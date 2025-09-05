@@ -1,0 +1,38 @@
+
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "source": ".",
+    "frameworksBackend": {
+      "region": "us-central1"
+    }
+  },
+  "apphosting": {
+    "backends": [
+      {
+        "id": "studio",
+        "region": "us-central1",
+        "scaling": {
+          "maxInstances": 10
+        },
+        "resources": {
+          "cpu": 2,
+          "memoryMiB": 2048
+        },
+        "startupProbe": {
+          "timeoutSeconds": 900,
+          "periodSeconds": 300
+        },
+        "healthCheck": {
+          "path": "/api/healthz"
+        }
+      }
+    ]
+  }
+}
