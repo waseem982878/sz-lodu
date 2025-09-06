@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X, Eye, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment } from "firebase/firestore";
+import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { Transaction } from "@/models/transaction.model";
 import type { Agent } from "@/models/agent.model";
@@ -218,8 +218,8 @@ export default function TransactionsPage() {
                             </TableCell>
                             
                             <TableCell>
-                                {type === 'deposit' && t.screenshotUrl && (<ScreenshotModal imageUrl={t.screenshotUrl} />)}
-                                {type === 'withdrawal' && t.withdrawalDetails && (<span className="text-xs">{t.withdrawalDetails.method}: {t.withdrawalDetails.address}</span>)}
+                                {t.type === 'deposit' && t.screenshotUrl && (<ScreenshotModal imageUrl={t.screenshotUrl} />)}
+                                {t.type === 'withdrawal' && t.withdrawalDetails && (<span className="text-xs">{t.withdrawalDetails.method}: {t.withdrawalDetails.address}</span>)}
                             </TableCell>
 
                             <TableCell className="text-xs text-muted-foreground">{t.processedBy?.name || 'N/A'}</TableCell>
@@ -281,5 +281,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-
-    
