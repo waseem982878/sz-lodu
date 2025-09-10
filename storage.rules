@@ -1,36 +1,38 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-  
-    // Default deny all reads and writes
+    // Helper function for auth check
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Images can be read by anyone (public access for avatars, etc.)
+    // Writes are restricted to authenticated users for their own files.
     match /{allPaths=**} {
-      allow read, write: if false;
-    }
-
-    // Allow avatar uploads for any authenticated user to their own folder.
-    // Allow public read for avatars.
-    match /avatars/{userId}/{fileName} {
       allow read;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if isAuthenticated();
     }
 
-    // Allow KYC document uploads for the specific user.
-    // Disallow public read.
-    match /kyc/{userId}/{fileName} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Specific rule for user avatars - only the user can write to their avatar path
+    match /avatars/{userId} {
+        allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Allow deposit screenshot uploads for the specific user.
-    // Disallow public read.
-    match /deposits/{userId}/{fileName} {
-       allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Specific rule for KYC documents - only the user can write
+    match /kyc/{userId}/{allPaths=**} {
+         allow write: if isAuthenticated() && request.auth.uid == userId;
     }
-
-    // Allow game result uploads for any authenticated user involved in a battle.
-    // Disallow public read.
-    match /results/{battleId}/{userId}/{fileName} {
-       allow read, write: if request.auth != null && request.auth.uid == userId;
+    
+    // Result screenshots
+    match /results/{battleId}/{userId} {
+        allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Deposit screenshots
+    match /deposits/{userId}/{allPaths=**} {
+        allow write: if isAuthenticated() && request.auth.uid == userId;
     }
   }
 }
