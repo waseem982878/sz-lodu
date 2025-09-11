@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 
 const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
@@ -22,7 +23,7 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
 );
 
 const HowToPlayCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
-     <div className="text-center p-4">
+     <div className="text-center p-4 transition-transform duration-300 hover:scale-105">
         <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 border-2 border-primary text-primary mx-auto mb-4">
             <Icon className="h-8 w-8" />
         </div>
@@ -38,7 +39,7 @@ const ScreenshotCard = ({ src, alt, "data-ai-hint": dataAiHint }: { src: string,
 )
 
 const TestimonialCard = ({ name, text, avatarSeed }: { name: string, text: string, avatarSeed: string }) => (
-    <Card className="p-6 text-center">
+    <Card className="p-6 text-center transition-transform duration-300 hover:scale-105 hover:shadow-lg">
         <div className="flex justify-center mb-4">
             {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
         </div>
@@ -62,7 +63,6 @@ export default function LandingPageV2() {
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // Check if user has already "installed"
         try {
              if (localStorage.getItem('appInstalled') === 'true') {
                 router.replace('/login');
@@ -78,9 +78,7 @@ export default function LandingPageV2() {
 
     const handleInstallClick = async () => {
         if (deferredPrompt) {
-            // Show the install prompt
             (deferredPrompt as any).prompt();
-            // Wait for the user to respond to the prompt
             const { outcome } = await (deferredPrompt as any).userChoice;
             if (outcome === 'accepted') {
                 console.log('User accepted the install prompt');
@@ -96,17 +94,16 @@ export default function LandingPageV2() {
             console.error("Could not save to localStorage", error);
         }
 
-        // Always redirect to login after attempting to prompt
         router.push('/login');
     };
 
     return (
         <div className="bg-background text-foreground font-sans">
             {/* Hero Section */}
-            <header className="relative py-20 md:py-28 px-4 bg-red-50/50">
+            <header className="relative py-20 md:py-28 px-4 bg-red-50/50 overflow-hidden">
                  <div className="container mx-auto grid md:grid-cols-2 gap-8 items-center">
                     <div className="text-center md:text-left">
-                        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-primary">SZ LUDO</h1>
+                        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">SZ LUDO</h1>
                         <p className="text-lg md:text-xl mt-4 max-w-2xl mx-auto md:mx-0 text-muted-foreground">The Ultimate Real Money Ludo Experience</p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                             <Button
@@ -126,7 +123,7 @@ export default function LandingPageV2() {
                         </div>
                     </div>
                      <div className="hidden md:flex justify-center">
-                         <Image src="/ludo-classic.png" alt="Ludo Game" width={400} height={400} className="rounded-lg shadow-2xl" />
+                         <Image src="/ludo-classic.png" alt="Ludo Game" width={400} height={400} className="rounded-lg shadow-2xl transition-transform duration-500 hover:scale-110" />
                      </div>
                 </div>
             </header>
@@ -237,3 +234,5 @@ export default function LandingPageV2() {
         </div>
     );
 }
+
+    
