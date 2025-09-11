@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Crown, Users, Coins, Dice5, UserPlus, Swords, Trophy, Banknote, ArrowDown, ShieldCheck, Zap, MessageSquare, Star, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -52,17 +52,17 @@ const TestimonialCard = ({ name, text, avatarSeed }: { name: string, text: strin
 
 export default function LandingPageV2() {
     const router = useRouter();
-
-    const handleInstallClick = () => {
-        try {
-            localStorage.setItem('appInstalled', 'true');
-        } catch (error) {
-            console.error("Could not save to localStorage", error);
-        }
-        router.push('/login');
-    };
+    const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
     useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        // Check if user has already "installed"
         try {
              if (localStorage.getItem('appInstalled') === 'true') {
                 router.replace('/login');
@@ -70,7 +70,35 @@ export default function LandingPageV2() {
         } catch(error) {
             // Ignore localStorage errors on server or in restricted environments
         }
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
     }, [router]);
+
+    const handleInstallClick = async () => {
+        if (deferredPrompt) {
+            // Show the install prompt
+            (deferredPrompt as any).prompt();
+            // Wait for the user to respond to the prompt
+            const { outcome } = await (deferredPrompt as any).userChoice;
+            if (outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+            } else {
+                console.log('User dismissed the install prompt');
+            }
+            setDeferredPrompt(null);
+        }
+        
+        try {
+            localStorage.setItem('appInstalled', 'true');
+        } catch (error) {
+            console.error("Could not save to localStorage", error);
+        }
+
+        // Always redirect to login after attempting to prompt
+        router.push('/login');
+    };
 
     return (
         <div className="bg-background text-foreground font-sans">
@@ -209,5 +237,3 @@ export default function LandingPageV2() {
         </div>
     );
 }
-
-    
