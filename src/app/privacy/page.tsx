@@ -2,32 +2,26 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
-import { Loader2 } from "lucide-react";
 
 export default function PrivacyPolicyPage() {
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchContent = async () => {
-      const docRef = doc(db, 'config', 'appSettings');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setContent(docSnap.data().privacyPolicy || "Privacy Policy not available.");
-      } else {
-        setContent("Privacy Policy not available.");
-      }
-      setLoading(false);
-    };
-    fetchContent();
-  }, []);
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
-  }
+  const content = `
+    <h2 class="text-xl font-semibold text-gray-800">1. Information We Collect</h2>
+    <p class="mt-2 text-gray-600">
+      We collect information you provide directly to us, such as when you create an account, update your profile, use the interactive features of our services, and communicate with us. This information may include your name, email address, phone number, and any other information you choose to provide.
+    </p>
+    <h2 class="text-xl font-semibold text-gray-800 mt-6">2. How We Use Information</h2>
+    <p class="mt-2 text-gray-600">
+      We use the information we collect to operate, maintain, and provide you with the features and functionality of the service, as well as to communicate directly with you, such as to send you email messages and push notifications. We may also send you service-related emails or messages (e.g., account verification, changes or updates to features of the service, technical and security notices).
+    </p>
+    <h2 class="text-xl font-semibold text-gray-800 mt-6">3. Sharing of Your Information</h2>
+    <p class="mt-2 text-gray-600">
+      We will not rent or sell your information to third parties outside SZ LUDO without your consent, except as noted in this Policy.
+    </p>
+    <h2 class="text-xl font-semibold text-gray-800 mt-6">4. Security</h2>
+    <p class="mt-2 text-gray-600">
+      We care about the security of your information and use commercially reasonable safeguards to preserve the integrity and security of all information collected through the service. However, no security system is impenetrable and we cannot guarantee the security of our systems 100%.
+    </p>
+  `;
 
   return (
     <div className="bg-background p-4 md:p-8 rounded-lg max-w-4xl mx-auto">
@@ -42,3 +36,5 @@ export default function PrivacyPolicyPage() {
     </div>
   );
 }
+
+    

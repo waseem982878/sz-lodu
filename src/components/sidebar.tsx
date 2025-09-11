@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link";
@@ -23,7 +24,7 @@ const adminNav = { href: "/admin/dashboard", icon: ShieldCheck, label: "Admin Pa
 
 export function Sidebar() {
   const { isSidebarOpen, closeSidebar } = useSidebar();
-  const { user, userProfile, logout, isAdmin } = useAuth();
+  const { user, userProfile, logout, isSuperAdmin, isAgent } = useAuth();
   const pathname = usePathname();
 
   const handleLogout = async () => {
@@ -64,7 +65,7 @@ export function Sidebar() {
               </div>
               <nav className="flex-grow">
                   <ul>
-                       {isAdmin && (
+                       {(isSuperAdmin || isAgent) && (
                           <li>
                             <Link href={adminNav.href} onClick={closeSidebar} className="flex items-center justify-between p-3 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 mb-2">
                                 <div className="flex items-center gap-4">
@@ -108,3 +109,5 @@ export function Sidebar() {
     </>
   )
 }
+
+    

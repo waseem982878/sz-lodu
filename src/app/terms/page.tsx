@@ -2,32 +2,26 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
-import { Loader2 } from "lucide-react";
 
 export default function TermsPage() {
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchContent = async () => {
-      const docRef = doc(db, 'config', 'appSettings');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setContent(docSnap.data().termsAndConditions || "Terms and Conditions not available.");
-      } else {
-        setContent("Terms and Conditions not available.");
-      }
-      setLoading(false);
-    };
-    fetchContent();
-  }, []);
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
-  }
+  const content = `
+    <h2 class="text-xl font-semibold text-gray-800">1. Introduction</h2>
+    <p class="mt-2 text-gray-600">
+      Welcome to SZ LUDO. By using our services, you agree to be bound by these Terms & Conditions. Please read them carefully. You must be 18 years or older to use this service.
+    </p>
+    <h2 class="text-xl font-semibold text-gray-800 mt-6">2. User Account</h2>
+    <p class="mt-2 text-gray-600">
+      You are responsible for maintaining the confidentiality of your account and password. You agree to accept responsibility for all activities that occur under your account. Any fraudulent, abusive, or otherwise illegal activity may be grounds for termination of your account.
+    </p>
+    <h2 class="text-xl font-semibold text-gray-800 mt-6">3. Gameplay</h2>
+    <p class="mt-2 text-gray-600">
+      All games must be played fairly. Any use of bots, hacks, or any other unauthorized third-party software is strictly prohibited. Players found cheating will have their accounts permanently banned and any existing funds will be forfeited.
+    </p>
+    <h2 class="text-xl font-semibold text-gray-800 mt-6">4. Financial Risk</h2>
+    <p class="mt-2 text-gray-600">
+      This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk. SZ LUDO is not responsible for any financial losses incurred while using the platform.
+    </p>
+  `;
 
   return (
     <div className="bg-background p-4 md:p-8 rounded-lg max-w-4xl mx-auto">
@@ -42,3 +36,5 @@ export default function TermsPage() {
     </div>
   );
 }
+
+    

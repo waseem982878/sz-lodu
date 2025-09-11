@@ -4,13 +4,28 @@
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Crown, Users, Coins, Dice5, UserPlus, Swords, Trophy, Banknote, ArrowDown, ShieldCheck, Zap, MessageSquare, Star, ArrowRight } from "lucide-react";
+import { Crown, Users, Coins, Dice5, UserPlus, Swords, Trophy, Banknote, ArrowDown, ShieldCheck, Zap, MessageSquare, Star, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
+
+type LandingPageContent = {
+    heroTitle: string;
+    heroSubtitle: string;
+    feature1Title: string;
+    feature1Description: string;
+    feature2Title: string;
+    feature2Description: string;
+    feature3Title: string;
+    feature3Description: string;
+    feature4Title: string;
+    feature4Description: string;
+}
 
 const FeatureCard = ({ icon: Icon, title, description, delay }: { icon: React.ElementType, title: string, description: string, delay?: number }) => (
     <Card className="feature-card text-center p-6 transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-primary/20 shadow-lg border" data-aos="fade-up" data-aos-delay={delay}>
@@ -54,10 +69,12 @@ const TestimonialCard = ({ name, text, avatarSeed, delay }: { name: string, text
 export default function LandingPageV2() {
     const router = useRouter();
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+    const [content, setContent] = useState<Partial<LandingPageContent>>({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Dynamically load AOS library and its CSS
-        const loadAOS = async () => {
+        const loadPageData = async () => {
+            // Load AOS library
             const AOS = (await import('aos')).default;
             const link = document.createElement('link');
             link.href = 'https://unpkg.com/aos@2.3.1/dist/aos.css';
@@ -65,12 +82,20 @@ export default function LandingPageV2() {
             document.head.appendChild(link);
             
             AOS.init({
-                duration: 800, // values from 0 to 3000, with step 50ms
-                once: true, // whether animation should happen only once - while scrolling down
+                duration: 800,
+                once: true,
             });
-        };
 
-        loadAOS();
+            // Fetch content from Firestore
+            const landingRef = doc(db, 'config', 'landingPage');
+            const landingSnap = await getDoc(landingRef);
+            if (landingSnap.exists()) {
+                setContent(landingSnap.data() as LandingPageContent);
+            }
+            setLoading(false);
+        };
+        
+        loadPageData();
 
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
@@ -112,6 +137,15 @@ export default function LandingPageV2() {
 
         router.push('/login');
     };
+    
+    if(loading) {
+        return (
+             <div className="flex flex-col justify-center items-center h-screen bg-background text-center p-4">
+                <span className="text-4xl font-bold mb-4 text-primary font-heading">SZ LUDO</span>
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        )
+    }
 
     return (
         <div className="bg-background text-foreground font-sans overflow-x-hidden">
@@ -119,8 +153,8 @@ export default function LandingPageV2() {
             <header className="relative py-20 md:py-28 px-4 bg-red-50/50 overflow-hidden">
                  <div className="container mx-auto grid md:grid-cols-2 gap-8 items-center">
                     <div className="text-center md:text-left" data-aos="fade-right">
-                        <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">SZ LUDO</h1>
-                        <p className="text-lg md:text-xl mt-4 max-w-2xl mx-auto md:mx-0 text-muted-foreground">The Ultimate Real Money Ludo Experience</p>
+                        <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
+                        <p className="text-lg md:text-xl mt-4 max-w-2xl mx-auto md:mx-0 text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                             <Button
                                  className="text-base sm:text-lg py-4 px-6 sm:py-6 sm:px-8 rounded-full font-semibold transition-all duration-300 hover:scale-105"
@@ -151,9 +185,9 @@ export default function LandingPageV2() {
                         Why Choose SZ Ludo?
                      </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        <FeatureCard icon={ShieldCheck} title="Secure Platform" description="Your data and transactions are protected with top-tier security." delay={0} />
-                        <FeatureCard icon={Zap} title="Instant Withdrawals" description="Get your winnings transferred to your account in minutes." delay={100} />
-                        <FeatureCard icon={MessageSquare} title="24/7 Customer Support" description="Our team is always here to help you with any issues." delay={200} />
+                        <FeatureCard icon={ShieldCheck} title={content.feature1Title || "Secure Platform"} description={content.feature1Description || "Your data and transactions are protected with top-tier security."} delay={0} />
+                        <FeatureCard icon={Zap} title={content.feature2Title || "Instant Withdrawals"} description={content.feature2Description || "Get your winnings transferred to your account in minutes."} delay={100} />
+                        <FeatureCard icon={MessageSquare} title={content.feature3Title || "24/7 Customer Support"} description={content.feature3Description || "Our team is always here to help you with any issues."} delay={200} />
                     </div>
                 </section>
                 
@@ -240,6 +274,7 @@ export default function LandingPageV2() {
                         <Link href="/terms" className="text-muted-foreground hover:text-primary">Terms & Conditions</Link>
                         <Link href="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</Link>
                         <Link href="/refund" className="text-muted-foreground hover:text-primary">Refund Policy</Link>
+                        <Link href="/gst" className="text-muted-foreground hover:text-primary">GST Policy</Link>
                     </div>
                     <p className="text-muted-foreground">&copy; {new Date().getFullYear()} SZ LUDO. All rights reserved.</p>
                     <div className="mt-4 text-xs text-muted-foreground max-w-3xl mx-auto">

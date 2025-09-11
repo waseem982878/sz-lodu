@@ -103,8 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
-        const userRef = doc(db, 'users', user.uid);
         if (!isSuperAdmin && !isAgent) { // Don't track last seen for admins/agents
+            const userRef = doc(db, 'users', user.uid);
             updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(err => {});
         }
     }
@@ -116,7 +116,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isAuthRoute = pathname === '/login' || pathname === '/landing';
     const isRootRoute = pathname === '/';
     const isAdminRoute = pathname.startsWith('/admin');
+    const isPolicyRoute = ['/terms', '/privacy', '/refund', '/gst'].includes(pathname);
     
+    // Allow policy pages to be viewed by anyone
+    if (isPolicyRoute) {
+        return;
+    }
+
     // If checking is in progress, or on the root page (which handles its own redirect), do nothing.
     if (isRootRoute) {
         return;
@@ -137,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         } else {
             if (isAdminRoute) {
-                router.replace('/');
+                router.replace('/home'); // Redirect regular users from admin to home
             } else if (isAuthRoute) {
                 // For regular users, the main app content is now inside /home
                 router.replace('/home');
@@ -163,6 +169,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const renderContent = () => {
     const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
     const isAdminPage = pathname.startsWith('/admin');
+    const isPolicyPage = ['/terms', '/privacy', '/refund', '/gst'].includes(pathname);
+
+    // Always render policy pages without layout
+    if(isPolicyPage) {
+        return children;
+    }
 
     if (authLoading && !user) {
       return <GlobalLoader />;
@@ -180,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return isAdminPage ? children : <GlobalLoader />;
     } 
     
-    if (!profileLoading && !userProfile) {
+    if (!profileLoading && !userProfile && !isAuthPage) {
         return <GlobalLoader />;
     }
 
@@ -205,3 +217,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    
