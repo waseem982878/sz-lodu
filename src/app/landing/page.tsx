@@ -2,27 +2,32 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Download, Star, Users } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Crown, Users, Coins, Dice5 } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-export default function LandingPage() {
+const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
+    <div className="feature-card bg-black/20 rounded-2xl p-6 text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:border-primary hover:shadow-2xl hover:shadow-primary/30 border-2 border-transparent">
+        <Icon className="h-12 w-12 text-primary mx-auto mb-4" />
+        <h3 className="text-xl font-bold mb-2">{title}</h3>
+        <p className="text-gray-400">{description}</p>
+    </div>
+);
+
+export default function LandingPageV2() {
     const router = useRouter();
 
     const handleInstallClick = () => {
-        // Set a flag in localStorage to indicate the user has "installed" or passed the landing page
         try {
             localStorage.setItem('appInstalled', 'true');
         } catch (error) {
             console.error("Could not save to localStorage", error);
         }
-        // Redirect to the main app (login page)
         router.push('/login');
     };
-    
-    // In case a user who has already "installed" navigates here directly
+
     useEffect(() => {
         try {
              if (localStorage.getItem('appInstalled') === 'true') {
@@ -34,56 +39,46 @@ export default function LandingPage() {
     }, [router]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
-            <main className="flex-grow flex items-center justify-center p-4">
-                <Card className="w-full max-w-md shadow-2xl border-t-4 border-primary">
-                    <CardContent className="p-6 text-center space-y-6">
-                        <div className="flex justify-center items-center mb-2">
-                           <span className="text-4xl font-bold text-primary font-heading">SZ LUDO</span>
-                        </div>
-                        
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                            Play Ludo, Win Real Cash!
-                        </h1>
-
-                        <p className="text-muted-foreground">
-                            Join thousands of players in exciting Ludo battles and turn your skills into real money.
-                        </p>
-
-                        <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden my-4">
-                             <Image 
-                                src="/ludo-classic.png" 
-                                alt="Ludo game" 
-                                layout="fill" 
-                                objectFit="cover"
-                                priority
-                            />
-                        </div>
-
-                        <div className="flex justify-around items-center text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                                <Users className="h-5 w-5 text-primary" />
-                                <span>1M+ Players</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Star className="h-5 w-5 text-yellow-500" />
-                                <span>4.5 Rating</span>
-                            </div>
-                        </div>
-
-                        <Button 
-                            className="w-full text-lg py-6 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300"
-                            onClick={handleInstallClick}
+        <div className="bg-gradient-to-br from-primary/80 via-black to-black text-white font-sans">
+            <header className="relative text-center py-24 md:py-32 px-4 bg-[url('https://i.ibb.co/xJCfX2P/ludo-bg.png')] bg-center bg-cover">
+                <div className="absolute inset-0 bg-black/60 z-0"></div>
+                <div className="relative z-10">
+                    <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-shadow" style={{textShadow: '0 0 20px hsl(var(--primary))'}}>SZ LUDO</h1>
+                    <p className="text-lg md:text-xl mt-4 max-w-2xl mx-auto text-gray-300">The Ultimate Real Money Ludo Experience</p>
+                    <div className="mt-8 flex gap-4 justify-center">
+                        <Button
+                             className="text-lg py-6 px-8 rounded-full font-semibold border-2 border-primary bg-primary/20 text-white backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:scale-105 hover:shadow-lg hover:shadow-primary/50"
+                             onClick={handleInstallClick}
                         >
-                            <Download className="mr-3 h-6 w-6" />
-                            Download App & Get Started
+                            Download App
                         </Button>
-                    </CardContent>
-                </Card>
+                        <Button
+                             asChild
+                             variant="outline"
+                             className="text-lg py-6 px-8 rounded-full font-semibold border-2 border-primary bg-black/20 text-white backdrop-blur-sm transition-all duration-300 hover:bg-primary hover:text-white hover:scale-105 hover:shadow-lg hover:shadow-primary/50"
+                        >
+                           <Link href="/login">Play on Web</Link>
+                        </Button>
+                    </div>
+                </div>
+            </header>
+
+            <main>
+                <section className="py-16 md:py-24 px-4 container mx-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                        <FeatureCard icon={Dice5} title="Classic Ludo" description="Enjoy the traditional Ludo experience with a modern design." />
+                        <FeatureCard icon={Crown} title="Win Rewards" description="Play and win exciting cash prizes every day." />
+                        <FeatureCard icon={Users} title="Multiplayer" description="Challenge your friends and players worldwide." />
+                        <FeatureCard icon={Coins} title="Earn Coins" description="Collect coins and unlock premium features." />
+                    </div>
+                </section>
             </main>
-             <footer className="text-center py-4 text-xs text-muted-foreground">
+
+            <footer className="bg-black/30 py-8 px-4 text-center">
                 <p>&copy; {new Date().getFullYear()} SZ LUDO. All rights reserved.</p>
-                 <p className="mt-1">This game involves an element of financial risk and may be addictive. Please play responsibly.</p>
+                <div className="mt-4 text-xs text-gray-400">
+                    <p>This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk.</p>
+                </div>
             </footer>
         </div>
     );
