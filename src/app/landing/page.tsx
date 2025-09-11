@@ -12,8 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 
-const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
-    <Card className="feature-card text-center p-6 transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-primary/20 shadow-lg border">
+const FeatureCard = ({ icon: Icon, title, description, delay }: { icon: React.ElementType, title: string, description: string, delay?: number }) => (
+    <Card className="feature-card text-center p-6 transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-primary/20 shadow-lg border" data-aos="fade-up" data-aos-delay={delay}>
         <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mx-auto mb-4">
             <Icon className="h-8 w-8" />
         </div>
@@ -22,8 +22,8 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
     </Card>
 );
 
-const HowToPlayCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
-     <div className="text-center p-4 transition-transform duration-300 hover:scale-105">
+const HowToPlayCard = ({ icon: Icon, title, description, delay }: { icon: React.ElementType, title: string, description: string, delay?: number }) => (
+     <div className="text-center p-4 transition-transform duration-300 hover:scale-105" data-aos="fade-up" data-aos-delay={delay}>
         <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 border-2 border-primary text-primary mx-auto mb-4">
             <Icon className="h-8 w-8" />
         </div>
@@ -32,14 +32,14 @@ const HowToPlayCard = ({ icon: Icon, title, description }: { icon: React.Element
     </div>
 )
 
-const ScreenshotCard = ({ src, alt, "data-ai-hint": dataAiHint }: { src: string, alt: string, "data-ai-hint": string }) => (
-     <div className="overflow-hidden rounded-xl border shadow-lg transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-primary/20">
+const ScreenshotCard = ({ src, alt, "data-ai-hint": dataAiHint, delay }: { src: string, alt: string, "data-ai-hint": string, delay?: number }) => (
+     <div className="overflow-hidden rounded-xl border shadow-lg transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-primary/20" data-aos="fade-up" data-aos-delay={delay}>
         <Image src={src} alt={alt} width={400} height={700} className="w-full h-auto object-cover" data-ai-hint={dataAiHint} />
     </div>
 )
 
-const TestimonialCard = ({ name, text, avatarSeed }: { name: string, text: string, avatarSeed: string }) => (
-    <Card className="p-6 text-center transition-transform duration-300 hover:scale-105 hover:shadow-lg">
+const TestimonialCard = ({ name, text, avatarSeed, delay }: { name: string, text: string, avatarSeed: string, delay?: number }) => (
+    <Card className="p-6 text-center transition-transform duration-300 hover:scale-105 hover:shadow-lg" data-aos="fade-up" data-aos-delay={delay}>
         <div className="flex justify-center mb-4">
             {[...Array(5)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />)}
         </div>
@@ -56,6 +56,22 @@ export default function LandingPageV2() {
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
     useEffect(() => {
+        // Dynamically load AOS library and its CSS
+        const loadAOS = async () => {
+            const AOS = (await import('aos')).default;
+            const link = document.createElement('link');
+            link.href = 'https://unpkg.com/aos@2.3.1/dist/aos.css';
+            link.rel = 'stylesheet';
+            document.head.appendChild(link);
+            
+            AOS.init({
+                duration: 800, // values from 0 to 3000, with step 50ms
+                once: true, // whether animation should happen only once - while scrolling down
+            });
+        };
+
+        loadAOS();
+
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -102,7 +118,7 @@ export default function LandingPageV2() {
             {/* Hero Section */}
             <header className="relative py-20 md:py-28 px-4 bg-red-50/50 overflow-hidden">
                  <div className="container mx-auto grid md:grid-cols-2 gap-8 items-center">
-                    <div className="text-center md:text-left">
+                    <div className="text-center md:text-left" data-aos="fade-right">
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">SZ LUDO</h1>
                         <p className="text-lg md:text-xl mt-4 max-w-2xl mx-auto md:mx-0 text-muted-foreground">The Ultimate Real Money Ludo Experience</p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
@@ -122,7 +138,7 @@ export default function LandingPageV2() {
                             </Button>
                         </div>
                     </div>
-                     <div className="hidden md:flex justify-center">
+                     <div className="hidden md:flex justify-center" data-aos="fade-left">
                          <Image src="/ludo-classic.png" alt="Ludo Game" width={400} height={400} className="rounded-lg shadow-2xl transition-transform duration-500 hover:scale-110" />
                      </div>
                 </div>
@@ -131,52 +147,52 @@ export default function LandingPageV2() {
             <main className="container mx-auto">
                  {/* Why Choose Us Section */}
                 <section className="py-16 md:py-24 px-4">
-                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-primary">
+                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-primary" data-aos="zoom-in">
                         Why Choose SZ Ludo?
                      </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        <FeatureCard icon={ShieldCheck} title="Secure Platform" description="Your data and transactions are protected with top-tier security." />
-                        <FeatureCard icon={Zap} title="Instant Withdrawals" description="Get your winnings transferred to your account in minutes." />
-                        <FeatureCard icon={MessageSquare} title="24/7 Customer Support" description="Our team is always here to help you with any issues." />
+                        <FeatureCard icon={ShieldCheck} title="Secure Platform" description="Your data and transactions are protected with top-tier security." delay={0} />
+                        <FeatureCard icon={Zap} title="Instant Withdrawals" description="Get your winnings transferred to your account in minutes." delay={100} />
+                        <FeatureCard icon={MessageSquare} title="24/7 Customer Support" description="Our team is always here to help you with any issues." delay={200} />
                     </div>
                 </section>
                 
                  <section className="py-16 md:py-24 px-4 text-center bg-muted/40 rounded-xl">
-                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-primary">
+                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-primary" data-aos="zoom-in">
                         How to Get Started
                      </h2>
                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 items-start">
-                        <HowToPlayCard icon={UserPlus} title="1. Create Account" description="Quickly sign up with your details to create a secure profile."/>
-                        <HowToPlayCard icon={Swords} title="2. Join a Battle" description="Choose an ongoing battle or create your own challenge to play."/>
-                        <HowToPlayCard icon={Trophy} title="3. Play & Win" description="Use your Ludo skills to defeat your opponent and win real prizes."/>
-                        <HowToPlayCard icon={Banknote} title="4. Withdraw Winnings" description="Instantly withdraw your winnings to your bank account or UPI."/>
+                        <HowToPlayCard icon={UserPlus} title="1. Create Account" description="Quickly sign up with your details to create a secure profile." delay={0}/>
+                        <HowToPlayCard icon={Swords} title="2. Join a Battle" description="Choose an ongoing battle or create your own challenge to play." delay={100}/>
+                        <HowToPlayCard icon={Trophy} title="3. Play & Win" description="Use your Ludo skills to defeat your opponent and win real prizes." delay={200}/>
+                        <HowToPlayCard icon={Banknote} title="4. Withdraw Winnings" description="Instantly withdraw your winnings to your bank account or UPI." delay={300}/>
                      </div>
                 </section>
 
                 <section className="py-16 md:py-24 px-4 text-center">
-                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-primary">
+                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-primary" data-aos="zoom-in">
                         Glimpse of the Action
                      </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-                       <ScreenshotCard src="https://picsum.photos/seed/szludo1/400/700" alt="App Screenshot 1" data-ai-hint="app screenshot" />
-                       <ScreenshotCard src="https://picsum.photos/seed/szludo2/400/700" alt="App Screenshot 2" data-ai-hint="app gameplay" />
-                       <ScreenshotCard src="https://picsum.photos/seed/szludo3/400/700" alt="App Screenshot 3" data-ai-hint="app wallet" />
+                       <ScreenshotCard src="https://picsum.photos/seed/szludo1/400/700" alt="App Screenshot 1" data-ai-hint="app screenshot" delay={0} />
+                       <ScreenshotCard src="https://picsum.photos/seed/szludo2/400/700" alt="App Screenshot 2" data-ai-hint="app gameplay" delay={100} />
+                       <ScreenshotCard src="https://picsum.photos/seed/szludo3/400/700" alt="App Screenshot 3" data-ai-hint="app wallet" delay={200} />
                     </div>
                 </section>
 
                 {/* Testimonials Section */}
                 <section className="py-16 md:py-24 px-4">
-                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-primary">
+                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-primary" data-aos="zoom-in">
                         What Our Players Say
                      </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        <TestimonialCard name="Rohan S." text="Amazing app! The withdrawals are super fast. I won ₹500 and got it in my account in 10 minutes." avatarSeed="Rohan" />
-                        <TestimonialCard name="Priya K." text="Fair gameplay and a great community. I play here every day after work." avatarSeed="Priya" />
-                        <TestimonialCard name="Amit G." text="The best real money Ludo app out there. The support team is also very helpful." avatarSeed="Amit" />
+                        <TestimonialCard name="Rohan S." text="Amazing app! The withdrawals are super fast. I won ₹500 and got it in my account in 10 minutes." avatarSeed="Rohan" delay={0} />
+                        <TestimonialCard name="Priya K." text="Fair gameplay and a great community. I play here every day after work." avatarSeed="Priya" delay={100} />
+                        <TestimonialCard name="Amit G." text="The best real money Ludo app out there. The support team is also very helpful." avatarSeed="Amit" delay={200} />
                     </div>
                 </section>
 
-                <section className="py-16 md:py-24 px-4 max-w-3xl mx-auto">
+                <section className="py-16 md:py-24 px-4 max-w-3xl mx-auto" data-aos="fade-up">
                      <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center text-primary">
                         Frequently Asked Questions
                      </h2>
@@ -203,7 +219,7 @@ export default function LandingPageV2() {
                 </section>
                 
                 {/* Final CTA Section */}
-                <section className="py-20 px-4 text-center bg-primary text-primary-foreground rounded-xl my-24">
+                <section className="py-20 px-4 text-center bg-primary text-primary-foreground rounded-xl my-24" data-aos="zoom-in">
                     <h2 className="text-4xl font-bold mb-4">Ready to Play?</h2>
                     <p className="max-w-2xl mx-auto mb-8">Join thousands of players and start winning real cash prizes today. The next Ludo king could be you!</p>
                      <Button
