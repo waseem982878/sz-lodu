@@ -114,16 +114,16 @@ export default function LandingPageV2() {
     };
 
     return (
-        <div className="bg-background text-foreground font-sans">
+        <div className="bg-background text-foreground font-sans overflow-x-hidden">
             {/* Hero Section */}
             <header className="relative py-20 md:py-28 px-4 bg-red-50/50 overflow-hidden">
                  <div className="container mx-auto grid md:grid-cols-2 gap-8 items-center">
                     <div className="text-center md:text-left" data-aos="fade-right">
-                        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">SZ LUDO</h1>
+                        <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">SZ LUDO</h1>
                         <p className="text-lg md:text-xl mt-4 max-w-2xl mx-auto md:mx-0 text-muted-foreground">The Ultimate Real Money Ludo Experience</p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                             <Button
-                                 className="text-lg py-6 px-8 rounded-full font-semibold transition-all duration-300 hover:scale-105"
+                                 className="text-base sm:text-lg py-4 px-6 sm:py-6 sm:px-8 rounded-full font-semibold transition-all duration-300 hover:scale-105"
                                  onClick={handleInstallClick}
                             >
                                 <ArrowDown className="mr-2 h-5 w-5"/>
@@ -132,7 +132,7 @@ export default function LandingPageV2() {
                             <Button
                                  asChild
                                  variant="outline"
-                                 className="text-lg py-6 px-8 rounded-full font-semibold transition-all duration-300 hover:bg-accent hover:scale-105"
+                                 className="text-base sm:text-lg py-4 px-6 sm:py-6 sm:px-8 rounded-full font-semibold transition-all duration-300 hover:bg-accent hover:scale-105"
                             >
                                <Link href="/login">Play on Web</Link>
                             </Button>
@@ -219,13 +219,13 @@ export default function LandingPageV2() {
                 </section>
                 
                 {/* Final CTA Section */}
-                <section className="py-20 px-4 text-center bg-primary text-primary-foreground rounded-xl my-24" data-aos="zoom-in">
-                    <h2 className="text-4xl font-bold mb-4">Ready to Play?</h2>
+                <section className="py-16 sm:py-20 px-4 text-center bg-primary text-primary-foreground rounded-xl my-16 sm:my-24" data-aos="zoom-in">
+                    <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to Play?</h2>
                     <p className="max-w-2xl mx-auto mb-8">Join thousands of players and start winning real cash prizes today. The next Ludo king could be you!</p>
                      <Button
                         variant="secondary"
                         size="lg"
-                        className="text-lg py-7 px-10 rounded-full font-semibold transition-all duration-300 hover:scale-105"
+                        className="text-base sm:text-lg py-5 px-8 sm:py-7 sm:px-10 rounded-full font-semibold transition-all duration-300 hover:scale-105"
                         onClick={handleInstallClick}
                     >
                         Download Now & Get Started <ArrowRight className="ml-2 h-5 w-5" />
