@@ -47,7 +47,7 @@ export function Sidebar() {
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
           <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-            <Link href="/" onClick={closeSidebar} className="flex items-center">
+            <Link href="/home" onClick={closeSidebar} className="flex items-center">
               <span className="text-xl font-bold">SZ LUDO</span>
             </Link>
               <Button variant="ghost" size="icon" onClick={closeSidebar}>

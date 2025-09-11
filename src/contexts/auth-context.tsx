@@ -113,12 +113,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (authLoading) return;
 
-    const isAuthRoute = pathname === '/login';
+    const isAuthRoute = pathname === '/login' || pathname === '/landing';
+    const isRootRoute = pathname === '/';
     const isAdminRoute = pathname.startsWith('/admin');
+    
+    // If checking is in progress, or on the root page (which handles its own redirect), do nothing.
+    if (isRootRoute) {
+        return;
+    }
 
     if (!user) {
       if (!isAuthRoute) {
-        router.replace('/login');
+        router.replace('/');
       }
     } else {
         if (!profileLoading && !userProfile && isAuthRoute) {
@@ -133,7 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (isAdminRoute) {
                 router.replace('/');
             } else if (isAuthRoute) {
-                router.replace('/');
+                // For regular users, the main app content is now inside /home
+                router.replace('/home');
             }
         }
     }
@@ -148,33 +155,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     await signOut(auth);
-    router.replace('/login');
+    router.replace('/');
   };
   
   const value = { user, userProfile, loading: profileLoading, logout, isSuperAdmin, isAgent };
   
   const renderContent = () => {
-    const isLoginPage = pathname === '/login';
+    const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
     const isAdminPage = pathname.startsWith('/admin');
 
-    if (authLoading) {
+    if (authLoading && !user) {
       return <GlobalLoader />;
     }
     
+    if (isAuthPage) {
+        return children;
+    }
+    
     if (!user) {
-      return isLoginPage ? children : <GlobalLoader />;
+      return <GlobalLoader />;
     }
     
     if (isSuperAdmin || isAgent) {
         return isAdminPage ? children : <GlobalLoader />;
     } 
     
-    if (!profileLoading && !userProfile && !isLoginPage) {
+    if (!profileLoading && !userProfile) {
         return <GlobalLoader />;
     }
 
     if(isAdminPage) return <GlobalLoader/>;
-
+    
+    // All regular user authenticated routes are wrapped in SharedLayout
     return <SharedLayout>{children}</SharedLayout>;
   }
 
@@ -193,5 +205,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    

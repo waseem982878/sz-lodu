@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 const navItems = [
-    { href: "/", label: "Play", icon: Home },
+    { href: "/home", label: "Play", icon: Home },
     { href: "/leaderboard", label: "Leaders", icon: Trophy },
     { href: "/wallet", label: "Wallet", icon: Wallet },
     { href: "/profile", label: "Profile", icon: User },
@@ -25,7 +25,7 @@ export function BottomNav() {
 
         navItems.forEach((item, index) => {
             // Use exact match for home, startsWith for others
-            const isMatch = item.href === '/' ? pathname === item.href : pathname.startsWith(item.href);
+            const isMatch = item.href === '/home' ? pathname === item.href : pathname.startsWith(item.href);
             if (isMatch) {
                 if (item.href.length > longestMatch) {
                     longestMatch = item.href.length;

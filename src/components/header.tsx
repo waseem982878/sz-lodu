@@ -51,7 +51,7 @@ export function Header() {
                             <Menu className="h-6 w-6" />
                         </Button>
                     )}
-                    <Link href="/" className="flex items-center">
+                    <Link href="/home" className="flex items-center">
                         <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto] font-heading">SZ LUDO</span>
                     </Link>
                 </div>
