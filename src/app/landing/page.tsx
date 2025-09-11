@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import { Crown, Users, Coins, Dice5 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+
 
 const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
     <div className="feature-card bg-black/20 rounded-2xl p-6 text-center transition-all duration-300 hover:transform hover:-translate-y-2 hover:border-primary hover:shadow-2xl hover:shadow-primary/30 border-2 border-transparent">
@@ -15,6 +17,12 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
         <p className="text-gray-400">{description}</p>
     </div>
 );
+
+const ScreenshotCard = ({ src, alt, "data-ai-hint": dataAiHint }: { src: string, alt: string, "data-ai-hint": string }) => (
+     <div className="overflow-hidden rounded-xl border-2 border-primary/30 shadow-lg transition-all duration-300 hover:transform hover:-translate-y-2 hover:border-primary hover:shadow-2xl hover:shadow-primary/30">
+        <Image src={src} alt={alt} width={400} height={700} className="w-full h-auto object-cover" data-ai-hint={dataAiHint} />
+    </div>
+)
 
 export default function LandingPageV2() {
     const router = useRouter();
@@ -72,11 +80,22 @@ export default function LandingPageV2() {
                         <FeatureCard icon={Coins} title="Earn Coins" description="Collect coins and unlock premium features." />
                     </div>
                 </section>
+                
+                <section className="py-16 md:py-24 px-4 container mx-auto text-center">
+                     <h2 className="text-3xl md:text-4xl font-bold mb-12 text-shadow" style={{textShadow: '0 0 15px hsl(var(--primary))'}}>
+                        Glimpse of the Action
+                     </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+                       <ScreenshotCard src="https://picsum.photos/seed/szludo1/400/700" alt="App Screenshot 1" data-ai-hint="app screenshot" />
+                       <ScreenshotCard src="https://picsum.photos/seed/szludo2/400/700" alt="App Screenshot 2" data-ai-hint="app screenshot" />
+                       <ScreenshotCard src="https://picsum.photos/seed/szludo3/400/700" alt="App Screenshot 3" data-ai-hint="app screenshot" />
+                    </div>
+                </section>
             </main>
 
             <footer className="bg-black/30 py-8 px-4 text-center">
                 <p>&copy; {new Date().getFullYear()} SZ LUDO. All rights reserved.</p>
-                <div className="mt-4 text-xs text-gray-400">
+                <div className="mt-4 text-xs text-gray-400 max-w-3xl mx-auto">
                     <p>This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk.</p>
                 </div>
             </footer>
