@@ -4,12 +4,11 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-// This page is deprecated, use /create/[battleId] instead
+// This page is deprecated and now redirects to the main play page.
 export default function CreateGamePage() {
     const router = useRouter();
     
     useEffect(() => {
-        // Use replace to avoid adding a new entry to the browser's history
         router.replace('/play');
     }, [router]);
     

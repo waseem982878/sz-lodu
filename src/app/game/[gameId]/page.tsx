@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
-import { ArrowLeft, Info, Copy, Trash2, Upload, Gamepad, Crown, TriangleAlert, Loader2, CheckCircle, X } from "lucide-react";
+import { Info, Copy, Trash2, Upload, Crown, TriangleAlert, Loader2, CheckCircle, X, CircleHelp } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -178,6 +178,12 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     };
     const unsubscribe = getBattle(gameId, (battleData) => {
         if (battleData) {
+             const isParticipant = battleData.creator.id === user.uid || battleData.opponent?.id === user.uid;
+             if (!isParticipant && battleData.status !== 'open') {
+                setError("You are not part of this battle.");
+                setTimeout(() => router.push('/play'), 3000);
+                return;
+             }
             setBattle(battleData);
             if (battleData.roomCode) setRoomCode(battleData.roomCode);
         } else {
@@ -199,7 +205,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
   
   const handleCancel = async () => {
     if (!battle || !user) return;
-    if (confirm("Are you sure you want to cancel this battle? A penalty of Rs. 5 will be applied and given to the opponent.")) {
+    if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
       try {
         await cancelBattle(battle.id, user.uid, battle.amount);
         alert("Battle cancelled.");
@@ -243,12 +249,14 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
 
-  if (error || !battle || !user || !battle.opponent) {
+  if (error || !battle || !user) {
     return <div className="text-center py-10 text-red-500">{error || "Could not load battle details."}</div>;
   }
 
   const isCreator = battle.creator.id === user.uid;
+  const isOpponentJoined = !!battle.opponent;
   const opponent = isCreator ? battle.opponent : battle.creator;
+  const me = isCreator ? battle.creator : battle.opponent;
 
   const hasUserSubmittedResult = user && battle.result && battle.result[user.uid];
   const isPlayerReady = user && battle.readyPlayers && battle.readyPlayers[user.uid];
@@ -256,7 +264,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
 
   const getStatusMessage = () => {
       if (battle.status === 'completed') {
-          const winnerName = battle.winnerId === user.uid ? "You" : (opponent?.name || 'N/A');
+          const winnerName = battle.winnerId === me?.id ? "You" : (opponent?.name || 'N/A');
           return `Battle completed. Winner: ${winnerName}`;
       }
       if (hasUserSubmittedResult) {
@@ -278,6 +286,14 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
   }
   
    const renderGameControl = () => {
+        if (!isOpponentJoined) {
+             return (
+                <div className='text-center py-4'>
+                    <p className="text-lg font-semibold my-2">Waiting for an opponent...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                </div>
+            )
+        }
         if (!battle.roomCode) {
             if (isCreator) {
                 return (
@@ -350,34 +366,27 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
         <CardContent className="p-4">
           <div className="flex justify-between items-center text-center mb-4">
               <div className="flex flex-col items-center gap-1">
-                  <Image src={opponent.avatarUrl} alt={opponent.name} width={40} height={40} className="rounded-full ring-2 ring-muted" />
-                  <span className="font-semibold text-sm">{opponent.name}</span>
+                  <Image src={me?.avatarUrl || 'https://picsum.photos/40/40'} alt="You" width={40} height={40} className="rounded-full ring-2 ring-primary" />
+                  <span className="font-semibold text-sm">You</span>
               </div>
               <div className="text-center">
                   <p className="text-orange-500 font-bold text-xl">VS</p>
                   <p className="font-bold text-green-600">₹ {battle.amount}</p>
               </div>
-              <div className="flex flex-col items-center gap-1">
-                   <Image src={userProfile?.avatarUrl || 'https://picsum.photos/40/40'} alt="You" width={40} height={40} className="rounded-full ring-2 ring-primary" />
-                  <span className="font-semibold text-sm">You</span>
+               <div className={`flex flex-col items-center gap-1 transition-opacity duration-500 ${isOpponentJoined ? 'opacity-100' : 'opacity-50'}`}>
+                    {isOpponentJoined && opponent ? (
+                        <Image src={opponent.avatarUrl} alt={opponent.name} width={40} height={40} className="rounded-full ring-2 ring-muted" />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <CircleHelp className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                    )}
+                  <span className="font-semibold text-sm">{isOpponentJoined && opponent ? opponent.name : 'Waiting...'}</span>
               </div>
           </div>
 
           <div className="bg-muted/50 rounded-lg p-4 text-center">
-              {battle.roomCode ? (
-                <>
-                    <p className="text-sm text-muted-foreground">Room Code</p>
-                    <div className="flex justify-center items-center gap-2 my-2">
-                        <p className="text-4xl font-bold tracking-widest text-primary">{battle.roomCode}</p>
-                        <Button variant="ghost" size="icon" onClick={handleCopy}>
-                            <Copy className="w-6 h-6" />
-                        </Button>
-                    </div>
-                    {renderGameControl()}
-                </>
-              ) : (
-                 renderGameControl()
-              )}
+              {renderGameControl()}
           </div>
         </CardContent>
       </Card>
@@ -412,9 +421,13 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 pl-2">
             <li>A penalty will be applied for submitting a wrong or edited screenshot.</li>
             <li>Any abusive language or fraudulent activity will result in a permanent ban.</li>
-            <li>If you cancel after the opponent joins, a penalty will be deducted from your wallet.</li>
+            <li>If you cancel, your bet amount will be refunded after a small penalty.</li>
         </ul>
       </div>
+      
+      <Button variant="destructive" className="w-full" onClick={handleCancel}>
+        <Trash2 className="mr-2 h-4 w-4" /> Cancel Battle
+      </Button>
 
       <ResultModal status={resultStatus} onClose={() => setResultStatus(null)} battle={battle} onResultSubmitted={onResultSubmitted} />
     </div>
