@@ -17,7 +17,7 @@ export const createBattle = async (amount: number, gameType: GameType, user: Use
         }
 
         const currentUserProfile = userDoc.data() as UserProfile;
-        
+
         if (!isPractice) {
             if ((currentUserProfile.depositBalance + currentUserProfile.winningsBalance) < amount) {
                 throw new Error("Insufficient balance.");
@@ -25,10 +25,10 @@ export const createBattle = async (amount: number, gameType: GameType, user: Use
 
             const depositDeduction = Math.min(currentUserProfile.depositBalance, amount);
             const winningsDeduction = amount - depositDeduction;
-            
+
             const newDepositBalance = currentUserProfile.depositBalance - depositDeduction;
             const newWinningsBalance = currentUserProfile.winningsBalance - winningsDeduction;
-            
+
             transaction.update(userRef, {
                 depositBalance: newDepositBalance,
                 winningsBalance: newWinningsBalance
@@ -49,7 +49,7 @@ export const createBattle = async (amount: number, gameType: GameType, user: Use
             updatedAt: serverTimestamp() as any,
         };
         transaction.set(battleRef, newBattleData);
-        
+
         return battleRef.id;
     });
 
@@ -70,7 +70,7 @@ export const acceptBattle = async (battleId: string, user: User, userProfile: Us
         if (!battleDoc.exists() || battleDoc.data().status !== 'open') {
             throw new Error("Battle not available or already taken.");
         }
-        
+
         const battleData = battleDoc.data() as Battle;
         const isPractice = battleData.amount === 0;
 
@@ -83,23 +83,23 @@ export const acceptBattle = async (battleId: string, user: User, userProfile: Us
             throw new Error("User does not exist!");
         }
         const currentUserProfile = userAccount.data() as UserProfile;
-        
+
         if (!isPractice) {
             if ((currentUserProfile.depositBalance + currentUserProfile.winningsBalance) < battleData.amount) {
                 throw new Error("Insufficient balance to accept this battle.");
             }
             const depositDeduction = Math.min(currentUserProfile.depositBalance, battleData.amount);
             const winningsDeduction = battleData.amount - depositDeduction;
-            
+
             const newDepositBalance = currentUserProfile.depositBalance - depositDeduction;
             const newWinningsBalance = currentUserProfile.winningsBalance - winningsDeduction;
-            
+
             transaction.update(userRef, { 
                 depositBalance: newDepositBalance,
                 winningsBalance: newWinningsBalance
             });
         }
-        
+
         transaction.update(battleRef, {
             status: 'waiting_for_players_ready',
             opponent: {
@@ -116,7 +116,7 @@ export const acceptBattle = async (battleId: string, user: User, userProfile: Us
 // Get real-time updates for a single battle
 export const getBattle = (battleId: string, callback: (battle: Battle | null) => void) => {
     const battleRef = doc(db, 'battles', battleId);
-    
+
     const unsubscribe = onSnapshot(battleRef, (doc) => {
         if (doc.exists()) {
             callback({ id: doc.id, ...doc.data() } as Battle);
@@ -129,7 +129,10 @@ export const getBattle = (battleId: string, callback: (battle: Battle | null) =>
 }
 
 // Set room code by the creator
-export const setBattleRoomCode = async (battleId: string, roomCode: string) => {
+export const setRoomCode = async (battleId: string, roomCode: string) => {
+    if (!battleId || !roomCode) {
+        throw new Error("battleId and roomCode are required");
+    }
     const battleRef = doc(db, 'battles', battleId);
     await updateDoc(battleRef, {
         roomCode,
@@ -146,7 +149,7 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
     await runTransaction(db, async (transaction) => {
         const battleDoc = await transaction.get(battleRef);
         if (!battleDoc.exists()) throw new Error("Battle not found.");
-        
+
         const battleData = battleDoc.data() as Battle;
         if (['cancelled', 'completed'].includes(battleData.status)) {
             throw new Error("Battle cannot be cancelled as it's already concluded.");
@@ -154,11 +157,11 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
 
         const creatorId = battleData.creator.id;
         const opponentId = battleData.opponent?.id;
-        
+
         if (opponentId && !isPractice) {
             const cancellerIsCreator = userId === creatorId;
             const otherPlayerId = cancellerIsCreator ? opponentId : creatorId;
-            
+
             const cancellerRef = doc(db, 'users', userId);
             const otherPlayerRef = doc(db, 'users', otherPlayerId);
 
@@ -174,7 +177,7 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
             // Refund original bet amount to both players' winnings balance
             transaction.update(doc(db, 'users', creatorId), { winningsBalance: increment(amount) });
             transaction.update(doc(db, 'users', opponentId), { winningsBalance: increment(amount) });
-            
+
         } else if (!isPractice) { 
             // If no opponent, only refund the creator
             if (userId !== creatorId) {
@@ -228,13 +231,13 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
 
         const battleData = battleDoc.data() as Battle;
         if(battleData.status !== 'inprogress') throw new Error("Can only submit result for a game that is in progress.");
-        
+
         const resultSubmission: ResultSubmission = {
             status,
             screenshotUrl: status === 'won' ? screenshotUrl : '',
             submittedAt: serverTimestamp() as any
         };
-        
+
         transaction.update(battleRef, {
             [`result.${userId}`]: resultSubmission,
             status: 'result_pending', 
@@ -286,7 +289,7 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
 
         const winnerRef = doc(db, 'users', winnerId);
         const loserRef = doc(db, 'users', loserId);
-        
+
         const [winnerDoc, loserDoc] = await Promise.all([
             transaction.get(winnerRef),
             transaction.get(loserRef)
@@ -294,7 +297,7 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
 
         if(!winnerDoc.exists()) throw new Error("Winner profile not found");
         if(!loserDoc.exists()) throw new Error("Loser profile not found");
-        
+
         const winnerProfile = winnerDoc.data() as UserProfile;
         const loserProfile = loserDoc.data() as UserProfile;
         const isPractice = battleData.amount === 0;
@@ -305,7 +308,7 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
             updatedAt: serverTimestamp(),
             completedAt: serverTimestamp()
         });
-        
+
         const winnerUpdate: any = {
             gamesPlayed: increment(1),
             gamesWon: increment(1),
@@ -322,15 +325,15 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
              const settingsRef = doc(db, 'config', 'appSettings');
              const settingsSnap = await transaction.get(settingsRef);
              const commissionRate = settingsSnap.exists() ? settingsSnap.data().commissionRate / 100 : 0.05;
-            
+
             const prizeMoney = (battleData.amount * 2) * (1 - commissionRate);
             winnerUpdate.winningsBalance = increment(prizeMoney);
-            
+
             if (prizeMoney > (winnerProfile.biggestWin || 0)) {
                 winnerUpdate.biggestWin = prizeMoney;
             }
         }
-        
+
         transaction.update(winnerRef, winnerUpdate);
         transaction.update(loserRef, loserUpdate);
 

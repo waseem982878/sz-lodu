@@ -10,7 +10,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
-import { getBattle, setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
+import { getBattle, setRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
 import LudoLaunchButton from "@/components/LudoLaunchButton";
 
@@ -110,7 +110,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
       if(roomCode.trim() && battle) {
           setIsSubmittingCode(true);
           try {
-            await setBattleRoomCode(battle.id, roomCode.trim());
+            await setRoomCode(battle.id, roomCode.trim());
           } catch(err) {
               alert("Failed to set room code.");
           } finally {
