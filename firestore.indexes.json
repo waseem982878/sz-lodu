@@ -27,6 +27,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "creator.id", "order": "ASCENDING" },
+        { "fieldPath": "gameType", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
@@ -35,6 +37,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "opponent.id", "order": "ASCENDING" },
+        { "fieldPath": "gameType", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
@@ -43,7 +47,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "gameType", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "creator.id", "order": "ASCENDING" }
       ]
     },
     {
