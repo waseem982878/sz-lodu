@@ -129,7 +129,7 @@ export const getBattle = (battleId: string, callback: (battle: Battle | null) =>
 }
 
 // Set room code by the creator
-export const setRoomCode = async (battleId: string, roomCode: string) => {
+export const setBattleRoomCode = async (battleId: string, roomCode: string) => {
     const battleRef = doc(db, 'battles', battleId);
     await updateDoc(battleRef, {
         roomCode,

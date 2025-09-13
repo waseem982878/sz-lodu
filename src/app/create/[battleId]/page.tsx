@@ -10,7 +10,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
-import { getBattle, setRoomCode as setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
+import { getBattle, setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
 import LudoLaunchButton from "@/components/LudoLaunchButton";
 
