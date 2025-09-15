@@ -62,7 +62,7 @@ export default function LoginPage() {
   useEffect(() => {
     // Redirection is now fully handled by AuthProvider, but we can prevent rendering the form if user is already logged in.
     if (!authLoading && user) {
-       router.replace('/');
+       router.replace('/home');
     }
   }, [user, authLoading, router]);
 

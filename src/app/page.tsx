@@ -10,22 +10,9 @@ export default function RootPage() {
     const router = useRouter();
 
     useEffect(() => {
-        try {
-            // Check if the user has been to the landing page before
-            const appInstalled = localStorage.getItem('appInstalled');
-
-            if (appInstalled === 'true') {
-                // If they have, send them to the login page (or main app)
-                router.replace('/login');
-            } else {
-                // If it's their first time, send them to the new landing page
-                router.replace('/landing');
-            }
-        } catch (error) {
-            // Fallback for environments where localStorage is not available (like SSR part)
-            // or if there's a security error.
-            router.replace('/landing');
-        }
+        // The root page's only job is to redirect to the landing page.
+        // The AuthProvider will handle further redirection if the user is already logged in.
+        router.replace('/landing');
     }, [router]);
 
     // Show a loader while the redirection logic runs
@@ -36,5 +23,3 @@ export default function RootPage() {
         </div>
     );
 }
-
-    

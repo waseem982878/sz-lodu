@@ -113,43 +113,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (authLoading) return;
 
-    const isAuthRoute = pathname === '/login' || pathname === '/landing';
-    const isRootRoute = pathname === '/';
+    const publicRoutes = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'];
+    const isPublicRoute = publicRoutes.includes(pathname);
     const isAdminRoute = pathname.startsWith('/admin');
-    const isPolicyRoute = ['/terms', '/privacy', '/refund', '/gst'].includes(pathname);
-    
-    // Allow policy pages to be viewed by anyone
-    if (isPolicyRoute) {
-        return;
+
+    if (!user && !isPublicRoute) {
+        router.replace('/landing');
     }
 
-    // If checking is in progress, or on the root page (which handles its own redirect), do nothing.
-    if (isRootRoute) {
-        return;
-    }
-
-    if (!user) {
-      if (!isAuthRoute) {
-        router.replace('/');
-      }
-    } else {
-        if (!profileLoading && !userProfile && isAuthRoute) {
-            return; 
-        }
-
+    if (user) {
         if (isSuperAdmin || isAgent) {
             if (!isAdminRoute) {
                 router.replace('/admin/dashboard');
             }
         } else {
-            if (isAdminRoute) {
-                router.replace('/home'); // Redirect regular users from admin to home
-            } else if (isAuthRoute) {
-                // For regular users, the main app content is now inside /home
+             if (isAdminRoute) {
                 router.replace('/home');
-            }
+             } else if (pathname === '/login' || pathname === '/landing' || pathname === '/') {
+                router.replace('/home');
+             }
         }
     }
+
   }, [user, userProfile, isSuperAdmin, isAgent, authLoading, profileLoading, pathname, router]);
 
   const logout = async () => {
@@ -161,27 +146,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     await signOut(auth);
-    router.replace('/');
+    router.replace('/landing');
   };
   
   const value = { user, userProfile, loading: profileLoading, logout, isSuperAdmin, isAgent };
   
   const renderContent = () => {
-    const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
+    const publicRoutes = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'];
+    const isPublicRoute = publicRoutes.includes(pathname);
     const isAdminPage = pathname.startsWith('/admin');
-    const isPolicyPage = ['/terms', '/privacy', '/refund', '/gst'].includes(pathname);
 
-    // Always render policy pages without layout
-    if(isPolicyPage) {
-        return children;
-    }
-
-    if (authLoading && !user) {
+    if (authLoading && !isPublicRoute) {
       return <GlobalLoader />;
     }
-    
-    if (isAuthPage) {
-        return children;
+
+    if(isPublicRoute) {
+      // Prevent flicker for logged-in users on public routes before redirect
+      if(user && (pathname === '/landing' || pathname === '/login' || pathname === '/')) return <GlobalLoader />;
+      return children;
     }
     
     if (!user) {
@@ -190,15 +172,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (isSuperAdmin || isAgent) {
         return isAdminPage ? children : <GlobalLoader />;
-    } 
+    }
     
-    if (!profileLoading && !userProfile && !isAuthPage) {
+    if (!profileLoading && !userProfile) {
+        // This case handles a user being authenticated but their profile document is not ready yet.
+        // It's a transient state, especially during signup.
         return <GlobalLoader />;
     }
-
-    if(isAdminPage) return <GlobalLoader/>;
     
-    // All regular user authenticated routes are wrapped in SharedLayout
+    // Regular authenticated user
     return <SharedLayout>{children}</SharedLayout>;
   }
 

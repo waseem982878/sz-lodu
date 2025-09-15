@@ -104,18 +104,10 @@ export default function LandingPageV2() {
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        try {
-             if (localStorage.getItem('appInstalled') === 'true') {
-                router.replace('/login');
-            }
-        } catch(error) {
-            // Ignore localStorage errors on server or in restricted environments
-        }
-
         return () => {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         };
-    }, [router]);
+    }, []);
 
     const handleInstallClick = async () => {
         if (deferredPrompt) {
@@ -128,13 +120,6 @@ export default function LandingPageV2() {
             }
             setDeferredPrompt(null);
         }
-        
-        try {
-            localStorage.setItem('appInstalled', 'true');
-        } catch (error) {
-            console.error("Could not save to localStorage", error);
-        }
-
         router.push('/login');
     };
     
@@ -285,5 +270,3 @@ export default function LandingPageV2() {
         </div>
     );
 }
-
-    
