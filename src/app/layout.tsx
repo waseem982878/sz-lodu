@@ -24,8 +24,6 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#B91C1C", // Red color
-  // Set a fixed width for the landing page to appear as desktop on mobile
-  // Other pages will still be responsive due to their own styling.
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
