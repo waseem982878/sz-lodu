@@ -196,48 +196,48 @@ export default function TransactionsPage() {
                     <TableRow>
                         <TableHead>User</TableHead>
                         <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
+                        <TableHead className="hidden sm:table-cell">Date</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Details</TableHead>
-                        <TableHead>Processed By</TableHead>
+                        <TableHead className="hidden sm:table-cell">Processed By</TableHead>
                         <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {data.map(t => (
                         <TableRow key={t.id}>
-                            <TableCell className="font-mono text-xs">{t.userId}</TableCell>
+                            <TableCell className="font-mono text-xs truncate max-w-24 sm:max-w-xs">{t.userId}</TableCell>
                             <TableCell>
                                 ₹{t.amount}
-                                {t.type === 'deposit' && t.bonusAmount && <span className="text-green-600 text-xs ml-1">(+₹{t.bonusAmount} bonus)</span>}
+                                {t.type === 'deposit' && t.bonusAmount && <span className="text-green-600 text-xs ml-1 block sm:inline">(+₹{t.bonusAmount} bonus)</span>}
                             </TableCell>
-                            <TableCell>{new Date((t.createdAt as any)?.seconds * 1000).toLocaleString()}</TableCell>
+                            <TableCell className="text-xs hidden sm:table-cell whitespace-nowrap">{new Date((t.createdAt as any)?.seconds * 1000).toLocaleString()}</TableCell>
                             <TableCell>
                                 <Badge variant={t.status === 'completed' ? 'default' : t.status === 'pending' ? 'secondary' : 'destructive'}>{t.status}</Badge>
-                                {t.status === 'completed' && t.paymentSent && type === 'withdrawal' && <Badge className="ml-1 bg-blue-500">Paid</Badge>}
+                                {t.status === 'completed' && t.paymentSent && type === 'withdrawal' && <Badge className="ml-1 bg-blue-500 hidden sm:inline-flex">Paid</Badge>}
                             </TableCell>
                             
                             <TableCell>
                                 {t.type === 'deposit' && t.screenshotUrl && (<ScreenshotModal imageUrl={t.screenshotUrl} />)}
-                                {t.type === 'withdrawal' && t.withdrawalDetails && (<span className="text-xs">{t.withdrawalDetails.method}: {t.withdrawalDetails.address}</span>)}
+                                {t.type === 'withdrawal' && t.withdrawalDetails && (<span className="text-xs truncate block w-28">{t.withdrawalDetails.method}: {t.withdrawalDetails.address}</span>)}
                             </TableCell>
 
-                            <TableCell className="text-xs text-muted-foreground">{t.processedBy?.name || 'N/A'}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{t.processedBy?.name || 'N/A'}</TableCell>
 
                             <TableCell>
                                 {t.status === 'pending' && (
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-2">
                                         <Button size="sm" variant="default" onClick={() => type === 'deposit' ? handleDeposit(t, 'completed') : handleWithdrawal(t, 'completed')}>
-                                            <Check className="h-4 w-4 mr-1" /> Approve
+                                            <Check className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Approve</span>
                                         </Button>
                                         <Button size="sm" variant="destructive" onClick={() => type === 'deposit' ? handleDeposit(t, 'rejected') : handleWithdrawal(t, 'rejected')}>
-                                            <X className="h-4 w-4 mr-1" /> Reject
+                                            <X className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Reject</span>
                                         </Button>
                                     </div>
                                 )}
                                  {t.status === 'completed' && !t.paymentSent && type === 'withdrawal' && (
                                     <Button size="sm" variant="secondary" onClick={() => confirmPaymentSent(t.id)}>
-                                        <Send className="h-4 w-4 mr-1"/> Confirm Payout
+                                        <Send className="h-4 w-4 mr-1"/> <span className="hidden sm:inline">Confirm</span>
                                     </Button>
                                  )}
                             </TableCell>
@@ -281,7 +281,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-
-    
-
-    

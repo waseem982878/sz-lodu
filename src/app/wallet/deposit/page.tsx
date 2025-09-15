@@ -70,7 +70,7 @@ export default function DepositPage() {
         setIsSubmitting(true);
         try {
             // IMPORTANT: Pass 0 as the bonus amount, regardless of what's displayed.
-            await createDepositRequest(user.uid, amount, 0, imageFile, activeUpi.id);
+            await createDepositRequest(user.uid, amount, 0, imageFile, activeUpi.upiId);
             alert("Deposit request submitted successfully! It will be verified shortly.");
             router.push('/wallet');
         } catch (error) {

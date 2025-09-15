@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/auth-context';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, LogIn, UserPlus, Mail, KeyRound, User, Phone, Gift, ShieldAlert } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -79,14 +79,9 @@ export default function LoginPage() {
         const firebaseUser = userCredential.user;
         
         await updateProfile(firebaseUser, { displayName: name });
-        // The login page is now responsible for creating the complete profile,
-        // solving the race condition in the AuthProvider.
         await createUserProfile(firebaseUser, name, phoneNumber, referralCode.trim());
-        // The AuthProvider will detect the new user and their profile via onSnapshot
-        // and handle the redirect automatically.
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        // The AuthProvider will handle the redirect.
       }
     } catch (err: any) {
       let friendlyMessage = "An unexpected error occurred. Please try again.";
@@ -142,7 +137,7 @@ export default function LoginPage() {
         <Card className="w-full max-w-md shadow-2xl border-t-4 border-primary">
           <CardHeader className="text-center">
               <div className="flex justify-center items-center mb-2">
-                  <span className="text-4xl font-bold text-primary">SZ LUDO</span>
+                  <span className="text-4xl font-bold text-primary font-heading">SZ LUDO</span>
               </div>
             <CardTitle className="text-2xl text-primary">{isSignUp ? 'Create Your Account' : 'Welcome Back!'}</CardTitle>
             <CardDescription>{isSignUp ? 'Join the community and start winning!' : 'Login to your account to continue'}</CardDescription>

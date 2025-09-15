@@ -68,7 +68,9 @@ export default function AdminDashboard() {
         setRecentTransactions(recentTransactionsData);
     }, err => { console.error("Recent transactions error:", err); setError("Failed to load transaction data."); });
 
-    setLoading(false);
+    // Simulate loading for at least a moment to avoid flashing
+    setTimeout(() => setLoading(false), 500);
+
 
     // Cleanup function
     return () => {
@@ -99,7 +101,7 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {Object.values(stats).map((stat) => (
             <Card key={stat.title} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -119,39 +121,40 @@ export default function AdminDashboard() {
             <CardTitle className="text-primary">Recent Transactions</CardTitle>
         </CardHeader>
         <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>User ID</TableHead>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {recentTransactions.map((activity) => (
-                        <TableRow key={activity.id}>
-                            <TableCell>
-                                <Badge variant={activity.type === 'deposit' ? 'default' : 'destructive'} className={activity.type === 'deposit' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'}>
-                                    {activity.type}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="font-medium">₹{activity.amount}</TableCell>
-                            <TableCell className="font-mono text-xs text-gray-500">{activity.userId}</TableCell>
-                            <TableCell className="flex items-center gap-2 text-gray-500">
-                                <Clock className="h-4 w-4" />
-                                {activity.createdAt?.toDate ? activity.createdAt.toDate().toLocaleString() : 'N/A'}
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant={activity.status === 'completed' ? 'default' : activity.status === 'pending' ? 'secondary' : 'destructive'}>
-                                    {activity.status}
-                                </Badge>
-                            </TableCell>
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>User ID</TableHead>
+                            <TableHead>Time</TableHead>
+                            <TableHead>Status</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {recentTransactions.map((activity) => (
+                            <TableRow key={activity.id}>
+                                <TableCell>
+                                    <Badge variant={activity.type === 'deposit' ? 'default' : 'destructive'} className={activity.type === 'deposit' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'}>
+                                        {activity.type}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="font-medium">₹{activity.amount}</TableCell>
+                                <TableCell className="font-mono text-xs text-gray-500 truncate max-w-24 sm:max-w-xs">{activity.userId}</TableCell>
+                                <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                                    {activity.createdAt?.toDate ? activity.createdAt.toDate().toLocaleString() : 'N/A'}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={activity.status === 'completed' ? 'default' : activity.status === 'pending' ? 'secondary' : 'destructive'}>
+                                        {activity.status}
+                                    </Badge>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         </CardContent>
       </Card>
     </div>

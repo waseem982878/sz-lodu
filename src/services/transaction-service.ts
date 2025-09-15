@@ -12,7 +12,7 @@ import type { Transaction } from '@/models/transaction.model';
  * @param amount - The amount being deposited by the user.
  * @param bonusAmount - The GST bonus amount to be added.
  * @param screenshotFile - The payment screenshot file.
- * @param upiDocId - The ID of the UPI document used for payment.
+ * @param upiId - The UPI ID string used for payment.
  * @returns The ID of the newly created transaction document.
  */
 export const createDepositRequest = async (
@@ -20,10 +20,10 @@ export const createDepositRequest = async (
   amount: number,
   bonusAmount: number,
   screenshotFile: File,
-  upiDocId: string
+  upiId: string // Changed from upiDocId to upiId string
 ): Promise<string> => {
-  if (!userId || amount <= 0 || !screenshotFile || !upiDocId) {
-    throw new Error("User ID, amount, screenshot file, and UPI document ID are required.");
+  if (!userId || amount <= 0 || !screenshotFile || !upiId) {
+    throw new Error("User ID, amount, screenshot file, and UPI ID are required.");
   }
 
   try {
@@ -38,7 +38,7 @@ export const createDepositRequest = async (
       type: 'deposit',
       status: 'pending',
       screenshotUrl,
-      upiId: upiDocId, 
+      upiId: upiId, // Store the UPI ID string directly
       createdAt: serverTimestamp() as any,
       updatedAt: serverTimestamp() as any,
       isRead: false, // For notification system

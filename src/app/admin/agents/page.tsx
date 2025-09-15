@@ -118,7 +118,7 @@ export default function AgentsPage() {
     }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="space-y-6">
         <h1 className="text-3xl font-bold text-primary">Agent Management</h1>
       
         <Card>
@@ -154,33 +154,35 @@ export default function AgentsPage() {
                 <Loader2 className="h-8 w-8 animate-spin" />
              </div>
           ) : (
-            <Table>
-                <TableHeader>
-                <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Float Balance</TableHead>
-                    <TableHead>Used Amount</TableHead>
-                    <TableHead>Remaining Balance</TableHead>
-                    <TableHead>Status</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {agents.map((agent) => (
-                    <TableRow key={agent.id}>
-                        <TableCell className="font-medium">{agent.name}</TableCell>
-                        <TableCell className="flex items-center gap-2">
-                           <IndianRupee className="h-4 w-4 text-muted-foreground"/> {agent.floatBalance.toLocaleString()}
-                           <EditFloatModal agent={agent} onSave={handleUpdateFloat} />
-                        </TableCell>
-                        <TableCell className="text-red-500"><IndianRupee className="h-4 w-4 inline-block mr-1"/>{agent.usedAmount.toLocaleString()}</TableCell>
-                        <TableCell className="font-bold text-green-600"><IndianRupee className="h-4 w-4 inline-block mr-1"/>{agent.remainingBalance.toLocaleString()}</TableCell>
-                        <TableCell>
-                            <Badge variant={agent.isActive ? "default" : "destructive"}>{agent.isActive ? "Active" : "Inactive"}</Badge>
-                        </TableCell>
+            <div className="overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Float Balance</TableHead>
+                        <TableHead>Used Amount</TableHead>
+                        <TableHead>Remaining</TableHead>
+                        <TableHead>Status</TableHead>
                     </TableRow>
-                ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                    {agents.map((agent) => (
+                        <TableRow key={agent.id}>
+                            <TableCell className="font-medium">{agent.name}</TableCell>
+                            <TableCell className="flex items-center gap-2 whitespace-nowrap">
+                               <IndianRupee className="h-4 w-4 text-muted-foreground"/> {agent.floatBalance.toLocaleString()}
+                               <EditFloatModal agent={agent} onSave={handleUpdateFloat} />
+                            </TableCell>
+                            <TableCell className="text-red-500 whitespace-nowrap"><IndianRupee className="h-4 w-4 inline-block mr-1"/>{agent.usedAmount.toLocaleString()}</TableCell>
+                            <TableCell className="font-bold text-green-600 whitespace-nowrap"><IndianRupee className="h-4 w-4 inline-block mr-1"/>{agent.remainingBalance.toLocaleString()}</TableCell>
+                            <TableCell>
+                                <Badge variant={agent.isActive ? "default" : "destructive"}>{agent.isActive ? "Active" : "Inactive"}</Badge>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+            </div>
           )}
         </CardContent>
       </Card>

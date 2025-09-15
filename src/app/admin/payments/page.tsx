@@ -72,7 +72,7 @@ export default function PaymentsAdminPage() {
     };
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        <div className="space-y-6">
             <h1 className="text-3xl font-bold text-primary">Payment UPI Management</h1>
             
             <Card>
@@ -112,7 +112,8 @@ export default function PaymentsAdminPage() {
                             <Loader2 className="h-8 w-8 animate-spin" />
                         </div>
                     ) : (
-                        <Table>
+                       <div className="overflow-x-auto">
+                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>UPI ID</TableHead>
@@ -130,8 +131,8 @@ export default function PaymentsAdminPage() {
                                             <TableCell className="font-medium">{upi.upiId}</TableCell>
                                             <TableCell>{upi.payeeName}</TableCell>
                                             <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span>₹{upi.currentReceived.toLocaleString()} / ₹{upi.dailyLimit.toLocaleString()}</span>
+                                                <div className="flex flex-col w-40">
+                                                    <span className="text-xs whitespace-nowrap">₹{upi.currentReceived.toLocaleString()} / ₹{upi.dailyLimit.toLocaleString()}</span>
                                                     <div className="w-full bg-muted rounded-full h-2.5 mt-1">
                                                         <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
                                                     </div>
@@ -142,7 +143,7 @@ export default function PaymentsAdminPage() {
                                                     {upi.isActive ? 'Active' : 'Inactive'}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="flex gap-2">
+                                            <TableCell className="flex gap-2 items-center">
                                                 <Switch checked={upi.isActive} onCheckedChange={() => handleToggleActive(upi)} />
                                                 <Button variant="destructive" size="icon" onClick={() => handleDelete(upi.id)}>
                                                     <Trash2 className="h-4 w-4" />
@@ -153,6 +154,7 @@ export default function PaymentsAdminPage() {
                                 })}
                             </TableBody>
                         </Table>
+                       </div>
                     )}
                 </CardContent>
             </Card>

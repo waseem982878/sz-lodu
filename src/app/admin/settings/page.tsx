@@ -2,12 +2,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
@@ -99,8 +99,14 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <h1 className="text-3xl font-bold text-primary">App Settings</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <h1 className="text-3xl font-bold text-primary">App Settings</h1>
+        <Button onClick={handleSave} disabled={isSaving} size="lg">
+            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save All Settings
+        </Button>
+      </div>
       
       <Card>
         <CardHeader>
@@ -202,12 +208,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
       
-      <Button onClick={handleSave} disabled={isSaving} className="w-full">
-        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Save All Settings
-      </Button>
     </div>
   );
 }
-
-    
