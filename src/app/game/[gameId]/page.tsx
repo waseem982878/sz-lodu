@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { getBattle, cancelBattle, uploadResult, markPlayerAsReady, setRoomCode } from "@/services/battle-service";
+import { getBattle, cancelBattle, uploadResult, markPlayerAsReady, setRoomCode as setBattleRoomCode } from "@/services/battle-service";
 import { uploadImage } from "@/services/storage-service";
 import type { Battle } from "@/models/battle.model";
 import LudoLaunchButton from "@/components/LudoLaunchButton";
@@ -232,7 +232,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
       if(roomCode.trim() && battle) {
           setIsSubmittingCode(true);
           try {
-            await setRoomCode(battle.id, roomCode.trim());
+            await setBattleRoomCode(battle.id, roomCode.trim());
           } catch(err) {
               alert("Failed to set room code.");
           } finally {
