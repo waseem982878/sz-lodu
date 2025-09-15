@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import type { Battle } from "@/models/battle.model";
 import type { Transaction } from "@/models/transaction.model";
+import imagePaths from '@/lib/image-paths.json';
 
 
 function BalanceCard({ title, balance, buttonText, buttonAction, icon: Icon, variant }: {
@@ -241,8 +242,8 @@ export default function WalletPage() {
             </div>
             <div className="relative h-24 w-24 flex-shrink-0 -mr-4">
                 <Image
-                    src="/wallet.png"
-                    alt="Wallet illustration"
+                    src={imagePaths.walletIcon.path}
+                    alt={imagePaths.walletIcon.alt}
                     width={104}
                     height={104}
                     className="object-contain"

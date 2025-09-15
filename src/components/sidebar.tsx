@@ -57,7 +57,7 @@ export function Sidebar() {
           </div>
           <div className="p-4 flex flex-col h-[calc(100%-70px)]">
               <div className="flex items-center gap-4 mb-6">
-                   <Image src={userProfile?.avatarUrl || "https://picsum.photos/48/48"} alt="User Avatar" width={48} height={48} className="rounded-full" data-ai-hint="user avatar" />
+                   <Image src={userProfile?.avatarUrl || "https://picsum.photos/48/48"} alt="User Avatar" width={48} height={48} className="rounded-full" />
                    <div>
                       <h3 className="font-bold text-lg">{userProfile?.name || "New Player"} 👋</h3>
                       <p className="text-sm text-muted-foreground">{user.phoneNumber || user.email}</p>
@@ -109,5 +109,3 @@ export function Sidebar() {
     </>
   )
 }
-
-    

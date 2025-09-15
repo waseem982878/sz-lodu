@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import Image from "next/image";
+import imagePaths from '@/lib/image-paths.json';
 
 interface Referral {
     id: string;
@@ -81,8 +82,8 @@ export default function ReferPage() {
                 </div>
                 <div className="absolute right-0 bottom-0 h-full w-auto aspect-square">
                      <Image
-                        src="/refer-gift.png"
-                        alt="Gift Box"
+                        src={imagePaths.referGiftIcon.path}
+                        alt={imagePaths.referGiftIcon.alt}
                         layout="fill"
                         className="object-contain"
                     />

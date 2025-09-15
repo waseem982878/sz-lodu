@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { cn } from "@/lib/utils";
+import imagePaths from '@/lib/image-paths.json';
 
 type GameCardProps = {
   title: string;
@@ -124,13 +126,13 @@ export default function HomePage() {
       <div className="grid grid-cols-2 gap-4">
           <GameCard 
             title="LUDO CLASSIC"
-            imageUrl="/ludo-classic.png"
+            imageUrl={imagePaths.ludoClassicIcon.path}
             href="/play?game=classic"
             priority={true}
           />
           <GameCard 
             title="POPULAR LUDO"
-            imageUrl="/ludo-classic.png"
+            imageUrl={imagePaths.ludoClassicIcon.path}
             href="/play?game=popular"
             titleClassName="text-base"
           />

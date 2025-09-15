@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import imagePaths from '@/lib/image-paths.json';
 
 
 type LandingPageContent = {
@@ -134,7 +135,7 @@ export default function LandingPage() {
                         </div>
                     </div>
                      <div className="hidden lg:flex justify-center">
-                         <Image src="/ludo-classic.png" alt="Ludo Game" width={500} height={500} className="rounded-lg shadow-2xl" />
+                         <Image src={imagePaths.landingHero.path} alt={imagePaths.landingHero.alt} width={500} height={500} className="rounded-lg shadow-2xl" />
                      </div>
                 </div>
             </header>
@@ -169,9 +170,9 @@ export default function LandingPage() {
                         Glimpse of the Action
                      </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-                       <ScreenshotCard src="https://picsum.photos/seed/szludo1/400/700" alt="App Screenshot 1" data-ai-hint="app screenshot" />
-                       <ScreenshotCard src="https://picsum.photos/seed/szludo2/400/700" alt="App Screenshot 2" data-ai-hint="app gameplay" />
-                       <ScreenshotCard src="https://picsum.photos/seed/szludo3/400/700" alt="App Screenshot 3" data-ai-hint="app wallet" />
+                       <ScreenshotCard src={imagePaths.landingScreenshot1.path} alt={imagePaths.landingScreenshot1.alt} data-ai-hint={imagePaths.landingScreenshot1['data-ai-hint']} />
+                       <ScreenshotCard src={imagePaths.landingScreenshot2.path} alt={imagePaths.landingScreenshot2.alt} data-ai-hint={imagePaths.landingScreenshot2['data-ai-hint']} />
+                       <ScreenshotCard src={imagePaths.landingScreenshot3.path} alt={imagePaths.landingScreenshot3.alt} data-ai-hint={imagePaths.landingScreenshot3['data-ai-hint']} />
                     </div>
                 </section>
 

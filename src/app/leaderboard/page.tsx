@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Trophy, Award, Medal } from "lucide-react";
 import Image from "next/image";
+import imagePaths from '@/lib/image-paths.json';
 
 const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-6 w-6 text-yellow-500" />;
@@ -56,8 +57,8 @@ export default function LeaderboardPage() {
                     </div>
                      <div className="relative w-24 h-24 flex-shrink-0 -mr-4">
                          <Image
-                            src="/trophy.png"
-                            alt="Leaderboard Trophy"
+                            src={imagePaths.trophyIcon.path}
+                            alt={imagePaths.trophyIcon.alt}
                             width={104}
                             height={104}
                             className="object-contain"

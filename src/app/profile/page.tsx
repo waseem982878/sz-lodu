@@ -14,6 +14,7 @@ import { updateUserProfile } from "@/services/user-agent-service";
 import type { UserProfile } from "@/models/user.model";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import imagePaths from '@/lib/image-paths.json';
 
 
 type MetricProps = {
@@ -206,8 +207,8 @@ export default function ProfilePage() {
                     </div>
                      <div className="absolute right-0 bottom-0 h-full w-auto aspect-square">
                         <Image 
-                            src="/refer-gift.png" 
-                            alt="Refer and Earn"
+                            src={imagePaths.referGiftIcon.path}
+                            alt={imagePaths.referGiftIcon.alt}
                             layout="fill"
                             className="object-contain"
                         />
@@ -241,7 +242,7 @@ export default function ProfilePage() {
             </Button>
         )}
 
-         <Button variant="outline" className="w-full" onClick={logout}>
+         <Button variant="outline" className="w-full" onClick={() => logout()}>
             <LogOut className="mr-2 h-4 w-4" />
             LOG OUT
          </Button>

@@ -1,0 +1,38 @@
+
+{
+    "ludoClassicIcon": {
+        "path": "/ludo-classic.png",
+        "alt": "Ludo Classic Game"
+    },
+    "trophyIcon": {
+        "path": "/trophy.png",
+        "alt": "Leaderboard Trophy"
+    },
+    "referGiftIcon": {
+        "path": "/refer-gift.png",
+        "alt": "Refer and Earn Gift"
+    },
+    "walletIcon": {
+        "path": "/wallet.png",
+        "alt": "Wallet Illustration"
+    },
+    "landingHero": {
+        "path": "/landing-hero.png",
+        "alt": "Ludo Game in action"
+    },
+    "landingScreenshot1": {
+        "path": "/app-screenshot-1.png",
+        "alt": "App Screenshot 1",
+        "data-ai-hint": "app screenshot"
+    },
+    "landingScreenshot2": {
+        "path": "/app-screenshot-2.png",
+        "alt": "App Screenshot 2",
+        "data-ai-hint": "app gameplay"
+    },
+    "landingScreenshot3": {
+        "path": "/app-screenshot-3.png",
+        "alt": "App Screenshot 3",
+        "data-ai-hint": "app wallet"
+    }
+}
