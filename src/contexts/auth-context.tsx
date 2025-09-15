@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isAdminRoute = pathname.startsWith('/admin');
 
     if (!user && !isPublicRoute) {
-        router.replace('/landing');
+        router.replace('/login');
     }
 
     if (user) {
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     await signOut(auth);
-    router.replace('/landing');
+    router.replace('/login');
   };
   
   const value = { user, userProfile, loading: profileLoading, logout, isSuperAdmin, isAgent };
