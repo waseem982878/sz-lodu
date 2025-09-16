@@ -112,12 +112,12 @@ export default function LandingPage() {
     return (
         <div className="bg-background text-foreground font-sans">
             {/* Hero Section */}
-            <header className="py-20 px-4 bg-red-50/50 lg:py-28">
-                 <div className="container mx-auto grid lg:grid-cols-2 items-center gap-8">
-                    <div className="text-center lg:text-left">
-                        <h1 className="text-5xl sm:text-6xl md:text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
-                        <p className="text-xl md:text-2xl mt-4 max-w-2xl mx-auto lg:mx-0 text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
-                        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <header className="py-28 px-4 bg-red-50/50">
+                 <div className="container mx-auto grid grid-cols-2 items-center gap-8">
+                    <div className="text-left">
+                        <h1 className="text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
+                        <p className="text-2xl mt-4 max-w-2xl mx-auto text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
+                        <div className="mt-8 flex flex-row gap-4 justify-start">
                             <Button
                                  className="text-lg py-6 px-8 rounded-full font-semibold"
                                  onClick={handleInstallClick}
@@ -134,7 +134,7 @@ export default function LandingPage() {
                             </Button>
                         </div>
                     </div>
-                     <div className="hidden lg:flex justify-center">
+                     <div className="flex justify-center">
                          <Image src={imagePaths.landingHero.path} alt={imagePaths.landingHero.alt} width={500} height={500} className="rounded-lg shadow-2xl" />
                      </div>
                 </div>
@@ -146,7 +146,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-center text-primary">
                         Why Choose SZ Ludo?
                      </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-3 gap-8">
                         <FeatureCard icon={ShieldCheck} title={content.feature1Title || "Secure Platform"} description={content.feature1Description || "Your data and transactions are protected with top-tier security."} />
                         <FeatureCard icon={Zap} title={content.feature2Title || "Instant Withdrawals"} description={content.feature2Description || "Get your winnings transferred to your account in minutes."} />
                         <FeatureCard icon={MessageSquare} title={content.feature3Title || "24/7 Customer Support"} description={content.feature3Description || "Our team is always here to help you with any issues."} />
@@ -157,7 +157,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-primary">
                         How to Get Started
                      </h2>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-start gap-12">
+                     <div className="grid grid-cols-4 items-start gap-12">
                         <HowToPlayCard icon={UserPlus} title="1. Create Account" description="Quickly sign up with your details to create a secure profile."/>
                         <HowToPlayCard icon={Swords} title="2. Join a Battle" description="Choose an ongoing battle or create your own challenge to play."/>
                         <HowToPlayCard icon={Trophy} title="3. Play & Win" description="Use your Ludo skills to defeat your opponent and win real prizes."/>
@@ -169,7 +169,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-primary">
                         Glimpse of the Action
                      </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+                    <div className="grid grid-cols-3 gap-12">
                        <ScreenshotCard src={imagePaths.landingScreenshot1.path} alt={imagePaths.landingScreenshot1.alt} data-ai-hint={imagePaths.landingScreenshot1['data-ai-hint']} />
                        <ScreenshotCard src={imagePaths.landingScreenshot2.path} alt={imagePaths.landingScreenshot2.alt} data-ai-hint={imagePaths.landingScreenshot2['data-ai-hint']} />
                        <ScreenshotCard src={imagePaths.landingScreenshot3.path} alt={imagePaths.landingScreenshot3.alt} data-ai-hint={imagePaths.landingScreenshot3['data-ai-hint']} />
@@ -181,7 +181,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-center text-primary">
                         What Our Players Say
                      </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-3 gap-8">
                         <TestimonialCard name="Rohan S." text="Amazing app! The withdrawals are super fast. I won ₹500 and got it in my account in 10 minutes." avatarSeed="Rohan" />
                         <TestimonialCard name="Priya K." text="Fair gameplay and a great community. I play here every day after work." avatarSeed="Priya" />
                         <TestimonialCard name="Amit G." text="The best real money Ludo app out there. The support team is also very helpful." avatarSeed="Amit" />
@@ -232,7 +232,7 @@ export default function LandingPage() {
 
             <footer className="bg-muted/40 py-8 px-4 text-center mt-16">
                  <div className="container mx-auto">
-                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center mb-4">
+                    <div className="flex flex-row gap-6 justify-center mb-4">
                         <Link href="/terms" className="text-muted-foreground hover:text-primary">Terms & Conditions</Link>
                         <Link href="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</Link>
                         <Link href="/refund" className="text-muted-foreground hover:text-primary">Refund Policy</Link>
