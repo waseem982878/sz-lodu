@@ -11,9 +11,32 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { createWithdrawalRequest } from '@/services/transaction-service';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+
 
 const shortcutAmounts = [300, 500, 1000, 2000];
 const MINIMUM_WITHDRAWAL = 300;
+
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function WithdrawPage() {
     const router = useRouter();
@@ -26,18 +49,20 @@ export default function WithdrawPage() {
     const [accountNumber, setAccountNumber] = useState('');
     const [ifscCode, setIfscCode] = useState('');
     const [accountHolderName, setAccountHolderName] = useState('');
-    const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
+    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
 
     const winningsBalance = userProfile?.winningsBalance ?? 0;
     const isKycVerified = userProfile?.kycStatus === 'Verified';
 
     useEffect(() => {
         if (amount > 0 && amount < MINIMUM_WITHDRAWAL) {
-            setError(`Minimum withdrawal is ₹${MINIMUM_WITHDRAWAL}.`);
+            setFormError(`Minimum withdrawal is ₹${MINIMUM_WITHDRAWAL}.`);
         } else if (amount > winningsBalance) {
-            setError('Amount cannot exceed your winnings balance.');
+            setFormError('Amount cannot exceed your winnings balance.');
         } else {
-            setError(null);
+            setFormError(null);
         }
     }, [amount, winningsBalance]);
 
@@ -53,24 +78,29 @@ export default function WithdrawPage() {
         const value = parseInt(e.target.value, 10);
         setAmount(isNaN(value) ? 0 : value);
     };
+    
+    const showDialog = (title: string, message: string) => {
+        setDialogState({ open: true, title, message });
+    };
+
 
     const handleSubmit = async () => {
-        if (isSubmitting || error) return;
+        if (isSubmitting || formError) return;
         if (!user) return;
         
         if (!isKycVerified) {
-            alert("KYC not verified. Please complete KYC to withdraw.");
+            showDialog("KYC Required", "Please complete your KYC verification before withdrawing.");
             router.push('/profile/kyc');
             return;
         }
 
         if (amount < MINIMUM_WITHDRAWAL) {
-            alert(`Minimum withdrawal amount is ₹${MINIMUM_WITHDRAWAL}.`);
+             showDialog("Invalid Amount", `Minimum withdrawal amount is ₹${MINIMUM_WITHDRAWAL}.`);
             return;
         }
 
         if (amount > winningsBalance) {
-            alert('You cannot withdraw more than your winnings balance.');
+            showDialog("Insufficient Balance", "You cannot withdraw more than your winnings balance.");
             return;
         }
         
@@ -78,21 +108,21 @@ export default function WithdrawPage() {
             ? { method: 'upi' as const, address: upiId }
             : { method: 'bank' as const, address: `${accountHolderName}, ${accountNumber}, ${ifscCode}` };
 
-        if (!withdrawalDetails.address.trim()) {
-            alert(`Please enter your ${activeTab === 'upi' ? 'UPI ID' : 'bank details'}.`);
+        if (!withdrawalDetails.address.trim() || (activeTab === 'bank' && (!accountHolderName || !accountNumber || !ifscCode))) {
+            showDialog("Missing Details",`Please enter your ${activeTab === 'upi' ? 'UPI ID' : 'complete bank details'}.`);
             return;
         }
 
         setIsSubmitting(true);
         try {
             await createWithdrawalRequest(user.uid, amount, withdrawalDetails);
-            alert("Withdrawal request submitted successfully! It will be processed soon.");
+            showDialog("Success", "Withdrawal request submitted successfully! It will be processed soon.");
             router.push('/wallet');
         } catch (error) {
             if (error instanceof Error) {
-                 alert(`Error: ${error.message}`);
+                 showDialog("Error", `Error: ${error.message}`);
             } else {
-                alert("Failed to submit withdrawal request.");
+                showDialog("Error", "Failed to submit withdrawal request.");
             }
         } finally {
             setIsSubmitting(false);
@@ -101,7 +131,7 @@ export default function WithdrawPage() {
 
     const processingFee = amount * 0.02; // Assuming 2% processing fee
     const netAmount = amount - processingFee;
-    const canSubmit = !error && amount > 0 && (activeTab === 'upi' ? !!upiId : !!accountNumber && !!ifscCode && !!accountHolderName);
+    const canSubmit = !formError && amount > 0 && (activeTab === 'upi' ? !!upiId : !!accountNumber && !!ifscCode && !!accountHolderName);
 
     if (!isKycVerified) {
         return (
@@ -112,6 +142,12 @@ export default function WithdrawPage() {
                 <Link href="/profile/kyc" passHref>
                     <Button>Go to KYC Page</Button>
                 </Link>
+                 <InfoDialog 
+                    open={dialogState.open} 
+                    onClose={() => setDialogState({ ...dialogState, open: false })} 
+                    title={dialogState.title}
+                    message={dialogState.message} 
+                />
             </div>
         )
     }
@@ -131,7 +167,7 @@ export default function WithdrawPage() {
                         onChange={handleAmountChange}
                         className="text-center text-lg font-bold"
                     />
-                    {error && <p className="text-sm text-red-500 text-center pt-1">{error}</p>}
+                    {formError && <p className="text-sm text-red-500 text-center pt-1">{formError}</p>}
                     <div className="grid grid-cols-4 gap-2 pt-2">
                         {shortcutAmounts.map((shortcut) => (
                             <Button 
@@ -179,7 +215,7 @@ export default function WithdrawPage() {
                 </TabsContent>
             </Tabs>
 
-            {amount > 0 && !error && (
+            {amount > 0 && !formError && (
                  <Card>
                     <CardHeader>
                         <CardTitle className="text-lg text-primary">Summary</CardTitle>
@@ -213,6 +249,13 @@ export default function WithdrawPage() {
                 {isSubmitting ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : null}
                 Submit Withdrawal Request
             </Button>
+            
+             <InfoDialog 
+                open={dialogState.open} 
+                onClose={() => setDialogState({ ...dialogState, open: false })} 
+                title={dialogState.title}
+                message={dialogState.message} 
+            />
         </div>
     );
 }

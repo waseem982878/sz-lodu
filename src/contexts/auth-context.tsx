@@ -17,7 +17,7 @@ const SUPER_ADMIN_EMAIL = "waseem982878@gmail.com";
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
-  loading: boolean; // This now means profile is loading, not auth
+  loading: boolean;
   logout: () => Promise<void>;
   isSuperAdmin: boolean;
   isAgent: boolean;
@@ -37,8 +37,8 @@ function GlobalLoader() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [authLoading, setAuthLoading] = useState(true); // For initial auth check
-  const [profileLoading, setProfileLoading] = useState(true); // For profile data
+  const [authLoading, setAuthLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isAgent, setIsAgent] = useState(false);
   const router = useRouter();
@@ -46,35 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setAuthLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
-        
         const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
         setIsSuperAdmin(superAdminCheck);
         
-        // Check if the user is an agent
         const agentQuery = query(collection(db, "agents"), where("email", "==", firebaseUser.email));
         const unsubscribeAgent = onSnapshot(agentQuery, (snapshot) => {
           setIsAgent(!snapshot.empty);
         });
 
-        // Setup profile listener for regular users
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
-          setProfileLoading(true);
-          if (docSnap.exists()) {
-            setUserProfile(docSnap.data() as UserProfile);
-          } else {
-             setUserProfile(null);
-          }
-          setProfileLoading(false);
-        }, (error) => {
-          setUserProfile(null);
-          setProfileLoading(false);
-        });
-
-        // If super admin, ensure agent profile exists for them
         if (superAdminCheck) {
             getDoc(doc(db, 'agents', firebaseUser.uid)).then(agentSnap => {
                 if (!agentSnap.exists()) {
@@ -82,6 +63,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             });
         }
+        
+        // Setup profile listener for regular users
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUserProfile(docSnap.data() as UserProfile);
+          } else {
+             // Profile doesn't exist yet (e.g., during signup).
+             // Set it to null and let the logic wait for it to be created.
+             setUserProfile(null);
+          }
+          setProfileLoading(false);
+        }, (error) => {
+          setUserProfile(null);
+          setProfileLoading(false);
+        });
         
         setAuthLoading(false);
         return () => {
@@ -100,41 +97,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribeAuth();
   }, []);
-
+  
   useEffect(() => {
-    if (user) {
-        if (!isSuperAdmin && !isAgent) { // Don't track last seen for admins/agents
-            const userRef = doc(db, 'users', user.uid);
-            updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(err => {});
-        }
+    if (user && !isSuperAdmin && !isAgent && pathname !== '/login') {
+        const userRef = doc(db, 'users', user.uid);
+        updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(err => {});
     }
   }, [pathname, user, isSuperAdmin, isAgent]);
 
   useEffect(() => {
     if (authLoading) return;
 
-    const publicRoutes = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'];
-    const isPublicRoute = publicRoutes.includes(pathname);
+    const isPublicRoute = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
     const isAdminRoute = pathname.startsWith('/admin');
 
-    if (!user && !isPublicRoute) {
-        router.replace('/login');
-    }
-
-    if (user) {
+    if (!user) { // User is not logged in
+        if (!isPublicRoute) {
+            router.replace('/login');
+        }
+    } else { // User is logged in
         if (isSuperAdmin || isAgent) {
             if (!isAdminRoute) {
                 router.replace('/admin/dashboard');
             }
-        } else {
+        } else { // Regular user
+            // Profile is still loading or doesn't exist yet, wait.
+            if (profileLoading || !userProfile) {
+                return;
+            }
              if (isAdminRoute) {
                 router.replace('/home');
-             } else if (pathname === '/login' || pathname === '/landing' || pathname === '/') {
+             } else if (isPublicRoute) {
                 router.replace('/home');
              }
         }
     }
-
   }, [user, userProfile, isSuperAdmin, isAgent, authLoading, profileLoading, pathname, router]);
 
   const logout = async () => {
@@ -142,48 +139,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userRef = doc(db, 'users', user.uid);
         await updateDoc(userRef, { lastSeen: serverTimestamp() });
-      } catch (error) {
-      }
+      } catch (error) {}
     }
     await signOut(auth);
     router.replace('/login');
   };
   
-  const value = { user, userProfile, loading: profileLoading, logout, isSuperAdmin, isAgent };
+  const value = { user, userProfile, loading: authLoading || profileLoading, logout, isSuperAdmin, isAgent };
   
   const renderContent = () => {
-    const publicRoutes = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'];
-    const isPublicRoute = publicRoutes.includes(pathname);
+    const isPublicRoute = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
     const isAdminPage = pathname.startsWith('/admin');
 
-    if (authLoading && !isPublicRoute) {
-      return <GlobalLoader />;
+    if ((authLoading || (user && !isAgent && !isSuperAdmin && profileLoading))) {
+        if (!isPublicRoute) return <GlobalLoader />;
     }
 
     if(isPublicRoute) {
-      // Prevent flicker for logged-in users on public routes before redirect
-      if(user && (pathname === '/landing' || pathname === '/login' || pathname === '/')) return <GlobalLoader />;
-      return children;
+      if(user && userProfile) return <GlobalLoader />; // User is logged in, show loader while redirecting
+      return children; // Show public page for logged-out users
     }
     
     if (!user) {
-      return <GlobalLoader />;
+      return <GlobalLoader />; // Not on public route and no user, show loader while redirecting to login
     }
     
     if (isSuperAdmin || isAgent) {
-        return isAdminPage ? children : <GlobalLoader />;
+        return isAdminPage ? children : <GlobalLoader />; // Show admin page or loader while redirecting
     }
     
-    if (!profileLoading && !userProfile) {
-        // This case handles a user being authenticated but their profile document is not ready yet.
-        // It's a transient state, especially during signup.
-        return <GlobalLoader />;
+    if (!userProfile) {
+      // This case handles a logged-in user whose profile is still being created.
+      return <GlobalLoader />;
     }
     
-    // Regular authenticated user
+    // Regular authenticated user with a loaded profile
     return <SharedLayout>{children}</SharedLayout>;
   }
-
 
   return (
     <AuthContext.Provider value={value}>

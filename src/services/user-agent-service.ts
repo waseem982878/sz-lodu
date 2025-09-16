@@ -9,17 +9,15 @@ import type { Agent } from '@/models/agent.model';
 export const createUserProfile = async (user: User, name: string, phoneNumber: string | null, referralCode?: string) => {
     const userRef = doc(db, 'users', user.uid);
     
-    // Check if the profile already exists to prevent overwriting
     const docSnap = await getDoc(userRef);
+    // If profile exists, it might be a re-authentication, do nothing to avoid overwriting.
     if (docSnap.exists()) {
-        // Optionally update some fields if needed, e.g., name if it was just updated
-        await updateDoc(userRef, { name: name, lastSeen: serverTimestamp() });
         return;
     }
 
     const referralCodeForNewUser = `SZLUDO${user.uid.substring(0, 6).toUpperCase()}`;
     
-    const userProfileData: Omit<UserProfile, 'uid'> & { [key: string]: any } = {
+    const userProfileData: Omit<UserProfile, 'uid'> = {
         name: name,
         email: user.email,
         phoneNumber: phoneNumber,
@@ -52,11 +50,11 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
                 status: 'pending',
                 createdAt: serverTimestamp()
             });
-        } else {
-            // Silently fail if referral code is not found
         }
     }
-
+    
+    // Use setDoc instead of updateDoc to guarantee the document is created.
+    // This is crucial for new user sign-ups.
     await setDoc(userRef, userProfileData);
 };
 

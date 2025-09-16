@@ -187,7 +187,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                         <div className="space-y-1 mt-2 text-sm text-muted-foreground">
                             <p className="flex items-center gap-2"><Mail className="h-4 w-4" /> <span>{user.email}</span></p>
                             <p className="flex items-center gap-2"><Phone className="h-4 w-4" /> <span>{user.phoneNumber}</span></p>
-                            <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> <span>Joined on {new Date(user.createdAt.seconds * 1000).toLocaleDateString()}</span></p>
+                            <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> <span>Joined on {new Date((user.createdAt as any).seconds * 1000).toLocaleDateString()}</span></p>
                             <p className="flex items-center gap-2 pt-1"><UserCheck className="h-4 w-4" /> <Badge variant={user.kycStatus === 'Verified' ? 'default' : 'secondary'}>{user.kycStatus}</Badge></p>
                         </div>
                     </div>
@@ -232,7 +232,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                                             <TableCell className="capitalize"><Badge variant={t.type === 'deposit' ? 'default' : 'destructive'} className={t.type === 'deposit' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>{t.type}</Badge></TableCell>
                                             <TableCell>₹{t.amount.toFixed(2)}</TableCell>
                                             <TableCell><Badge variant={t.status === 'completed' ? 'default' : 'secondary'}>{t.status}</Badge></TableCell>
-                                            <TableCell>{new Date(t.createdAt.seconds * 1000).toLocaleString()}</TableCell>
+                                            <TableCell>{new Date((t.createdAt as any).seconds * 1000).toLocaleString()}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

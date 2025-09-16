@@ -21,19 +21,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from '@/components/ui/label';
 
 // Custom Error Dialog Component
-function ErrorDialog({ open, onClose, message }: { open: boolean, onClose: () => void, message: string }) {
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-primary">
             <ShieldAlert className="text-destructive" />
-            Authentication Failed
+            {title}
           </DialogTitle>
           <DialogDescription className="pt-4">
             {message}
           </DialogDescription>
         </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -50,8 +55,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const [error, setError] = useState('');
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
   const [showForgotPasswordDialog, setShowForgotPasswordDialog] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
@@ -65,10 +69,13 @@ export default function LoginPage() {
        router.replace('/home');
     }
   }, [user, authLoading, router]);
+  
+  const showDialog = (title: string, message: string) => {
+    setDialogState({ open: true, title, message });
+  };
 
   const handleAuthAction = async () => {
     setLoading(true);
-    setError('');
 
     try {
       if (isSignUp) {
@@ -80,8 +87,15 @@ export default function LoginPage() {
         
         await updateProfile(firebaseUser, { displayName: name });
         await createUserProfile(firebaseUser, name, phoneNumber, referralCode.trim());
+        
+        // Don't redirect here. The AuthProvider will handle it after the profile is created and loaded.
+        // Adding a small delay to allow firestore to be consistent
+        showDialog("Success", "Account created successfully! Redirecting...");
+        setTimeout(() => router.push('/home'), 2000);
+
       } else {
         await signInWithEmailAndPassword(auth, email, password);
+        // Successful login is handled by the AuthProvider's useEffect
       }
     } catch (err: any) {
       let friendlyMessage = "An unexpected error occurred. Please try again.";
@@ -102,8 +116,7 @@ export default function LoginPage() {
           friendlyMessage = err.message || friendlyMessage;
           break;
       }
-      setError(friendlyMessage);
-      setShowErrorDialog(true);
+      showDialog("Authentication Failed", friendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -224,14 +237,19 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center text-sm">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}
-              <Button variant="link" onClick={() => { setIsSignUp(!isSignUp); setError(''); }} className="font-semibold">
+              <Button variant="link" onClick={() => { setIsSignUp(!isSignUp); }} className="font-semibold">
                 {isSignUp ? 'Login Here' : 'Create an Account'}
               </Button>
             </div>
           </CardContent>
         </Card>
         
-        <ErrorDialog open={showErrorDialog} onClose={() => setShowErrorDialog(false)} message={error} />
+        <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
       </div>
 
       <Dialog open={showForgotPasswordDialog} onOpenChange={setShowForgotPasswordDialog}>
