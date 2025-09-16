@@ -151,30 +151,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isPublicRoute = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
     const isAdminPage = pathname.startsWith('/admin');
 
+    // Show a global loader if we're doing auth checks, or for a regular user if their profile isn't loaded yet.
+    // But don't show the loader on public pages to avoid flash of content.
     if ((authLoading || (user && !isAgent && !isSuperAdmin && profileLoading))) {
         if (!isPublicRoute) return <GlobalLoader />;
     }
 
-    if(isPublicRoute) {
-      if(user && userProfile) return <GlobalLoader />; // User is logged in, show loader while redirecting
-      return children; // Show public page for logged-out users
-    }
-    
+    // For a logged-out user, only show public pages. The useEffect handles the redirect.
     if (!user) {
-      return <GlobalLoader />; // Not on public route and no user, show loader while redirecting to login
+        return isPublicRoute ? children : <GlobalLoader />;
     }
-    
+
+    // For a logged-in user (admin or regular)
     if (isSuperAdmin || isAgent) {
         return isAdminPage ? children : <GlobalLoader />; // Show admin page or loader while redirecting
     }
     
-    if (!userProfile) {
-      // This case handles a logged-in user whose profile is still being created.
-      return <GlobalLoader />;
+    // For a regular user, show the shared layout for non-admin pages.
+    // If they land on a public page, the useEffect will redirect them.
+    if (userProfile) {
+        if (isAdminPage) return <GlobalLoader />;
+        return isPublicRoute ? <GlobalLoader /> : <SharedLayout>{children}</SharedLayout>;
     }
     
-    // Regular authenticated user with a loaded profile
-    return <SharedLayout>{children}</SharedLayout>;
+    // Fallback for user logged in but profile not yet available (e.g. during signup)
+    return <GlobalLoader />;
   }
 
   return (

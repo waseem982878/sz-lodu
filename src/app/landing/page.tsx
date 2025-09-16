@@ -13,8 +13,6 @@ import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import imagePaths from '@/lib/image-paths.json';
-import Head from 'next/head';
-
 
 type LandingPageContent = {
     heroTitle: string;
@@ -93,14 +91,15 @@ export default function LandingPage() {
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // Dynamically set viewport for this page only
+        // This script dynamically sets the viewport just for this page
+        // to achieve the "desktop view on mobile" effect.
         const viewport = document.querySelector("meta[name=viewport]");
-        const originalContent = viewport ? viewport.getAttribute('content') : 'width=device-width, initial-scale=1';
-
+        let originalContent: string | null = null;
         if (viewport) {
-             if (window.innerWidth < 1024) {
+            originalContent = viewport.getAttribute('content');
+            if (window.innerWidth < 1024) {
                 viewport.setAttribute('content', 'width=1280');
-             }
+            }
         }
 
         return () => {
@@ -129,7 +128,7 @@ export default function LandingPage() {
                  <div className="container mx-auto grid grid-cols-2 items-center gap-8">
                     <div className="text-left">
                         <h1 className="text-6xl lg:text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
-                        <p className="text-2xl mt-4 max-w-2xl mx-auto text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
+                        <p className="text-2xl mt-4 max-w-2xl text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
                         <div className="mt-8 flex flex-row gap-4 justify-start">
                             <Button
                                  className="text-lg py-6 px-8 rounded-full font-semibold"
@@ -260,5 +259,3 @@ export default function LandingPage() {
         </div>
     );
 }
-
-    
