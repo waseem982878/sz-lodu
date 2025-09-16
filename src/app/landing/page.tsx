@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import imagePaths from '@/lib/image-paths.json';
+import Head from 'next/head';
 
 
 type LandingPageContent = {
@@ -75,7 +76,6 @@ export default function LandingPage() {
 
     useEffect(() => {
         const loadPageData = async () => {
-            // Fetch content from Firestore
             const landingRef = doc(db, 'config', 'landingPage');
             const landingSnap = await getDoc(landingRef);
             if (landingSnap.exists()) {
@@ -93,8 +93,22 @@ export default function LandingPage() {
 
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
+        // Dynamically set viewport for this page only
+        const viewport = document.querySelector("meta[name=viewport]");
+        const originalContent = viewport ? viewport.getAttribute('content') : 'width=device-width, initial-scale=1';
+
+        if (viewport) {
+             if (window.innerWidth < 1024) {
+                viewport.setAttribute('content', 'width=1280');
+             }
+        }
+
         return () => {
             window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            // Restore original viewport on component unmount
+            if (viewport && originalContent) {
+                viewport.setAttribute('content', originalContent);
+            }
         };
     }, []);
 
@@ -104,7 +118,6 @@ export default function LandingPage() {
             await (deferredPrompt as any).userChoice;
             setDeferredPrompt(null);
         } else {
-             // Fallback for browsers that don't support PWA installation prompt, or if it was already dismissed.
             router.push('/login');
         }
     };
@@ -115,7 +128,7 @@ export default function LandingPage() {
             <header className="py-28 px-4 bg-red-50/50">
                  <div className="container mx-auto grid grid-cols-2 items-center gap-8">
                     <div className="text-left">
-                        <h1 className="text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
+                        <h1 className="text-6xl lg:text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
                         <p className="text-2xl mt-4 max-w-2xl mx-auto text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
                         <div className="mt-8 flex flex-row gap-4 justify-start">
                             <Button
@@ -247,5 +260,3 @@ export default function LandingPage() {
         </div>
     );
 }
-
-    
