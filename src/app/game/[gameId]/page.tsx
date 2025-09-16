@@ -280,7 +280,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
           return `Join the room in Ludo King and click 'I'm Ready'.`
       }
       if (battle.status === 'waiting_for_players_ready' && isPlayerReady && !isOpponentReady) {
-          return `You are ready! Waiting for ${opponent.name} to confirm.`
+          return `You are ready! Waiting for ${opponent?.name || 'opponent'} to confirm.`
       }
       return "Game is about to start. Get ready!";
   }
@@ -329,7 +329,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
                 return (
                     <div className='text-center py-4'>
                         <p className="text-lg font-semibold my-2 text-green-600">You are ready!</p>
-                        <p>Waiting for ${opponent.name} to confirm...</p>
+                        <p>Waiting for {opponent?.name || 'opponent'} to confirm...</p>
                     </div>
                 );
             }
