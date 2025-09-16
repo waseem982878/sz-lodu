@@ -15,8 +15,8 @@ export interface UserProfile {
     gamesPlayed: number;
     gamesWon: number;
     penaltyTotal: number;
-    createdAt: Timestamp;
-    lastSeen?: Timestamp; // For user analytics
+    createdAt: any;
+    lastSeen?: any; // For user analytics
     
     // Detailed Stats
     winStreak: number;

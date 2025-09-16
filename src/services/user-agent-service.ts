@@ -34,8 +34,8 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
         winStreak: 0,
         losingStreak: 0,
         biggestWin: 0,
-        createdAt: serverTimestamp(),
-        lastSeen: serverTimestamp(),
+        createdAt: serverTimestamp() as any,
+        lastSeen: serverTimestamp() as any,
     };
 
     if (referralCode) {

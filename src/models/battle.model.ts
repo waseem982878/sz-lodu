@@ -12,7 +12,7 @@ export type GameType = 'classic' | 'popular';
 export interface ResultSubmission {
     status: 'won' | 'lost';
     screenshotUrl?: string; // URL to screenshot for 'won'
-    submittedAt: Timestamp;
+    submittedAt: any;
 }
 
 export interface Battle {
@@ -30,8 +30,8 @@ export interface Battle {
     result?: {
         [userId: string]: ResultSubmission;
     };
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
-    startedAt?: Timestamp;
-    completedAt?: Timestamp;
+    createdAt: any;
+    updatedAt: any;
+    startedAt?: any;
+    completedAt?: any;
 }

@@ -14,8 +14,8 @@ export interface Transaction {
         method: 'upi' | 'bank';
         address: string; // UPI ID or bank details string
     };
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+    createdAt: any;
+    updatedAt: any;
     notes?: string; // Admin notes
     processedBy?: { // To track which agent handled the transaction
         id: string;
@@ -24,5 +24,3 @@ export interface Transaction {
     paymentSent?: boolean; // For withdrawals, to confirm payment has been sent by agent
     isRead?: boolean; // For notification system
 }
-
-    
