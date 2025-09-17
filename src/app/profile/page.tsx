@@ -176,44 +176,31 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-      <div className="space-y-4">
-           <Link href="/wallet" className="no-underline">
-              <Card className="p-4 flex justify-between items-center transition-all hover:bg-muted/50 cursor-pointer h-[88px]">
-                  <div className="flex items-center gap-4">
-                      <div className="p-3 bg-red-100 dark:bg-red-900/50 rounded-lg">
-                          <Wallet className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                          <p className="font-bold">My Wallet</p>
-                          <p className="text-xs text-muted-foreground">View balance & history</p>
-                      </div>
-                  </div>
-                   <div className="flex items-center gap-2">
-                       <p className="font-bold text-primary">₹{(userProfile.depositBalance + userProfile.winningsBalance).toFixed(2)}</p>
-                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        <div className="space-y-4">
+           <Link href="/wallet" className="no-underline group">
+                <Card className="bg-gradient-to-br from-red-500 to-primary text-primary-foreground p-4 flex justify-between items-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-[88px] relative overflow-hidden">
+                    <div className="space-y-1">
+                        <p className="font-bold text-lg">My Wallet</p>
+                        <p className="text-2xl font-bold tracking-wider">₹{(userProfile.depositBalance + userProfile.winningsBalance).toFixed(2)}</p>
+                    </div>
+                     <div className="flex items-center gap-2">
+                       <p className="text-sm opacity-80 group-hover:opacity-100">View History</p>
+                       <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                    </div>
+                   <Wallet className="absolute h-24 w-24 -right-4 -bottom-4 text-white/10" />
               </Card>
             </Link>
-            <Link href="/refer" className="no-underline">
-                <Card className="p-4 flex justify-between items-center transition-all hover:bg-muted/50 cursor-pointer overflow-hidden relative h-[88px]">
-                    <div className="flex items-center gap-4 z-10">
-                       <div className="p-3 bg-green-100 dark:bg-green-900/50 rounded-lg">
-                           <Gift className="h-6 w-6 text-green-600" />
-                       </div>
-                       <div>
-                           <p className="font-bold">Refer & Earn</p>
-                           <p className="text-xs text-muted-foreground">Invite friends & get bonus</p>
-                       </div>
+             <Link href="/refer" className="no-underline group">
+                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-primary-foreground p-4 flex justify-between items-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-[88px] relative overflow-hidden">
+                     <div className="space-y-1">
+                        <p className="font-bold text-lg">Refer & Earn</p>
+                        <p className="text-xs opacity-90">Invite friends & get bonus!</p>
                     </div>
-                     <div className="absolute right-0 bottom-0 h-full w-auto aspect-square">
-                        <Image 
-                            src={imagePaths.referGiftIcon.path}
-                            alt={imagePaths.referGiftIcon.alt}
-                            layout="fill"
-                            className="object-contain"
-                        />
-                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground z-10" />
+                     <div className="flex items-center gap-2">
+                       <p className="text-sm opacity-80 group-hover:opacity-100">Share Now</p>
+                       <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                   </div>
+                   <Gift className="absolute h-24 w-24 -right-4 -bottom-4 text-white/10" />
                 </Card>
             </Link>
         </div>
@@ -250,3 +237,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
