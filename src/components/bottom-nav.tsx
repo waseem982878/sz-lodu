@@ -23,8 +23,7 @@ export function BottomNav() {
     }
 
     const NavLink = ({ href, label, icon: Icon }: { href: string, label: string, icon: React.ElementType }) => {
-        // Special check for home to avoid it being active on all sub-routes
-        const isActive = href === "/home" ? pathname === href : pathname.startsWith(href);
+        const isActive = pathname.startsWith(href);
         const isSupportButton = href === "/support";
         const LinkComponent = isSupportButton ? 'a' : Link;
 
@@ -37,9 +36,9 @@ export function BottomNav() {
                 className="flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-all duration-300 w-16"
             >
                 <div className={cn(
-                    "flex items-center justify-center h-16 w-16 rounded-full transition-all duration-300 ease-in-out",
+                    "flex items-center justify-center rounded-full transition-all duration-300 ease-in-out",
                      isActive 
-                        ? "bg-primary text-primary-foreground shadow-lg -translate-y-6 border-4 border-background ring-4 ring-primary/20" 
+                        ? "bg-primary text-primary-foreground shadow-lg -translate-y-6 border-4 border-background ring-4 ring-primary/20 h-16 w-16" 
                         : "h-10 w-10"
                 )}>
                     <Icon className={cn("transition-all", isActive ? "h-8 w-8" : "h-6 w-6")} />

@@ -71,6 +71,8 @@ export default function LoginPage() {
   }, [user, authLoading, router]);
   
   const showDialog = (title: string, message: string) => {
+    // Prevent multiple dialogs from opening
+    if (dialogState.open) return;
     setDialogState({ open: true, title, message });
   };
 
@@ -88,10 +90,12 @@ export default function LoginPage() {
         await updateProfile(firebaseUser, { displayName: name });
         await createUserProfile(firebaseUser, name, phoneNumber, referralCode.trim());
         
-        // Don't redirect here. The AuthProvider will handle it after the profile is created and loaded.
-        // Adding a small delay to allow firestore to be consistent
         showDialog("Success", "Account created successfully! Redirecting...");
-        setTimeout(() => router.push('/home'), 2000);
+        // Delay to allow firestore to be consistent before auth context redirects
+        setTimeout(() => {
+            // The AuthProvider will handle the final redirection after profile loads.
+            // No need to manually push here.
+        }, 2000);
 
       } else {
         await signInWithEmailAndPassword(auth, email, password);

@@ -9,9 +9,10 @@ import type { Agent } from '@/models/agent.model';
 export const createUserProfile = async (user: User, name: string, phoneNumber: string | null, referralCode?: string) => {
     const userRef = doc(db, 'users', user.uid);
     
+    // Check if the document already exists. If so, don't overwrite to prevent race conditions.
     const docSnap = await getDoc(userRef);
-    // If profile exists, it might be a re-authentication, do nothing to avoid overwriting.
     if (docSnap.exists()) {
+        console.log("User profile already exists for:", user.uid);
         return;
     }
 
@@ -53,8 +54,8 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
         }
     }
     
-    // Use setDoc instead of updateDoc to guarantee the document is created.
-    // This is crucial for new user sign-ups.
+    // Use setDoc to guarantee the document is created.
+    // This is crucial for new user sign-ups and avoids race conditions.
     await setDoc(userRef, userProfileData);
 };
 

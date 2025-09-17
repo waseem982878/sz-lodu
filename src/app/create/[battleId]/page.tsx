@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle } from "lucide-react";
+import { Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useAuth } from "@/contexts/auth-context";
 import { getBattle, setRoomCode as setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
-import LudoLaunchButton from "@/components/LudoLaunchButton";
 
 function RulesDialog() {
   return (
@@ -88,7 +87,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
              if (battleData.creator.id === user.uid) {
                 setBattle(battleData);
                 // If battle has moved on, redirect creator to game room too
-                if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed') {
+                if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed' || battleData.status === 'waiting_for_players_ready') {
                     router.replace(`/game/${battleId}`);
                 }
              } else {

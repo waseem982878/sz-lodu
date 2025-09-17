@@ -349,5 +349,3 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         }
     });
 }
-
-    
