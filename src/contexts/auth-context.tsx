@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
              if (isAdminRoute) {
                 router.replace('/home');
              } else if (isPublicRoute || !userProfile) {
-                 // If on a public route, or if profile is still loading, go to home
+                 // Redirect from public routes to home once logged in and profile is ready
                  if (pathname !== '/home' && userProfile) {
                     router.replace('/home');
                  }
@@ -132,37 +132,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    // State will be cleared by the onAuthStateChanged listener
     router.replace('/login');
   };
   
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
   
-  const renderContent = () => {
-    if (loading) {
-        return <GlobalLoader />;
-    }
-
-    const isPublicRoute = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
-    const isAdminArea = pathname.startsWith('/admin');
-    
-    if (!user) {
-        return isPublicRoute ? children : <GlobalLoader />;
-    }
-    
-    // User is logged in
-    if (isSuperAdmin || isAgent) {
-        return isAdminArea ? children : <GlobalLoader />;
-    }
-
-    // Regular user is logged in. Show loader until profile is available.
-    if (!userProfile) {
-        return <GlobalLoader />;
-    }
-    
-    // Regular user with profile, show layout for non-admin pages
-    return isAdminArea ? <GlobalLoader /> : <SharedLayout>{children}</SharedLayout>;
+  if (loading) {
+    return <GlobalLoader />;
   }
+
+  const isAdminPage = pathname.startsWith('/admin');
+  const isPublicPage = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
+
+  // This logic ensures something is always rendered.
+  // The useEffect above handles the actual redirection.
+  const renderContent = () => {
+    if (!user && isPublicPage) {
+        return children; // Show public pages to logged-out users
+    }
+    if (user && (isSuperAdmin || isAgent) && isAdminPage) {
+        return children; // Show admin pages to admin/agent users
+    }
+    if (user && userProfile && !isAdminPage && !isPublicPage) {
+        return <SharedLayout>{children}</SharedLayout>; // Show shared layout for regular users on private pages
+    }
+    // For all other cases (e.g., during redirection), show the loader.
+    return <GlobalLoader />;
+  };
 
   return (
     <AuthContext.Provider value={value}>
