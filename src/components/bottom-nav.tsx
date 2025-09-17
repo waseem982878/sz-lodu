@@ -35,12 +35,21 @@ export function BottomNav() {
                 onClick={isSupportButton ? handleSupportClick : undefined}
                 target={isSupportButton ? "_blank" : undefined}
                 rel={isSupportButton ? "noopener noreferrer" : undefined}
-                className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+                className={cn(
+                    "flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-all duration-300",
+                    isActive && "-translate-y-2"
+                )}
             >
-                <div className={cn("flex items-center justify-center gap-2 rounded-full px-4 py-1 transition-all", isActive && "bg-primary/10")}>
-                    <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                    <span className={cn("text-xs font-medium", !isActive && "hidden")}>{label}</span>
+                <div className={cn(
+                    "flex items-center justify-center h-10 w-10 rounded-full transition-all duration-300",
+                     isActive ? "bg-primary text-primary-foreground shadow-lg" : "bg-transparent"
+                )}>
+                    <Icon className="h-5 w-5" />
                 </div>
+                <span className={cn(
+                    "text-xs font-medium transition-opacity duration-300",
+                    isActive ? "text-primary opacity-100" : "opacity-0"
+                )}>{label}</span>
             </LinkComponent>
         )
     }
