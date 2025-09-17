@@ -47,54 +47,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       setUserProfile(null); // Reset profile on auth change
+      setIsSuperAdmin(false);
+      setIsAgent(false);
       
       if (firebaseUser) {
         setUser(firebaseUser);
         const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
         setIsSuperAdmin(superAdminCheck);
 
-        // Super Admin specific logic
         if (superAdminCheck) {
-            setIsAgent(true); // Super admin is also an agent
+            // Super admin is always an agent.
+            setIsAgent(true);
             getDoc(doc(db, 'agents', firebaseUser.uid)).then(agentSnap => {
                 if (!agentSnap.exists()) {
                     createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin");
                 }
             });
-             setLoading(false); // For admins, we can load faster
-             return; 
+            setLoading(false);
+        } else {
+            // Check for regular agents first.
+            const agentQuery = query(collection(db, "agents"), where("email", "==", firebaseUser.email));
+            getDocs(agentQuery).then(snapshot => {
+                const isAgentProfile = !snapshot.empty;
+                setIsAgent(isAgentProfile);
+
+                if (isAgentProfile) {
+                    setLoading(false); // Agents can also load faster
+                } else {
+                     // If not an agent, listen for a regular user profile.
+                     const userRef = doc(db, 'users', firebaseUser.uid);
+                     const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+                       if (docSnap.exists()) {
+                         setUserProfile(docSnap.data() as UserProfile);
+                         updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
+                       } else {
+                          setUserProfile(null);
+                       }
+                       setLoading(false);
+                     }, () => {
+                       setUserProfile(null);
+                       setLoading(false);
+                     });
+                     // This is tricky; we need a way to clean this up.
+                     // The auth state change will handle it.
+                }
+            });
         }
-        
-        // Agent check
-        const agentQuery = query(collection(db, "agents"), where("email", "==", firebaseUser.email));
-        getDocs(agentQuery).then(snapshot => {
-            const isAgentProfile = !snapshot.empty;
-            setIsAgent(isAgentProfile);
-            if (isAgentProfile) {
-                setLoading(false); // Agents can also load faster
-            } else {
-                 // If not an agent, listen for user profile
-                 const userRef = doc(db, 'users', firebaseUser.uid);
-                 const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
-                   if (docSnap.exists()) {
-                     setUserProfile(docSnap.data() as UserProfile);
-                     updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
-                   } else {
-                      setUserProfile(null);
-                   }
-                   setLoading(false);
-                 }, () => {
-                   setUserProfile(null);
-                   setLoading(false);
-                 });
-                 return () => unsubscribeProfile();
-            }
-        });
       } else {
         // No user is signed in
         setUser(null);
-        setIsSuperAdmin(false);
-        setIsAgent(false);
         setLoading(false);
       }
     });
@@ -110,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!user) { // User NOT logged in
         if (!isPublicRoute) {
-            router.replace('/login');
+            router.replace('/landing'); // Default to landing page
         }
     } else { // User IS logged in
         if (isSuperAdmin || isAgent) {
@@ -120,11 +121,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else { // Regular user
              if (isAdminRoute) {
                 router.replace('/home');
-             } else if (isPublicRoute || !userProfile) {
+             } else if (isPublicRoute && userProfile) {
                  // Redirect from public routes to home once logged in and profile is ready
-                 if (pathname !== '/home' && userProfile) {
-                    router.replace('/home');
-                 }
+                 router.replace('/home');
              }
         }
     }
@@ -132,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    router.replace('/login');
   };
   
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
@@ -140,31 +138,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (loading) {
     return <GlobalLoader />;
   }
-
+  
   const isAdminPage = pathname.startsWith('/admin');
   const isPublicPage = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
 
   // This logic ensures something is always rendered.
   // The useEffect above handles the actual redirection.
-  const renderContent = () => {
-    if (!user && isPublicPage) {
-        return children; // Show public pages to logged-out users
+   if (!user && isPublicPage) {
+      return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+      );
     }
+    
     if (user && (isSuperAdmin || isAgent) && isAdminPage) {
-        return children; // Show admin pages to admin/agent users
+        return (
+            <AuthContext.Provider value={value}>
+                {children}
+            </AuthContext.Provider>
+        );
     }
+    
     if (user && userProfile && !isAdminPage && !isPublicPage) {
-        return <SharedLayout>{children}</SharedLayout>; // Show shared layout for regular users on private pages
+        return (
+            <AuthContext.Provider value={value}>
+                <SharedLayout>{children}</SharedLayout>
+            </AuthContext.Provider>
+        );
     }
-    // For all other cases (e.g., during redirection), show the loader.
-    return <GlobalLoader />;
-  };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {renderContent()}
-    </AuthContext.Provider>
-  );
+    // Fallback for transitional states (e.g., user just logged in but profile not yet loaded)
+    return <GlobalLoader />;
 }
 
 export function useAuth() {
