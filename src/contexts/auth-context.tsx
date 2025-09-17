@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from "firebase/auth";
 import { auth, db } from '@/firebase/config';
-import { doc, onSnapshot, serverTimestamp, updateDoc, getDoc, query, where, collection } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, updateDoc, getDoc, query, where, collection, getDocs } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
 import { Loader2 } from 'lucide-react';
@@ -178,5 +178,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
