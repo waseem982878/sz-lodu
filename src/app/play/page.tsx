@@ -244,6 +244,12 @@ function PlayPageContent() {
 
   return (
     <div className="space-y-2">
+      <div className="flex justify-start items-center mb-4">
+        <Button onClick={() => router.back()} variant="ghost" className="pl-0">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
+        </Button>
+      </div>
+
        <Card className="p-4">
         <p className="text-center font-semibold mb-2 text-muted-foreground">Create Challenge for <span className="text-primary">{pageTitle}</span></p>
         <div className="flex gap-2">
@@ -310,3 +316,5 @@ export default function Play() {
       </Suspense>
   )
 }
+
+    

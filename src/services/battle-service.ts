@@ -197,14 +197,17 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
 
 const awardReferralBonus = async (transaction: any, referredUserId: string) => {
     const referralQuery = query(collection(db, 'referrals'), where('referredId', '==', referredUserId), where('status', '==', 'pending'), limit(1));
-    const referralSnap = await getDocs(referralQuery);
+    const settingsRef = doc(db, 'config', 'appSettings');
+    
+    const [referralSnap, settingsSnap] = await Promise.all([
+        getDocs(referralQuery),
+        getDoc(settingsRef)
+    ]);
 
     if (!referralSnap.empty) {
         const referralDoc = referralSnap.docs[0];
         const referralData = referralDoc.data();
         const referrerId = referralData.referrerId;
-        const settingsRef = doc(db, 'config', 'appSettings');
-        const settingsSnap = await getDoc(settingsRef);
         const referralBonus = settingsSnap.exists() ? settingsSnap.data().referralBonus || 25 : 25;
 
         const referrerRef = doc(db, 'users', referrerId);
@@ -230,12 +233,12 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
         if (!battleDoc.exists()) throw new Error("Battle not found");
 
         const battleData = battleDoc.data() as Battle;
-        if(battleData.status !== 'inprogress') throw new Error("Can only submit result for a game that is in progress.");
+        if(battleData.status !== 'inprogress' && battleData.status !== 'result_pending') throw new Error("Can only submit result for a game that is in progress or pending results.");
 
         const resultSubmission: ResultSubmission = {
             status,
-            screenshotUrl: status === 'won' ? screenshotUrl : '',
-            submittedAt: serverTimestamp() as any
+            screenshotUrl: status === 'won' ? screenshotUrl : undefined,
+            submittedAt: serverTimestamp()
         };
 
         transaction.update(battleRef, {
@@ -290,9 +293,10 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         const winnerRef = doc(db, 'users', winnerId);
         const loserRef = doc(db, 'users', loserId);
 
-        const [winnerDoc, loserDoc] = await Promise.all([
+        const [winnerDoc, loserDoc, settingsSnap] = await Promise.all([
             transaction.get(winnerRef),
-            transaction.get(loserRef)
+            transaction.get(loserRef),
+            transaction.get(doc(db, 'config', 'appSettings'))
         ]);
 
         if(!winnerDoc.exists()) throw new Error("Winner profile not found");
@@ -322,12 +326,9 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         };
 
         if (!isPractice) {
-             const settingsRef = doc(db, 'config', 'appSettings');
-             const settingsSnap = await transaction.get(settingsRef);
              const commissionRate = settingsSnap.exists() ? settingsSnap.data().commissionRate / 100 : 0.05;
-
-            const prizeMoney = (battleData.amount * 2) * (1 - commissionRate);
-            winnerUpdate.winningsBalance = increment(prizeMoney);
+             const prizeMoney = (battleData.amount * 2) * (1 - commissionRate);
+             winnerUpdate.winningsBalance = increment(prizeMoney);
 
             if (prizeMoney > (winnerProfile.biggestWin || 0)) {
                 winnerUpdate.biggestWin = prizeMoney;

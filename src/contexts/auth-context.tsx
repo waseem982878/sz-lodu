@@ -46,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
+      setUserProfile(null); // Reset profile on auth change
+      
       if (firebaseUser) {
         setUser(firebaseUser);
         const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
@@ -59,44 +61,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin");
                 }
             });
-             setLoading(false); // For admins, we don't need to wait for a user profile
-             return; // Stop execution for admins here in auth listener
+             setLoading(false); // For admins, we can load faster
+             return; 
         }
         
         // Agent check
         const agentQuery = query(collection(db, "agents"), where("email", "==", firebaseUser.email));
-        const unsubscribeAgent = onSnapshot(agentQuery, (snapshot) => {
-          const isAgentProfile = !snapshot.empty;
-          setIsAgent(isAgentProfile);
-           if (isAgentProfile) {
-                setLoading(false); // For agents, we also don't need a user profile
-           }
+        getDocs(agentQuery).then(snapshot => {
+            const isAgentProfile = !snapshot.empty;
+            setIsAgent(isAgentProfile);
+            if (isAgentProfile) {
+                setLoading(false); // Agents can also load faster
+            } else {
+                 // If not an agent, listen for user profile
+                 const userRef = doc(db, 'users', firebaseUser.uid);
+                 const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+                   if (docSnap.exists()) {
+                     setUserProfile(docSnap.data() as UserProfile);
+                     updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
+                   } else {
+                      setUserProfile(null);
+                   }
+                   setLoading(false);
+                 }, () => {
+                   setUserProfile(null);
+                   setLoading(false);
+                 });
+                 return () => unsubscribeProfile();
+            }
         });
-
-        // Regular User Profile Listener
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const profileData = docSnap.data() as UserProfile;
-            setUserProfile(profileData);
-            updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
-          } else {
-             setUserProfile(null);
-          }
-          setLoading(false);
-        }, (error) => {
-          setUserProfile(null);
-          setLoading(false);
-        });
-        
-        return () => {
-            unsubscribeProfile();
-            unsubscribeAgent();
-        };
       } else {
         // No user is signed in
         setUser(null);
-        setUserProfile(null);
         setIsSuperAdmin(false);
         setIsAgent(false);
         setLoading(false);
@@ -124,12 +120,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else { // Regular user
              if (isAdminRoute) {
                 router.replace('/home');
-             } else if (isPublicRoute) {
-                router.replace('/home');
+             } else if (isPublicRoute || !userProfile) {
+                 // If on a public route, or if profile is still loading, go to home
+                 if (pathname !== '/home' && userProfile) {
+                    router.replace('/home');
+                 }
              }
         }
     }
-  }, [user, isSuperAdmin, isAgent, loading, pathname, router]);
+  }, [user, userProfile, isSuperAdmin, isAgent, loading, pathname, router]);
 
   const logout = async () => {
     await signOut(auth);
@@ -140,26 +139,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
   
   const renderContent = () => {
-    const isPublicRoute = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
-    
     if (loading) {
         return <GlobalLoader />;
     }
 
+    const isPublicRoute = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
+    const isAdminArea = pathname.startsWith('/admin');
+    
     if (!user) {
         return isPublicRoute ? children : <GlobalLoader />;
     }
     
     // User is logged in
-    const isAdminArea = pathname.startsWith('/admin');
-    
     if (isSuperAdmin || isAgent) {
         return isAdminArea ? children : <GlobalLoader />;
     }
 
-    // Regular user is logged in
+    // Regular user is logged in. Show loader until profile is available.
     if (!userProfile) {
-        // Profile is still being created or failed to load, show loader
         return <GlobalLoader />;
     }
     
@@ -181,3 +178,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    
