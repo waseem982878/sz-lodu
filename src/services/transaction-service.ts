@@ -22,6 +22,9 @@ export const createDepositRequest = async (
   screenshotFile: File,
   upiId: string // Changed from upiDocId to upiId string
 ): Promise<string> => {
+  if (!db) {
+    throw new Error("Database not available. Cannot create deposit request.");
+  }
   if (!userId || amount <= 0 || !screenshotFile || !upiId) {
     throw new Error("User ID, amount, screenshot file, and UPI ID are required.");
   }
@@ -66,6 +69,9 @@ export const createWithdrawalRequest = async (
   amount: number,
   withdrawalDetails: { method: 'upi' | 'bank'; address: string }
 ): Promise<string> => {
+  if (!db) {
+    throw new Error("Database not available. Cannot create withdrawal request.");
+  }
   if (!userId || !amount || !withdrawalDetails) {
     throw new Error("User ID, amount, and withdrawal details are required.");
   }
@@ -117,6 +123,10 @@ export const createWithdrawalRequest = async (
  * @returns An active UPI object or null if none are available.
  */
 export const getActiveUpi = async (): Promise<PaymentUpi | null> => {
+    if (!db) {
+        console.error("Database not available. Cannot get active UPI.");
+        return null;
+    }
     const q = query(
         collection(db, 'payment_upis'),
         where('isActive', '==', true)

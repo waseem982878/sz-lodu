@@ -65,11 +65,19 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
 };
 
 export const updateUserProfile = async (uid: string, data: Partial<UserProfile>) => {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot update user profile.");
+        return;
+    }
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, data);
 };
 
 export const submitKycDetails = async (uid: string, data: Partial<Omit<UserProfile, 'uid' | 'createdAt'>>) => {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot submit KYC details.");
+        return;
+    }
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, {
         ...data,
@@ -78,6 +86,10 @@ export const submitKycDetails = async (uid: string, data: Partial<Omit<UserProfi
 }
 
 export const updateUserBalances = async (uid: string, depositBalance: number, winningsBalance: number) => {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot update user balances.");
+        throw new Error("Database not available.");
+    }
     if (typeof depositBalance !== 'number' || typeof winningsBalance !== 'number' || depositBalance < 0 || winningsBalance < 0) {
         throw new Error("Invalid balance amounts provided.");
     }
@@ -89,6 +101,10 @@ export const updateUserBalances = async (uid: string, depositBalance: number, wi
 };
 
 export const createAgentProfile = async (uid: string, email: string, name: string) => {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot create agent profile.");
+        return;
+    }
     // This function is for the super admin, who needs both an agent profile and a user profile.
     const agentRef = doc(db, 'agents', uid);
     const userRef = doc(db, 'users', uid);

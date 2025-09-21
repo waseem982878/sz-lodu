@@ -7,6 +7,9 @@ import type { Battle, GameType, ResultSubmission } from '@/models/battle.model';
 
 // Create a new battle
 export const createBattle = async (amount: number, gameType: GameType, user: User, userProfile: UserProfile): Promise<string> => {
+    if (!db) {
+        throw new Error("Database not available. Cannot create battle.");
+    }
     const userRef = doc(db, 'users', user.uid);
     const isPractice = amount === 0;
 
@@ -62,8 +65,11 @@ export const createBattle = async (amount: number, gameType: GameType, user: Use
 
 // Accept an open battle
 export const acceptBattle = async (battleId: string, user: User, userProfile: UserProfile): Promise<void> => {
-     const battleRef = doc(db, 'battles', battleId);
-     const userRef = doc(db, 'users', user.uid);
+    if (!db) {
+        throw new Error("Database not available. Cannot accept battle.");
+    }
+    const battleRef = doc(db, 'battles', battleId);
+    const userRef = doc(db, 'users', user.uid);
 
     await runTransaction(db, async (transaction) => {
         const battleDoc = await transaction.get(battleRef);
@@ -115,6 +121,10 @@ export const acceptBattle = async (battleId: string, user: User, userProfile: Us
 
 // Get real-time updates for a single battle
 export const getBattle = (battleId: string, callback: (battle: Battle | null) => void) => {
+    if (!db) {
+        console.error("Database not available. Cannot get battle.");
+        return () => {}; // Return an empty unsubscribe function
+    }
     const battleRef = doc(db, 'battles', battleId);
 
     const unsubscribe = onSnapshot(battleRef, (doc) => {
@@ -130,6 +140,9 @@ export const getBattle = (battleId: string, callback: (battle: Battle | null) =>
 
 // Set room code by the creator
 export const setRoomCode = async (battleId: string, roomCode: string) => {
+    if (!db) {
+        throw new Error("Database not available. Cannot set room code.");
+    }
     if (!battleId || !roomCode) {
         throw new Error("battleId and roomCode are required");
     }
@@ -142,6 +155,9 @@ export const setRoomCode = async (battleId: string, roomCode: string) => {
 
 // Cancel a battle
 export const cancelBattle = async (battleId: string, userId: string, amount: number) => {
+    if (!db) {
+        throw new Error("Database not available. Cannot cancel battle.");
+    }
     const battleRef = doc(db, 'battles', battleId);
     const CANCELLATION_FEE = 5;
     const isPractice = amount === 0;
@@ -208,6 +224,7 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
 
 
 const awardReferralBonus = async (transaction: any, referredUserId: string) => {
+    if (!db) return;
     const referralQuery = query(collection(db, 'referrals'), where('referredId', '==', referredUserId), where('status', '==', 'pending'), limit(1));
     const settingsRef = doc(db, 'config', 'appSettings');
     
@@ -238,6 +255,9 @@ const awardReferralBonus = async (transaction: any, referredUserId: string) => {
 
 // Upload result screenshot or loss confirmation
 export const uploadResult = async (battleId: string, userId: string, status: 'won' | 'lost', screenshotUrl?: string) => {
+    if (!db) {
+        throw new Error("Database not available. Cannot upload result.");
+    }
     const battleRef = doc(db, 'battles', battleId);
 
     await runTransaction(db, async (transaction) => {
@@ -264,6 +284,9 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
 
 // Mark a player as ready for the battle
 export const markPlayerAsReady = async (battleId: string, userId: string) => {
+    if (!db) {
+        throw new Error("Database not available. Cannot mark player as ready.");
+    }
     const battleRef = doc(db, 'battles', battleId);
 
     await runTransaction(db, async (transaction) => {
@@ -290,6 +313,9 @@ export const markPlayerAsReady = async (battleId: string, userId: string) => {
 
 
 export const updateBattleStatus = async (battleId: string, winnerId: string) => {
+    if (!db) {
+        throw new Error("Database not available. Cannot update battle status.");
+    }
     const battleRef = doc(db, 'battles', battleId);
 
     await runTransaction(db, async (transaction) => {
@@ -361,4 +387,3 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         }
     });
 }
-
