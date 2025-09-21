@@ -1,14 +1,14 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from "firebase/auth";
 import { auth, db } from '@/firebase/config';
-import { doc, onSnapshot, serverTimestamp, updateDoc, query, where, collection, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
 import { Loader2 } from 'lucide-react';
 import { createAgentProfile } from '@/services/user-agent-service';
-import SharedLayout from '@/app/shared-layout';
 
 // IMPORTANT: Set your super admin email here
 const SUPER_ADMIN_EMAIL = "waseem982878@gmail.com";
@@ -46,51 +46,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
         const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
         setIsSuperAdmin(superAdminCheck);
 
-        // Super Admin Path
-        if (superAdminCheck) {
-          setIsAgent(true);
-          getDocs(query(collection(db, 'agents'), where('email', '==', firebaseUser.email))).then(agentSnap => {
-            if (agentSnap.empty) {
-              createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin");
-            }
-            setLoading(false);
-          });
-          return; // End for super admin
-        }
-
-        // Agent/User Path
-        const agentQuery = query(collection(db, 'agents'), where('email', '==', firebaseUser.email));
-        getDocs(agentQuery).then(agentSnap => {
-          const isAgentProfile = !agentSnap.empty;
-          setIsAgent(isAgentProfile);
-
-          if (isAgentProfile) {
-            setLoading(false); // Agent loading is fast
+        // Listen to the user's profile document in Firestore
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const profile = docSnap.data() as UserProfile;
+            setUserProfile(profile);
+            // The isAgent role is now directly on the user's profile.
+            // This avoids a separate, permission-failing query to the 'agents' collection.
+            setIsAgent(!!profile.isAgent || superAdminCheck);
+            updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
           } else {
-            // Regular user path, set up profile listener
-            const userRef = doc(db, 'users', firebaseUser.uid);
-            const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
-              if (docSnap.exists()) {
-                setUserProfile(docSnap.data() as UserProfile);
-                updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
-              } else {
-                setUserProfile(null);
-              }
-              setLoading(false); // Loading is false after profile is fetched or confirmed non-existent
-            }, () => {
-              setUserProfile(null);
-              setLoading(false);
-            });
-            // This is tricky, but onAuthStateChanged handles cleanup when user logs out.
+            // Profile doesn't exist. This could be a new user or an admin logging in for the first time.
+            if (superAdminCheck) {
+              // If super admin has no user profile, create one.
+               createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin").then(() => {
+                    // The profile will be picked up by the onSnapshot listener, no need to set state here.
+               });
+            } else {
+                 setUserProfile(null); // Regular user with no profile yet.
+            }
           }
+          setLoading(false);
+        }, (error) => {
+          console.error("Auth context profile listener error:", error);
+          setUserProfile(null);
+          setLoading(false);
         });
 
+        // This is a failsafe. If the onAuthStateChanged is called again (e.g., logout),
+        // we must clean up the previous user's profile listener.
+        return () => unsubscribeProfile();
       } else {
         // No user is signed in
         setUser(null);
@@ -107,23 +98,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return; // Do nothing while loading
 
-    const isPublic = publicRoutes.includes(pathname);
+    const isPublic = publicRoutes.some(route => pathname === route);
     const isAdminRoute = pathname.startsWith('/admin');
 
-    if (user) {
-      // User is logged in
-      const isRoleAgent = isAgent || isSuperAdmin;
-      if (isRoleAgent) {
+    if (user && userProfile) {
+      // User is logged in and has a profile
+      if (isAgent || isSuperAdmin) {
         if (!isAdminRoute) router.replace('/admin/dashboard');
       } else { // Regular user
         if (isAdminRoute) router.replace('/home');
-        else if (isPublic && userProfile) router.replace('/home');
+        else if (isPublic) router.replace('/home');
       }
+    } else if (user && !userProfile) {
+        // User is logged in but profile is being created. Stay on loading screen (or login page).
+        if(pathname !== '/login') {
+            // Don't redirect from login page while profile is being created.
+        }
     } else {
       // User is not logged in
       if (!isPublic) router.replace('/landing');
     }
-  }, [user, userProfile, isAgent, isSuperAdmin, loading, pathname, router, publicRoutes]);
+  }, [user, userProfile, isAgent, isSuperAdmin, loading, pathname, router]);
   
   const logout = async () => {
     await signOut(auth);
@@ -136,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return <GlobalLoader />;
   }
 
-  // Render children immediately after loading, redirection is handled by useEffect
   return (
     <AuthContext.Provider value={value}>
         {children}

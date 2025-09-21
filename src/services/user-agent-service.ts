@@ -35,6 +35,7 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
         biggestWin: 0,
         createdAt: serverTimestamp() as any,
         lastSeen: serverTimestamp() as any,
+        isAgent: false, // Default to false for all new users
     };
 
     if (referralCode) {
@@ -84,8 +85,33 @@ export const updateUserBalances = async (uid: string, depositBalance: number, wi
 };
 
 export const createAgentProfile = async (uid: string, email: string, name: string) => {
+    // This function is for the super admin, who needs both an agent profile and a user profile.
     const agentRef = doc(db, 'agents', uid);
+    const userRef = doc(db, 'users', uid);
 
+    // 1. Create the user profile for the admin
+    const userProfileData: Omit<UserProfile, 'uid'> = {
+        name,
+        email,
+        phoneNumber: 'N/A',
+        avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`,
+        referralCode: `SZADMIN${uid.substring(0,4)}`,
+        depositBalance: 0,
+        winningsBalance: 0,
+        kycStatus: 'Verified',
+        gamesPlayed: 0,
+        gamesWon: 0,
+        penaltyTotal: 0,
+        createdAt: serverTimestamp(),
+        lastSeen: serverTimestamp(),
+        winStreak: 0,
+        losingStreak: 0,
+        biggestWin: 0,
+        isAgent: true // Super admin is an agent
+    };
+    await setDoc(userRef, userProfileData, { merge: true });
+
+    // 2. Create the agent profile
     const agentProfileData: Omit<Agent, 'id' | 'remainingBalance'> = {
         name: name,
         email: email,

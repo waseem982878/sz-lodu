@@ -31,4 +31,7 @@ export interface UserProfile {
     panCardUrl?: string;
     aadhaarCardUrl?: string;
     kycNotes?: string; // Notes from admin on rejection
+
+    // Role management
+    isAgent?: boolean;
 }
