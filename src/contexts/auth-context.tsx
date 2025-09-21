@@ -50,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
     }
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setLoading(true);
       if (firebaseUser) {
         // User is logged in, set basic info
         setUser(firebaseUser);
@@ -134,7 +133,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
   
-  // While loading, or if redirection is about to happen, show the global loader.
   if (loading) {
     return <GlobalLoader />;
   }
