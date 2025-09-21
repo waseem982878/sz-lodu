@@ -1,21 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
-        remotePatterns: [
-            {
-                protocol: 'https',
-                hostname: 'api.dicebear.com',
-            },
-            {
-                protocol: 'https',
-                hostname: 'firebasestorage.googleapis.com',
-            },
-             {
-                protocol: 'https',
-                hostname: 'picsum.photos',
-            }
-        ]
-    }
+  // The recharts library uses some syntax that is not compatible with the modern JS build process.
+  // This line tells Next.js to run recharts through its compiler to fix this.
+  transpilePackages: ['recharts'],
 };
 
 export default nextConfig;
