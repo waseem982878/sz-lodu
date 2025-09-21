@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from "firebase/auth";
 import { auth, db } from '@/firebase/config';
-import { doc, onSnapshot, serverTimestamp, updateDoc, getDoc, query, where, collection, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, updateDoc, query, where, collection, getDocs } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
 import { Loader2 } from 'lucide-react';
@@ -42,60 +41,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAgent, setIsAgent] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  
+  const publicRoutes = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'];
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
-      setUserProfile(null); // Reset profile on auth change
-      setIsSuperAdmin(false);
-      setIsAgent(false);
-      
       if (firebaseUser) {
         setUser(firebaseUser);
         const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
         setIsSuperAdmin(superAdminCheck);
 
+        // Super Admin Path
         if (superAdminCheck) {
-            // Super admin is always an agent.
-            setIsAgent(true);
-            getDoc(doc(db, 'agents', firebaseUser.uid)).then(agentSnap => {
-                if (!agentSnap.exists()) {
-                    createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin");
-                }
-            });
+          setIsAgent(true);
+          getDocs(query(collection(db, 'agents'), where('email', '==', firebaseUser.email))).then(agentSnap => {
+            if (agentSnap.empty) {
+              createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin");
+            }
             setLoading(false);
-        } else {
-            // Check for regular agents first.
-            const agentQuery = query(collection(db, "agents"), where("email", "==", firebaseUser.email));
-            getDocs(agentQuery).then(snapshot => {
-                const isAgentProfile = !snapshot.empty;
-                setIsAgent(isAgentProfile);
-
-                if (isAgentProfile) {
-                    setLoading(false); // Agents can also load faster
-                } else {
-                     // If not an agent, listen for a regular user profile.
-                     const userRef = doc(db, 'users', firebaseUser.uid);
-                     const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
-                       if (docSnap.exists()) {
-                         setUserProfile(docSnap.data() as UserProfile);
-                         updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
-                       } else {
-                          setUserProfile(null);
-                       }
-                       setLoading(false);
-                     }, () => {
-                       setUserProfile(null);
-                       setLoading(false);
-                     });
-                     // This is tricky; we need a way to clean this up.
-                     // The auth state change will handle it.
-                }
-            });
+          });
+          return; // End for super admin
         }
+
+        // Agent/User Path
+        const agentQuery = query(collection(db, 'agents'), where('email', '==', firebaseUser.email));
+        getDocs(agentQuery).then(agentSnap => {
+          const isAgentProfile = !agentSnap.empty;
+          setIsAgent(isAgentProfile);
+
+          if (isAgentProfile) {
+            setLoading(false); // Agent loading is fast
+          } else {
+            // Regular user path, set up profile listener
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+              if (docSnap.exists()) {
+                setUserProfile(docSnap.data() as UserProfile);
+                updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
+              } else {
+                setUserProfile(null);
+              }
+              setLoading(false); // Loading is false after profile is fetched or confirmed non-existent
+            }, () => {
+              setUserProfile(null);
+              setLoading(false);
+            });
+            // This is tricky, but onAuthStateChanged handles cleanup when user logs out.
+          }
+        });
+
       } else {
         // No user is signed in
         setUser(null);
+        setUserProfile(null);
+        setIsAgent(false);
+        setIsSuperAdmin(false);
         setLoading(false);
       }
     });
@@ -104,33 +105,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading) return; // Do nothing while loading
 
-    const isPublicRoute = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
+    const isPublic = publicRoutes.includes(pathname);
     const isAdminRoute = pathname.startsWith('/admin');
 
-    if (!user) { // User NOT logged in
-        if (!isPublicRoute) {
-            router.replace('/landing'); // Default to landing page
-        }
-    } else { // User IS logged in
-        if (isSuperAdmin || isAgent) {
-            if (!isAdminRoute) {
-                router.replace('/admin/dashboard');
-            }
-        } else { // Regular user
-             if (isAdminRoute) {
-                router.replace('/home');
-             } else if (isPublicRoute && userProfile) {
-                 // Redirect from public routes to home once logged in and profile is ready
-                 router.replace('/home');
-             }
-        }
+    if (user) {
+      // User is logged in
+      const isRoleAgent = isAgent || isSuperAdmin;
+      if (isRoleAgent) {
+        if (!isAdminRoute) router.replace('/admin/dashboard');
+      } else { // Regular user
+        if (isAdminRoute) router.replace('/home');
+        else if (isPublic && userProfile) router.replace('/home');
+      }
+    } else {
+      // User is not logged in
+      if (!isPublic) router.replace('/landing');
     }
-  }, [user, userProfile, isSuperAdmin, isAgent, loading, pathname, router]);
-
+  }, [user, userProfile, isAgent, isSuperAdmin, loading, pathname, router, publicRoutes]);
+  
   const logout = async () => {
     await signOut(auth);
+    // onAuthStateChanged will handle the state reset and redirection
   };
   
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
@@ -138,38 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (loading) {
     return <GlobalLoader />;
   }
-  
-  const isAdminPage = pathname.startsWith('/admin');
-  const isPublicPage = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'].includes(pathname);
 
-  // This logic ensures something is always rendered.
-  // The useEffect above handles the actual redirection.
-   if (!user && isPublicPage) {
-      return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-      );
-    }
-    
-    if (user && (isSuperAdmin || isAgent) && isAdminPage) {
-        return (
-            <AuthContext.Provider value={value}>
-                {children}
-            </AuthContext.Provider>
-        );
-    }
-    
-    if (user && userProfile && !isAdminPage && !isPublicPage) {
-        return (
-            <AuthContext.Provider value={value}>
-                <SharedLayout>{children}</SharedLayout>
-            </AuthContext.Provider>
-        );
-    }
-
-    // Fallback for transitional states (e.g., user just logged in but profile not yet loaded)
-    return <GlobalLoader />;
+  // Render children immediately after loading, redirection is handled by useEffect
+  return (
+    <AuthContext.Provider value={value}>
+        {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
