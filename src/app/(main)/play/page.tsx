@@ -126,22 +126,41 @@ function PlayPageContent() {
   useEffect(() => {
     if (!user) return;
 
+    // Separate, valid queries for creator and opponent roles
+    const activeStatuses: Battle['status'][] = ['open', 'inprogress', 'waiting_for_players_ready', 'result_pending'];
+
     setLoadingMyBattles(true);
-    const myBattlesQuery = query(
+    const creatorQuery = query(
       collection(db, 'battles'),
-      and(
-          where('gameType', '==', gameType),
-          where('status', 'in', ['open', 'inprogress', 'waiting_for_players_ready', 'result_pending']),
-          or(
-            where('creator.id', '==', user.uid),
-            where('opponent.id', '==', user.uid)
-          )
-      )
+      where('gameType', '==', gameType),
+      where('creator.id', '==', user.uid),
+      where('status', 'in', activeStatuses)
     );
-    const unsubMyBattles = onSnapshot(myBattlesQuery, (snapshot) => {
-        const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-        setMyBattles(battlesData);
-        setLoadingMyBattles(false);
+    const opponentQuery = query(
+      collection(db, 'battles'),
+      where('gameType', '==', gameType),
+      where('opponent.id', '==', user.uid),
+      where('status', 'in', activeStatuses)
+    );
+
+    const unsubCreator = onSnapshot(creatorQuery, (creatorSnapshot) => {
+        const creatorBattles = creatorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
+        
+        const unsubOpponent = onSnapshot(opponentQuery, (opponentSnapshot) => {
+            const opponentBattles = opponentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
+            
+            // Combine and remove duplicates
+            const allMyBattles = [...creatorBattles, ...opponentBattles];
+            const uniqueBattles = Array.from(new Map(allMyBattles.map(battle => [battle.id, battle])).values());
+            
+            setMyBattles(uniqueBattles);
+            setLoadingMyBattles(false);
+        }, (error) => {
+            setLoadingMyBattles(false);
+        });
+
+        // Return a cleanup function for the nested listener
+        return () => unsubOpponent();
     }, (error) => {
         setLoadingMyBattles(false);
     });
@@ -162,7 +181,7 @@ function PlayPageContent() {
     });
 
     return () => {
-        unsubMyBattles();
+        unsubCreator();
         unsubOpenBattles();
     };
   }, [user, gameType]);
@@ -316,3 +335,5 @@ export default function Play() {
       </Suspense>
   )
 }
+
+    
