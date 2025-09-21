@@ -7,6 +7,10 @@ import type { Agent } from '@/models/agent.model';
 
 // Create or update user profile in Firestore
 export const createUserProfile = async (user: User, name: string, phoneNumber: string | null, referralCode?: string) => {
+    if (!db) {
+        console.error("Firestore is not initialized. Cannot create user profile.");
+        return;
+    }
     const userRef = doc(db, 'users', user.uid);
     
     // Check if the document already exists. If so, don't overwrite to prevent race conditions.

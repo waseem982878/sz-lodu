@@ -29,22 +29,18 @@ if (!firebaseConfig.apiKey) {
     console.error("Firebase API Key is missing. Please check your NEXT_PUBLIC_FIREBASE_API_KEY environment variable. Firebase will not be initialized.");
 } else {
     // Check if Firebase app already exists.
-    if (!getApps().length) {
-      try {
-        app = initializeApp(firebaseConfig);
-      } catch (e) {
-        console.error("Failed to initialize Firebase app", e);
-        // We will let the app continue to run, but Firebase services will fail.
-      }
-    } else {
-      app = getApp();
+    try {
+        if (!getApps().length) {
+            app = initializeApp(firebaseConfig);
+        } else {
+            app = getApp();
+        }
+        auth = getAuth(app);
+        db = getFirestore(app);
+        storage = getStorage(app);
+    } catch (e) {
+         console.error("Failed to initialize Firebase app or its services", e);
     }
-
-    // These will throw an error if the app is not initialized, which is intended behavior
-    // if the config is missing, but our guard above prevents that.
-    auth = getAuth(app!);
-    db = getFirestore(app!);
-    storage = getStorage(app!);
 }
 
 
