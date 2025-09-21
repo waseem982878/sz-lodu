@@ -1,10 +1,25 @@
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // This is required to make 'recharts' library work with Next.js App Router
-    transpilePackages: ['recharts'],
-    experimental: {
-        serverComponentsExternalPackages: ['firebase-admin'],
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'api.dicebear.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'picsum.photos',
+            },
+            {
+                protocol: 'https',
+                hostname: 'firebasestorage.googleapis.com',
+            }
+        ],
+    },
+    webpack: (config) => {
+        // This is to fix a bug with recharts and Next.js App Router
+        config.externals.push('recharts');
+        return config;
     }
 };
 
