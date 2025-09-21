@@ -42,10 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Effect 1: Handle Firebase auth state changes ONLY.
-  // This effect sets the user and profile state.
+  // Effect 1: Handle Firebase auth state changes and profile listening ONLY.
   useEffect(() => {
-    // Guard clause: If firebase auth is not initialized (e.g. missing API key), do nothing.
+    // Guard clause: If firebase auth is not initialized, do nothing.
     if (!auth) {
         console.error("Firebase Auth is not initialized. Check your environment variables.");
         setLoading(false);
@@ -53,12 +52,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // User is logged in, set basic info
+        // User is logged in, set basic info immediately.
         setUser(firebaseUser);
         const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
         setIsSuperAdmin(superAdminCheck);
 
-        // Listen for profile changes
+        // Create or refresh session cookie.
+        getIdToken(firebaseUser, true).then((token) => {
+          fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken: token }) });
+        });
+
+        // Listen for profile changes in a separate process.
         const userRef = doc(db, 'users', firebaseUser.uid);
         const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
@@ -66,23 +70,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUserProfile(profile);
             const agentCheck = !!profile.isAgent;
             setIsAgent(agentCheck || superAdminCheck);
-            // Update last seen timestamp
+            // Update last seen timestamp without blocking.
             updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
           } else if (superAdminCheck) {
-             // If super admin logs in for the first time, create their profiles
+             // If super admin logs in for the first time, create their profiles.
              createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin").catch(console.error);
           }
-          setLoading(false); // Profile loaded or confirmed non-existent
+          // The loading state is no longer tied to the profile snapshot.
         }, (error) => {
           console.error("Auth context profile listener error:", error);
           setUserProfile(null);
-          setLoading(false);
         });
-
-        // Create or refresh session cookie
-        getIdToken(firebaseUser, true).then((token) => {
-          fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken: token }) });
-        });
+        
+        setLoading(false); // <--- CRITICAL FIX: Stop loading as soon as auth state is known.
 
         return () => unsubscribeProfile();
       } else {
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserProfile(null);
         setIsAgent(false);
         setIsSuperAdmin(false);
-        setLoading(false);
+        setLoading(false); // Stop loading.
       }
     });
 
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Effect 2: Handle routing AFTER loading is complete.
   // This is the single source of truth for redirection.
    useEffect(() => {
-      if (loading) return; // Don't do anything while loading
+      if (loading) return; // Don't do anything while loading.
 
       const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
       const isAdminRoute = pathname.startsWith('/admin');
@@ -132,11 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    // onAuthStateChanged will handle the state update and redirection via the useEffect hook.
+    // onAuthStateChanged will handle state cleanup and redirection via the useEffect hooks.
   };
 
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
   
+  // Render based on loading state. The routing useEffect will handle redirection after load.
   if (loading) {
     return <GlobalLoader />;
   }
