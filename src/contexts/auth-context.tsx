@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   // Effect 1: Handle Firebase auth state changes ONLY.
+  // This effect sets the user and profile state.
   useEffect(() => {
     // Guard clause: If firebase auth is not initialized (e.g. missing API key), do nothing.
     if (!auth) {
@@ -99,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   
   // Effect 2: Handle routing AFTER loading is complete.
+  // This is the single source of truth for redirection.
    useEffect(() => {
       if (loading) return; // Don't do anything while loading
 
