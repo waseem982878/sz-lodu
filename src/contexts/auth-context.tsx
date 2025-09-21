@@ -4,12 +4,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut, getIdToken } from "firebase/auth";
 import { auth, db } from '@/firebase/config';
-import { doc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
 import { Loader2 } from 'lucide-react';
 import { createAgentProfile } from '@/services/user-agent-service';
-import Cookies from 'js-cookie';
 
 // IMPORTANT: Set your super admin email here
 const SUPER_ADMIN_EMAIL = "waseem982878@gmail.com";
@@ -45,40 +44,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
-        // User is signed in.
-        const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
+        // User is logged in, set basic info
         setUser(firebaseUser);
+        const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
         setIsSuperAdmin(superAdminCheck);
 
-        // Listen for user profile changes
+        // Listen for profile changes
         const userRef = doc(db, 'users', firebaseUser.uid);
         const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const profile = docSnap.data() as UserProfile;
             setUserProfile(profile);
-            setIsAgent(!!profile.isAgent || superAdminCheck); // Agent if profile says so or is super admin
+            const agentCheck = !!profile.isAgent;
+            setIsAgent(agentCheck || superAdminCheck);
+            // Update last seen timestamp
             updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
           } else if (superAdminCheck) {
-            // If super admin has no profile, create it.
-            createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin").catch(console.error);
+             // If super admin logs in for the first time, create their profiles
+             createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin").catch(console.error);
           }
-           // The loading state will be handled by the redirection logic below.
+          setLoading(false); // Profile loaded or confirmed non-existent
         }, (error) => {
           console.error("Auth context profile listener error:", error);
           setUserProfile(null);
           setLoading(false);
         });
 
-        // Set session cookie
-        getIdToken(firebaseUser).then((token) => {
+        // Create or refresh session cookie
+        getIdToken(firebaseUser, true).then((token) => {
           fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken: token }) });
         });
 
         return () => unsubscribeProfile();
       } else {
         // User is signed out.
-        fetch('/api/auth', { method: 'DELETE' });
+        fetch('/api/auth', { method: 'DELETE' }); // Clear session cookie
         setUser(null);
         setUserProfile(null);
         setIsAgent(false);
@@ -91,36 +93,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (loading) return; // Don't do anything until auth state is resolved
+      if (loading) return; // Don't do anything while loading
 
-    const isAuthRoute = pathname === '/login';
-    const isPublicRoute = ['/landing', '/terms', '/privacy', '/refund', '/gst'].includes(pathname);
-    const isAdminRoute = pathname.startsWith('/admin');
+      const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
 
-    if (!user) {
-      // User is logged out. Redirect to landing if not on a public/auth route.
-      if (!isAuthRoute && !isPublicRoute) {
-        router.replace('/landing');
-      }
-    } else {
-      // User is logged in.
-      if (isAgent || isSuperAdmin) {
-        if (!isAdminRoute) {
-          // If agent/admin is not in admin area, redirect them there.
-          router.replace('/admin/dashboard');
-        }
+      if (user) {
+          // User is logged in
+          const targetPath = (isAgent || isSuperAdmin) ? '/admin/dashboard' : '/home';
+          if (!pathname.startsWith(targetPath.substring(0,6))) { // check for /admin or /home
+             router.replace(targetPath);
+          }
       } else {
-        // Regular user.
-        if (isAdminRoute) {
-          // If regular user tries to access admin, send to home.
-          router.replace('/home');
-        } else if (isAuthRoute || isPublicRoute) {
-          // If on login or public page, send to home.
-          router.replace('/home');
-        }
+          // User is not logged in
+          if (!isAuthPage) {
+              router.replace('/landing');
+          }
       }
-    }
-  }, [user, userProfile, isAgent, isSuperAdmin, loading, pathname, router]);
+
+  }, [user, loading, pathname, router, isAgent, isSuperAdmin]);
+
 
   const logout = async () => {
     await signOut(auth);
@@ -128,14 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
-
-  // While auth state is loading, always show the global loader.
+  
+  // While loading, or if redirection is about to happen, show the global loader.
   if (loading) {
     return <GlobalLoader />;
   }
 
-  // Once loading is complete, the useEffect above will handle redirection.
-  // We render children to prevent a flash of incorrect content during the redirect.
   return (
     <AuthContext.Provider value={value}>
       {children}

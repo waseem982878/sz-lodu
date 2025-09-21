@@ -15,9 +15,10 @@ export default function MainAppLayout({
 }) {
   const { user } = useAuth();
 
+  // The AuthProvider is now responsible for handling redirects and showing a loader.
+  // This layout will only be rendered for authenticated users, so this check is simplified.
+  // We no longer return null here, which was causing the race condition with redirects.
   if (!user) {
-    // AuthProvider is handling redirects, so we can just show nothing or a loader here
-    // to prevent layout flicker for unauthenticated users.
     return null;
   }
 

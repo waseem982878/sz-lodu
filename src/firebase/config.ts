@@ -21,12 +21,13 @@ const firebaseConfig = {
 // Initialize Firebase for SSR
 let app: FirebaseApp;
 
-// Check if the API key is provided before initializing
+// Check if the API key is provided before initializing.
+// This is a crucial guard against runtime errors if env variables are not set.
 if (!firebaseConfig.apiKey) {
-    console.error("Firebase API Key is missing. Please check your environment variables. The app will not initialize Firebase.");
+    console.error("Firebase API Key is missing. Please check your NEXT_PUBLIC_FIREBASE_API_KEY environment variable. Firebase will not be initialized.");
 }
 
-if (!getApps().length) {
+if (firebaseConfig.apiKey && !getApps().length) {
   try {
     app = initializeApp(firebaseConfig);
   } catch (e) {
@@ -38,6 +39,8 @@ if (!getApps().length) {
   app = getApp();
 }
 
+// These will throw an error if the app is not initialized, which is intended behavior
+// if the config is missing.
 const auth = getAuth(app!);
 const db = getFirestore(app!);
 const storage = getStorage(app!);
