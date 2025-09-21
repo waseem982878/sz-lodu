@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Effect 1: Handle Firebase auth state changes ONLY.
   useEffect(() => {
     // Guard clause: If firebase auth is not initialized (e.g. missing API key), do nothing.
     if (!auth) {
@@ -96,8 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribeAuth();
   }, []);
-
-  useEffect(() => {
+  
+  // Effect 2: Handle routing AFTER loading is complete.
+   useEffect(() => {
       if (loading) return; // Don't do anything while loading
 
       const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
@@ -128,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    // onAuthStateChanged will handle the state update and redirection.
+    // onAuthStateChanged will handle the state update and redirection via the useEffect hook.
   };
 
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
