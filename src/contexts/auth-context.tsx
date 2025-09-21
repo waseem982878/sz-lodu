@@ -43,6 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Guard clause: If firebase auth is not initialized (e.g. missing API key), do nothing.
+    if (!auth) {
+        console.error("Firebase Auth is not initialized. Check your environment variables.");
+        setLoading(false);
+        return;
+    }
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
@@ -96,12 +102,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (loading) return; // Don't do anything while loading
 
       const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
+      const isAdminRoute = pathname.startsWith('/admin');
 
       if (user) {
           // User is logged in
-          const targetPath = (isAgent || isSuperAdmin) ? '/admin/dashboard' : '/home';
-          if (!pathname.startsWith(targetPath.substring(0,6))) { // check for /admin or /home
-             router.replace(targetPath);
+          if(isSuperAdmin || isAgent) {
+              if(!isAdminRoute) {
+                  router.replace('/admin/dashboard');
+              }
+          } else {
+              if (isAdminRoute) {
+                  router.replace('/home');
+              } else if (isAuthPage) {
+                  router.replace('/home');
+              }
           }
       } else {
           // User is not logged in
