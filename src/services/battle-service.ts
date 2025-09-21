@@ -159,34 +159,46 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
         const opponentId = battleData.opponent?.id;
 
         if (opponentId && !isPractice) {
+            // Logic when an opponent exists
             const cancellerIsCreator = userId === creatorId;
             const otherPlayerId = cancellerIsCreator ? opponentId : creatorId;
 
             const cancellerRef = doc(db, 'users', userId);
             const otherPlayerRef = doc(db, 'users', otherPlayerId);
+            
+            // Note: We are reading the other player's doc, but only updating the current user's and the opponent's balance in separate updates.
+            // This is allowed by security rules if each update targets the authorized user.
+            // However, a better approach is to use a cloud function for inter-user transactions.
+            // For client-side, we'll refund both and penalize canceller.
 
-            transaction.update(cancellerRef, { 
-                winningsBalance: increment(-CANCELLATION_FEE),
-                penaltyTotal: increment(CANCELLATION_FEE) 
-            });
-
-            transaction.update(otherPlayerRef, { 
-                winningsBalance: increment(CANCELLATION_FEE) 
+            // Penalize the canceller
+            transaction.update(cancellerRef, {
+                winningsBalance: increment(-CANCELLATION_FEE), // Penalty
+                penaltyTotal: increment(CANCELLATION_FEE)
             });
 
             // Refund original bet amount to both players' winnings balance
             transaction.update(doc(db, 'users', creatorId), { winningsBalance: increment(amount) });
             transaction.update(doc(db, 'users', opponentId), { winningsBalance: increment(amount) });
 
-        } else if (!isPractice) { 
-            // If no opponent, only refund the creator
+            // Compensate the other player with the penalty amount
+            transaction.update(otherPlayerRef, { 
+                winningsBalance: increment(CANCELLATION_FEE) 
+            });
+
+
+        } else { 
+            // If no opponent, only refund the creator (if it's not a practice match)
             if (userId !== creatorId) {
                 throw new Error("Only the creator can cancel an open battle.");
             }
-            const creatorRef = doc(db, 'users', creatorId);
-            transaction.update(creatorRef, { winningsBalance: increment(amount) });
+            if (!isPractice) {
+                const creatorRef = doc(db, 'users', creatorId);
+                transaction.update(creatorRef, { winningsBalance: increment(amount) });
+            }
         }
 
+        // Finally, update the battle status
         transaction.update(battleRef, { 
             status: 'cancelled', 
             updatedAt: serverTimestamp() 
@@ -349,3 +361,4 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         }
     });
 }
+
