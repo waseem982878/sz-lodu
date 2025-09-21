@@ -60,18 +60,9 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
   
-  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    // Redirection is now fully handled by AuthProvider, but we can prevent rendering the form if user is already logged in.
-    if (!authLoading && user) {
-       router.replace('/home');
-    }
-  }, [user, authLoading, router]);
-  
   const showDialog = (title: string, message: string) => {
-    // Prevent multiple dialogs from opening
     if (dialogState.open) return;
     setDialogState({ open: true, title, message });
   };
@@ -88,18 +79,13 @@ export default function LoginPage() {
         const firebaseUser = userCredential.user;
         
         await updateProfile(firebaseUser, { displayName: name });
+        // Profile creation now happens here. AuthProvider will pick it up.
         await createUserProfile(firebaseUser, name, phoneNumber, referralCode.trim());
         
-        showDialog("Success", "Account created successfully! Redirecting...");
-        // Delay to allow firestore to be consistent before auth context redirects
-        setTimeout(() => {
-            // The AuthProvider will handle the final redirection after profile loads.
-            // No need to manually push here.
-        }, 2000);
-
+        // No need to show success dialog, AuthProvider will redirect.
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        // Successful login is handled by the AuthProvider's useEffect
+        // Successful login is handled by the AuthProvider's redirection logic.
       }
     } catch (err: any) {
       let friendlyMessage = "An unexpected error occurred. Please try again.";
@@ -134,7 +120,7 @@ export default function LoginPage() {
           setResetMessage('Password reset link sent! Check your email (including spam folder).');
       } catch (err: any) {
            let friendlyMessage = "Could not send reset email. Please try again later.";
-            if (err.code === 'auth/invalid-credential') { // Corrected from user-not-found
+            if (err.code === 'auth/invalid-email') {
                 friendlyMessage = "No user found with this email address.";
             }
            setResetMessage(friendlyMessage);
@@ -150,7 +136,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
         <Card className="w-full max-w-md shadow-2xl border-t-4 border-primary">
           <CardHeader className="text-center">
               <div className="flex justify-center items-center mb-2">

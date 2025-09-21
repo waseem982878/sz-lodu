@@ -1,8 +1,11 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // The recharts library uses some syntax that is not compatible with the modern JS build process.
-  // This line tells Next.js to run recharts through its compiler to fix this.
-  transpilePackages: ['recharts'],
+    // This is required to make 'recharts' library work with Next.js App Router
+    transpilePackages: ['recharts'],
+    experimental: {
+        serverComponentsExternalPackages: ['firebase-admin'],
+    }
 };
 
 export default nextConfig;

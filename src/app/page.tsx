@@ -3,8 +3,9 @@
 
 import { Loader2 } from 'lucide-react';
 
-// This is now the root entry point, which will simply show a loader.
-// The AuthProvider and layout files will handle all redirection logic.
+// This is the root entry point.
+// It shows a global loader while the AuthProvider determines the user's state.
+// All redirection logic is now handled in the AuthProvider.
 export default function RootPage() {
     return (
         <div className="flex flex-col justify-center items-center h-screen bg-background text-center p-4">

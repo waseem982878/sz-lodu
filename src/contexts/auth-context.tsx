@@ -2,13 +2,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, User, signOut } from "firebase/auth";
+import { onAuthStateChanged, User, signOut, getIdToken } from "firebase/auth";
 import { auth, db } from '@/firebase/config';
-import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, updateDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
 import { Loader2 } from 'lucide-react';
 import { createAgentProfile } from '@/services/user-agent-service';
+import Cookies from 'js-cookie';
 
 // IMPORTANT: Set your super admin email here
 const SUPER_ADMIN_EMAIL = "waseem982878@gmail.com";
@@ -41,43 +42,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAgent, setIsAgent] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  
-  const protectedRoutes = ['/home', '/profile', '/wallet', '/play', '/create', '/game', '/refer', '/leaderboard', '/support'];
-  const publicRoutes = ['/landing', '/login', '/terms', '/privacy', '/refund', '/gst', '/'];
-  const adminRoutes = ['/admin'];
-
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        setUser(firebaseUser);
+        // User is signed in.
         const superAdminCheck = firebaseUser.email === SUPER_ADMIN_EMAIL;
+        setUser(firebaseUser);
         setIsSuperAdmin(superAdminCheck);
 
+        // Listen for user profile changes
         const userRef = doc(db, 'users', firebaseUser.uid);
         const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const profile = docSnap.data() as UserProfile;
             setUserProfile(profile);
-            setIsAgent(!!profile.isAgent || superAdminCheck);
+            setIsAgent(!!profile.isAgent || superAdminCheck); // Agent if profile says so or is super admin
             updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
-            setLoading(false);
-          } else {
-             if (superAdminCheck) {
-               createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin").catch(console.error);
-             } else {
-                setUserProfile(null); // Let's signup flow create it
-                setLoading(false);
-             }
+          } else if (superAdminCheck) {
+            // If super admin has no profile, create it.
+            createAgentProfile(firebaseUser.uid, firebaseUser.email!, "Super Admin").catch(console.error);
           }
+           // The loading state will be handled by the redirection logic below.
         }, (error) => {
           console.error("Auth context profile listener error:", error);
           setUserProfile(null);
           setLoading(false);
         });
 
+        // Set session cookie
+        getIdToken(firebaseUser).then((token) => {
+          fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken: token }) });
+        });
+
         return () => unsubscribeProfile();
       } else {
+        // User is signed out.
+        fetch('/api/auth', { method: 'DELETE' });
         setUser(null);
         setUserProfile(null);
         setIsAgent(false);
@@ -90,45 +91,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading) return; // Don't do anything until auth state is resolved
 
-    const isPublic = publicRoutes.some(route => pathname === route);
-    const isAdminPath = pathname.startsWith('/admin');
+    const isAuthRoute = pathname === '/login';
+    const isPublicRoute = ['/landing', '/terms', '/privacy', '/refund', '/gst'].includes(pathname);
+    const isAdminRoute = pathname.startsWith('/admin');
 
-    if (!user) { // Not logged in
-        if (!isPublic) {
-            router.replace('/landing');
+    if (!user) {
+      // User is logged out. Redirect to landing if not on a public/auth route.
+      if (!isAuthRoute && !isPublicRoute) {
+        router.replace('/landing');
+      }
+    } else {
+      // User is logged in.
+      if (isAgent || isSuperAdmin) {
+        if (!isAdminRoute) {
+          // If agent/admin is not in admin area, redirect them there.
+          router.replace('/admin/dashboard');
         }
-    } else { // Logged in
-        if (isAgent || isSuperAdmin) {
-            if (!isAdminPath) {
-                router.replace('/admin/dashboard');
-            }
-        } else { // Regular user
-            if (isAdminPath) {
-                router.replace('/home');
-            } else if (isPublic) {
-                router.replace('/home');
-            }
+      } else {
+        // Regular user.
+        if (isAdminRoute) {
+          // If regular user tries to access admin, send to home.
+          router.replace('/home');
+        } else if (isAuthRoute || isPublicRoute) {
+          // If on login or public page, send to home.
+          router.replace('/home');
         }
+      }
     }
   }, [user, userProfile, isAgent, isSuperAdmin, loading, pathname, router]);
-  
+
   const logout = async () => {
     await signOut(auth);
+    // onAuthStateChanged will handle the state update and redirection.
   };
-  
+
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
-  
-  // Render children immediately if not in a loading state. The useEffect hook will handle redirection.
-  // This prevents the white screen of death by always rendering something.
+
+  // While auth state is loading, always show the global loader.
   if (loading) {
     return <GlobalLoader />;
   }
 
+  // Once loading is complete, the useEffect above will handle redirection.
+  // We render children to prevent a flash of incorrect content during the redirect.
   return (
     <AuthContext.Provider value={value}>
-        {children}
+      {children}
     </AuthContext.Provider>
   );
 }

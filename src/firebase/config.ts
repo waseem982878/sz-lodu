@@ -8,27 +8,38 @@ import { getStorage } from "firebase/storage";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyATZDqpzbFDaDz0JmR-uOneFbLklNmfPZ8",
-  authDomain: "ludo-king-battles.firebaseapp.com",
-  databaseURL: "https://ludo-king-battles-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ludo-king-battles",
-  storageBucket: "ludo-king-battles.appspot.com",
-  messagingSenderId: "211677946988",
-  appId: "1:211677946988:web:d1a505fbdbd88f5368a449",
-  measurementId: "G-J2B17ENJ9N"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
-
 
 // Initialize Firebase for SSR
 let app: FirebaseApp;
+
+// Check if the API key is provided before initializing
+if (!firebaseConfig.apiKey) {
+    console.error("Firebase API Key is missing. Please check your environment variables. The app will not initialize Firebase.");
+}
+
 if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+  try {
+    app = initializeApp(firebaseConfig);
+  } catch (e) {
+    console.error("Failed to initialize Firebase app", e);
+    // We will let the app continue to run, but Firebase services will fail.
+    // This can be useful for viewing non-Firebase parts of the UI.
+  }
 } else {
   app = getApp();
 }
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+const auth = getAuth(app!);
+const db = getFirestore(app!);
+const storage = getStorage(app!);
 
 export { app, auth, db, storage };
