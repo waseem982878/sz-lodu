@@ -218,6 +218,7 @@ const awardReferralBonus = async (transaction: any, referredUserId: string) => {
     const referralQuery = query(collection(db, 'referrals'), where('referredId', '==', referredUserId), where('status', '==', 'pending'), limit(1));
     const settingsRef = doc(db, 'config', 'appSettings');
     
+    // These reads happen OUTSIDE the main transaction that calls this function.
     const [referralSnap, settingsSnap] = await Promise.all([
         getDocs(referralQuery),
         getDoc(settingsRef)
@@ -231,7 +232,9 @@ const awardReferralBonus = async (transaction: any, referredUserId: string) => {
 
         const referrerRef = doc(db, 'users', referrerId);
         const referralRef = doc(db, 'referrals', referralDoc.id);
-
+        
+        // These updates are safe to be 'awaited' inside the calling transaction
+        // because they are passed the transaction object `t`.
         transaction.update(referrerRef, {
             winningsBalance: increment(referralBonus)
         });
@@ -368,10 +371,12 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
 
         if (!isPractice) {
             if (winnerProfile.gamesPlayed === 0) {
-                await awardReferralBonus(transaction, winnerId);
+                // Do not await this call inside the transaction
+                awardReferralBonus(transaction, winnerId);
             }
             if (loserProfile.gamesPlayed === 0) {
-                 await awardReferralBonus(transaction, loserId);
+                 // Do not await this call inside the transaction
+                 awardReferralBonus(transaction, loserId);
             }
         }
     });
