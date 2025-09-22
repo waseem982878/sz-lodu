@@ -42,9 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             setUserProfile(docSnap.data() as UserProfile);
-            if (!adminCheck) {
-              updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(err => console.log("Failed to update lastSeen"));
-            }
           } else {
              setUserProfile(null);
           }
