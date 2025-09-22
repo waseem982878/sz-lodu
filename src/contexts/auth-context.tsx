@@ -16,8 +16,7 @@ const SUPER_ADMIN_EMAIL = "waseem982878@gmail.com";
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
-  authLoading: boolean;
-  profileLoading: boolean;
+  loading: boolean; // Simplified loading state
   logout: () => Promise<void>;
   isSuperAdmin: boolean;
   isAgent: boolean;
@@ -38,13 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(true); // Default to true
+  const [profileLoading, setProfileLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isAgent, setIsAgent] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Step 1: Handle Auth State
+  // Handle Auth State
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
@@ -53,14 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribeAuth();
   }, []);
 
-  // Step 2: Handle Profile, Roles, and Session based on Auth State
+  // Handle Profile, Roles, and Session based on Auth State
   useEffect(() => {
     if (!user) {
       setUserProfile(null);
       setIsSuperAdmin(false);
       setIsAgent(false);
-      setProfileLoading(false); // No profile to load
-      fetch('/api/auth', { method: 'DELETE' }); // Clear the session cookie
+      setProfileLoading(false);
+      fetch('/api/auth', { method: 'DELETE' }).catch(() => {});
       return;
     }
 
@@ -70,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSuperAdmin(superAdminCheck);
 
     getIdToken(user, true).then((token) => {
-      fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken: token }) });
+      fetch('/api/auth', { method: 'POST', body: JSON.stringify({ idToken: token }) }).catch(() => {});
     });
 
     const userRef = doc(db, 'users', user.uid);
@@ -83,8 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
         }
       } else {
-        setUserProfile(null); 
-        setIsAgent(superAdminCheck); 
+        setUserProfile(null);
+        setIsAgent(superAdminCheck);
         if(superAdminCheck) {
             createAgentProfile(user.uid, user.email!, "Super Admin").catch(console.error);
         }
@@ -98,50 +97,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribeProfile();
   }, [user]);
+  
+  const loading = authLoading || profileLoading;
 
-  // Step 3: Handle redirection logic once all loading is complete
+  // Handle redirection logic once all loading is complete
   useEffect(() => {
-    // Wait for both auth and profile loading to finish
-    if (authLoading || profileLoading) return; 
+    if (loading) return;
 
     const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
     const isAdminRoute = pathname.startsWith('/admin');
 
     if (user) {
-        // User is authenticated
         const hasProfile = !!userProfile;
         const isDesignatedAgent = isAgent || isSuperAdmin;
         
         if (isDesignatedAgent) {
-            // User is an agent or super admin
             if (!isAdminRoute) {
                 router.replace('/admin/dashboard');
             }
         } else {
-            // User is a regular user
             if (isAdminRoute) {
-                router.replace('/home'); // Kick out of admin
+                router.replace('/home');
             } else if (isAuthPage && hasProfile) {
-                router.replace('/home'); // From login pages to home
+                router.replace('/home');
             }
         }
     } else {
-      // User is NOT authenticated
       if (!isAuthPage && !pathname.startsWith('/terms') && !pathname.startsWith('/privacy') && !pathname.startsWith('/refund') && !pathname.startsWith('/gst')) {
         router.replace('/landing');
       }
     }
-  }, [user, userProfile, isAgent, isSuperAdmin, authLoading, profileLoading, pathname, router]);
+  }, [user, userProfile, isAgent, isSuperAdmin, loading, pathname, router]);
 
   const logout = async () => {
     await signOut(auth);
   };
 
-  const value = { user, userProfile, authLoading, profileLoading, logout, isSuperAdmin, isAgent };
+  const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
   
   return (
     <AuthContext.Provider value={value}>
-      {authLoading || profileLoading ? <GlobalLoader /> : children}
+      {loading ? <GlobalLoader /> : children}
     </AuthContext.Provider>
   );
 }

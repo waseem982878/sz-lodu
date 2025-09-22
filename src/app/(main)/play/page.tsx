@@ -126,9 +126,9 @@ function PlayPageContent() {
   useEffect(() => {
     if (!user) return;
 
-    // Separate, valid queries for creator and opponent roles
     const activeStatuses: Battle['status'][] = ['open', 'inprogress', 'waiting_for_players_ready', 'result_pending'];
 
+    // --- Corrected Query for "My Battles" ---
     setLoadingMyBattles(true);
     const creatorQuery = query(
       collection(db, 'battles'),
@@ -146,25 +146,29 @@ function PlayPageContent() {
     const unsubCreator = onSnapshot(creatorQuery, (creatorSnapshot) => {
         const creatorBattles = creatorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
         
+        // This nested subscription ensures we have both sets of data before combining them
         const unsubOpponent = onSnapshot(opponentQuery, (opponentSnapshot) => {
             const opponentBattles = opponentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
             
-            // Combine and remove duplicates
+            // Combine and remove duplicates, which can happen if a user is both creator and opponent (though unlikely)
             const allMyBattles = [...creatorBattles, ...opponentBattles];
             const uniqueBattles = Array.from(new Map(allMyBattles.map(battle => [battle.id, battle])).values());
             
             setMyBattles(uniqueBattles);
             setLoadingMyBattles(false);
         }, (error) => {
+            console.error("Error fetching opponent battles:", error);
             setLoadingMyBattles(false);
         });
 
         // Return a cleanup function for the nested listener
         return () => unsubOpponent();
     }, (error) => {
+        console.error("Error fetching creator battles:", error);
         setLoadingMyBattles(false);
     });
 
+    // --- Corrected Query for "Other Open Battles" ---
     setLoadingOpenBattles(true);
     const openBattlesQuery = query(
         collection(db, 'battles'),
@@ -177,6 +181,7 @@ function PlayPageContent() {
       setOtherOpenBattles(battlesData);
       setLoadingOpenBattles(false);
     }, (error) => {
+      console.error("Error fetching open battles:", error);
       setLoadingOpenBattles(false);
     });
 
