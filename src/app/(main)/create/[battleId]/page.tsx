@@ -77,23 +77,23 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     };
     const unsubscribe = getBattle(battleId, (battleData) => {
         if (battleData) {
-            // If an opponent has joined, this page is no longer valid for them.
-            // Redirect them to the main game room.
-            if (battleData.opponent?.id === user.uid) {
-                router.replace(`/game/${battleId}`);
-                return;
-            }
-             // If the battle creator is viewing, show the page.
-             if (battleData.creator.id === user.uid) {
+             // If the battle creator is NOT viewing, check if they are the opponent.
+             if (battleData.creator.id !== user.uid) {
+                // If an opponent has joined and it's this user, redirect them to the main game room.
+                if (battleData.opponent?.id === user.uid) {
+                    router.replace(`/game/${battleId}`);
+                    return;
+                }
+                 // User is neither creator nor opponent.
+                 setError("You are not part of this battle.");
+                 setTimeout(() => router.push('/play'), 3000);
+
+             } else { // The creator is viewing the page
                 setBattle(battleData);
                 // If battle has moved on, redirect creator to game room too
                 if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed' || battleData.status === 'waiting_for_players_ready') {
                     router.replace(`/game/${battleId}`);
                 }
-             } else {
-                 // User is neither creator nor opponent.
-                 setError("You are not part of this battle.");
-                 setTimeout(() => router.push('/play'), 3000);
              }
         } else {
             setError("Battle not found or has been cancelled.");
@@ -276,3 +276,5 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     </div>
   );
 }
+
+    
