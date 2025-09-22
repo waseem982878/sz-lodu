@@ -11,7 +11,7 @@ import type { Battle, GameType } from "@/models/battle.model";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { createBattle, acceptBattle } from "@/services/battle-service";
-import { collection, query, where, onSnapshot, or } from "firebase/firestore";
+import { collection, query, where, onSnapshot, Unsubscribe } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
 
@@ -127,24 +127,47 @@ function PlayPageContent() {
     if (!user) return;
     setLoading(true);
 
-    const myBattlesQuery = query(
-        collection(db, "battles"), 
-        or(
-            where('creator.id', '==', user.uid), 
-            where('opponent.id', '==', user.uid)
-        ),
+    const createdQuery = query(
+        collection(db, "battles"),
+        where('creator.id', '==', user.uid),
+        where('gameType', '==', gameType),
+        where('status', '!=', 'cancelled')
+    );
+
+    const joinedQuery = query(
+        collection(db, "battles"),
+        where('opponent.id', '==', user.uid),
         where('gameType', '==', gameType),
         where('status', '!=', 'cancelled')
     );
     
-    const unsubMyBattles = onSnapshot(myBattlesQuery, (snapshot) => {
-        const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-        setMyBattles(battlesData);
+    let createdBattles: Battle[] = [];
+    let joinedBattles: Battle[] = [];
+    let unsubscribes: Unsubscribe[] = [];
+
+    const combineBattles = () => {
+        const allMyBattles = [...createdBattles, ...joinedBattles];
+        const uniqueBattles = Array.from(new Map(allMyBattles.map(b => [b.id, b])).values());
+        setMyBattles(uniqueBattles);
+    };
+
+    unsubscribes.push(onSnapshot(createdQuery, (snapshot) => {
+        createdBattles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
+        combineBattles();
         setLoading(false);
     }, (err) => {
-        console.error("Error fetching my battles: ", err);
+        console.error("Error fetching created battles: ", err);
         setLoading(false);
-    });
+    }));
+
+    unsubscribes.push(onSnapshot(joinedQuery, (snapshot) => {
+        joinedBattles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
+        combineBattles();
+        setLoading(false);
+    }, (err) => {
+        console.error("Error fetching joined battles: ", err);
+        setLoading(false);
+    }));
     
     const openBattlesQuery = query(
         collection(db, "battles"), 
@@ -152,18 +175,17 @@ function PlayPageContent() {
         where('gameType', '==', gameType),
         where('creator.id', '!=', user.uid)
     );
-    const unsubOpenBattles = onSnapshot(openBattlesQuery, (snapshot) => {
+    unsubscribes.push(onSnapshot(openBattlesQuery, (snapshot) => {
         const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
         setOtherOpenBattles(battlesData);
         setLoading(false);
     }, (err) => {
         console.error("Error fetching open battles: ", err);
         setLoading(false);
-    });
+    }));
 
     return () => {
-        unsubMyBattles();
-        unsubOpenBattles();
+        unsubscribes.forEach(unsub => unsub());
     };
 }, [user, gameType]);
 
