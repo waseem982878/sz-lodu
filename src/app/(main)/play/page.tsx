@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -174,7 +175,7 @@ function PlayPageContent() {
     }, (err) => {
         console.error("Error fetching battles: ", err);
         setLoading(false);
-    }));
+    });
 
     return () => unsubscribe();
   }, [user, gameType]);
@@ -341,5 +342,3 @@ export default function Play() {
       </Suspense>
   )
 }
-
-    
