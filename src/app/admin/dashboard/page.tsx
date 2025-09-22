@@ -18,7 +18,7 @@ const initialStats = {
     pendingKYCs: { title: "Pending KYCs", value: "0", icon: ShieldQuestion, color: "text-red-500", note: "" },
 };
 
-const TOTAL_LISTENERS = 5; // Reduced from 6, as we are disabling the expensive revenue calculation.
+const TOTAL_LISTENERS = 5; 
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(() => {
@@ -38,6 +38,13 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+  
+   const onListenerError = (type: string, err: Error) => {
+    console.error(`${type} listener error:`, err); 
+    setError(`Failed to load ${type} data.`); 
+    onListenerLoaded();
+  };
+
 
   useEffect(() => {
     setLoading(true);
@@ -49,32 +56,32 @@ export default function AdminDashboard() {
       onSnapshot(collection(db, "users"), (snapshot) => {
         setStats(prev => ({ ...prev, totalUsers: { ...prev.totalUsers, value: snapshot.size.toString() } }));
         onListenerLoaded();
-      }, err => { console.error("User listener error:", err); setError("Failed to load user data."); onListenerLoaded(); }),
+      }, err => onListenerError('user', err)),
 
       // Listener for Pending KYCs
       onSnapshot(query(collection(db, "users"), where("kycStatus", "==", "Pending")), (snapshot) => {
         setStats(prev => ({ ...prev, pendingKYCs: { ...prev.pendingKYCs, value: snapshot.size.toString() } }));
         onListenerLoaded();
-      }, err => { console.error("KYC listener error:", err); setError("Failed to load KYC data."); onListenerLoaded(); }),
+      }, err => onListenerError('KYC', err)),
 
       // Listener for Active Battles
       onSnapshot(query(collection(db, "battles"), where('status', 'in', ['inprogress', 'result_pending', 'waiting_for_players_ready'])), (snapshot) => {
         setStats(prev => ({...prev, activeBattles: {...prev.activeBattles, value: snapshot.size.toString()}}));
         onListenerLoaded();
-      }, err => { console.error("Active battles error:", err); setError("Failed to load battle data."); onListenerLoaded(); }),
+      }, err => onListenerError('battle', err)),
 
       // Listener for Pending Withdrawals
       onSnapshot(query(collection(db, "transactions"), where('type', '==', 'withdrawal'), where('status', '==', 'pending')), (snapshot) => {
         setStats(prev => ({...prev, pendingWithdrawals: {...prev.pendingWithdrawals, value: snapshot.size.toString()}}));
         onListenerLoaded();
-      }, err => { console.error("Withdrawals listener error:", err); setError("Failed to load withdrawal data."); onListenerLoaded(); }),
+      }, err => onListenerError('withdrawal', err)),
 
       // Listener for Recent Transactions
       onSnapshot(query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(5)), (snapshot) => {
         const recentTransactionsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
         setRecentTransactions(recentTransactionsData);
         onListenerLoaded();
-      }, err => { console.error("Recent transactions error:", err); setError("Failed to load transaction data."); onListenerLoaded(); }),
+      }, err => onListenerError('transaction', err)),
     ];
 
     return () => {
@@ -99,7 +106,7 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
       
-      {error && <p className="text-destructive text-center">{error}</p>} {/* Show non-critical errors at the top */}
+      {error && <p className="text-destructive text-center p-4 bg-destructive/10 rounded-md">{error}</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {Object.values(stats).map((stat) => (
