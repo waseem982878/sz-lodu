@@ -3,15 +3,15 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Trophy, Swords, Hourglass, PlusCircle, BrainCircuit, Loader2, ArrowLeft } from "lucide-react";
+import { Trophy, Swords, Hourglass, PlusCircle, BrainCircuit, Loader2, ArrowLeft, Users } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import type { Battle, GameType } from "@/models/battle.model";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { createBattle, acceptBattle } from "@/services/battle-service";
-import { collection, query, where, onSnapshot, Unsubscribe } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
 
@@ -95,6 +95,40 @@ function OpenBattleCard({ battle, onPlay }: { battle: Battle, onPlay: (battleId:
   );
 }
 
+function OngoingBattleCard({ battle }: { battle: Battle }) {
+    const router = useRouter();
+    if (!battle.opponent) return null; // Should not happen for ongoing battles
+    
+    const handleViewBattle = () => {
+        router.push(`/game/${battle.id}`);
+    }
+
+    return (
+        <Card className="p-2 bg-gradient-to-tr from-secondary to-card shadow-lg relative overflow-hidden border cursor-pointer" onClick={handleViewBattle}>
+            <div className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                LIVE
+            </div>
+            <div className="flex justify-between items-center text-center">
+                <div className="flex flex-col items-center gap-1 w-1/3">
+                    <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 border-blue-400" />
+                    <span className="font-semibold text-xs truncate w-full">{battle.creator.name}</span>
+                </div>
+                
+                <div className="text-center px-1">
+                    <p className="text-xs text-muted-foreground">Prize</p>
+                    <p className="font-bold text-lg text-green-500">₹{battle.amount}</p>
+                    <p className="text-orange-400 font-bold text-md -my-0.5">VS</p>
+                </div>
+
+                 <div className="flex flex-col items-center gap-1 w-1/3">
+                    <Image src={battle.opponent.avatarUrl} alt={battle.opponent.name} width={32} height={32} className="rounded-full border-2 border-red-400" />
+                    <span className="font-semibold text-xs truncate w-full">{battle.opponent.name}</span>
+                </div>
+            </div>
+        </Card>
+    )
+}
+
 function SectionDivider({ title, icon }: { title: string, icon: React.ElementType }) {
     const Icon = icon;
     return (
@@ -118,77 +152,43 @@ function PlayPageContent() {
   const { user, userProfile, loading: authLoading } = useAuth();
 
   const [amount, setAmount] = useState("");
-  const [myBattles, setMyBattles] = useState<Battle[]>([]);
-  const [otherOpenBattles, setOtherOpenBattles] = useState<Battle[]>([]);
+  const [allActiveBattles, setAllActiveBattles] = useState<Battle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-
-    const createdQuery = query(
-        collection(db, "battles"),
-        where('creator.id', '==', user.uid),
-        where('gameType', '==', gameType),
-        where('status', '!=', 'cancelled')
-    );
-
-    const joinedQuery = query(
-        collection(db, "battles"),
-        where('opponent.id', '==', user.uid),
-        where('gameType', '==', gameType),
-        where('status', '!=', 'cancelled')
-    );
     
-    let createdBattles: Battle[] = [];
-    let joinedBattles: Battle[] = [];
-    let unsubscribes: Unsubscribe[] = [];
-
-    const combineBattles = () => {
-        const allMyBattles = [...createdBattles, ...joinedBattles];
-        const uniqueBattles = Array.from(new Map(allMyBattles.map(b => [b.id, b])).values());
-        setMyBattles(uniqueBattles);
-    };
-
-    unsubscribes.push(onSnapshot(createdQuery, (snapshot) => {
-        createdBattles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-        combineBattles();
-        setLoading(false);
-    }, (err) => {
-        console.error("Error fetching created battles: ", err);
-        setLoading(false);
-    }));
-
-    unsubscribes.push(onSnapshot(joinedQuery, (snapshot) => {
-        joinedBattles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-        combineBattles();
-        setLoading(false);
-    }, (err) => {
-        console.error("Error fetching joined battles: ", err);
-        setLoading(false);
-    }));
-    
-    const openBattlesQuery = query(
+    // One listener to get all relevant battles
+    const battlesQuery = query(
         collection(db, "battles"), 
-        where('status', '==', 'open'),
         where('gameType', '==', gameType),
-        where('creator.id', '!=', user.uid)
+        where('status', 'in', ['open', 'inprogress', 'waiting_for_players_ready', 'result_pending'])
     );
-    unsubscribes.push(onSnapshot(openBattlesQuery, (snapshot) => {
+
+    const unsubscribe = onSnapshot(battlesQuery, (snapshot) => {
         const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-        setOtherOpenBattles(battlesData);
+        setAllActiveBattles(battlesData);
         setLoading(false);
     }, (err) => {
-        console.error("Error fetching open battles: ", err);
+        console.error("Error fetching battles: ", err);
         setLoading(false);
     }));
 
-    return () => {
-        unsubscribes.forEach(unsub => unsub());
-    };
-}, [user, gameType]);
+    return () => unsubscribe();
+  }, [user, gameType]);
 
+  const { myBattles, openBattles, ongoingBattles } = useMemo(() => {
+    if (!user) return { myBattles: [], openBattles: [], ongoingBattles: [] };
+
+    const myBattles = allActiveBattles.filter(b => b.creator.id === user.uid || b.opponent?.id === user.uid);
+    const openBattles = allActiveBattles.filter(b => b.status === 'open' && b.creator.id !== user.uid);
+    const ongoingBattles = allActiveBattles.filter(b => b.status === 'inprogress' && b.creator.id !== user.uid && b.opponent?.id !== user.uid);
+    
+    return { myBattles, openBattles, ongoingBattles };
+
+  }, [allActiveBattles, user]);
   
   const handleCreateBattle = async (isPractice = false) => {
     if (!user || !userProfile || isCreating) return;
@@ -227,7 +227,7 @@ function PlayPageContent() {
   const handleAcceptBattle = async (battleId: string) => {
     if (!user || !userProfile) return;
 
-    const battleToAccept = otherOpenBattles.find(b => b.id === battleId);
+    const battleToAccept = openBattles.find(b => b.id === battleId);
     if (!battleToAccept) return;
     
     const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
@@ -299,8 +299,7 @@ function PlayPageContent() {
           <>
             <SectionDivider title="My Battles" icon={Hourglass} />
             <div className="space-y-3">
-                {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> :
-                myBattles.map((battle) => (
+                {myBattles.map((battle) => (
                     <MyBattleCard key={battle.id} battle={battle} />
                 ))}
             </div>
@@ -310,12 +309,24 @@ function PlayPageContent() {
       <SectionDivider title="Open Battles" icon={Trophy} />
       
       <div className="space-y-3">
-        {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : otherOpenBattles.length > 0 ? (
-            otherOpenBattles.map((battle) => (
+        {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : openBattles.length > 0 ? (
+            openBattles.map((battle) => (
                 <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
             ))
         ) : (
             <p className="text-center text-muted-foreground py-8">No open battles right now. Create one!</p>
+        )}
+      </div>
+
+      <SectionDivider title="All Ongoing Battles" icon={Users} />
+
+      <div className="space-y-3">
+         {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : ongoingBattles.length > 0 ? (
+            ongoingBattles.map((battle) => (
+                <OngoingBattleCard key={battle.id} battle={battle} />
+            ))
+         ) : (
+            <p className="text-center text-muted-foreground py-8">No other battles are in progress.</p>
         )}
       </div>
 
@@ -330,3 +341,5 @@ export default function Play() {
       </Suspense>
   )
 }
+
+    
