@@ -275,3 +275,5 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     </div>
   );
 }
+
+    
