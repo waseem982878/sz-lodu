@@ -82,7 +82,11 @@ export default function LandingPage() {
             setLoading(false);
         };
         
-        loadPageData();
+        if (db) {
+            loadPageData();
+        } else {
+            setLoading(false);
+        }
 
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
@@ -259,3 +263,5 @@ export default function LandingPage() {
         </div>
     );
 }
+
+    
