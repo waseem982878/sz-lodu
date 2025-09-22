@@ -16,7 +16,8 @@ const SUPER_ADMIN_EMAIL = "waseem982878@gmail.com";
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
-  loading: boolean;
+  authLoading: boolean;
+  profileLoading: boolean;
   logout: () => Promise<void>;
   isSuperAdmin: boolean;
   isAgent: boolean;
@@ -36,32 +37,35 @@ function GlobalLoader() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true); // Default to true
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isAgent, setIsAgent] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
+  // Step 1: Handle Auth State
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser); // Set user immediately
-      setLoading(false); // **CRITICAL FIX**: Stop loading as soon as auth state is known.
+      setUser(firebaseUser);
+      setAuthLoading(false);
     });
-
     return () => unsubscribeAuth();
   }, []);
 
+  // Step 2: Handle Profile, Roles, and Session based on Auth State
   useEffect(() => {
     if (!user) {
-      // User is logged out
       setUserProfile(null);
       setIsSuperAdmin(false);
       setIsAgent(false);
+      setProfileLoading(false); // No profile to load
       fetch('/api/auth', { method: 'DELETE' }); // Clear the session cookie
       return;
     }
 
-    // User is logged in, handle profile, roles, and session cookie
+    setProfileLoading(true);
+
     const superAdminCheck = user.email === SUPER_ADMIN_EMAIL;
     setIsSuperAdmin(superAdminCheck);
 
@@ -75,30 +79,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const profile = docSnap.data() as UserProfile;
         setUserProfile(profile);
         setIsAgent(!!profile.isAgent || superAdminCheck);
-        // Only update lastSeen if they are a regular user to avoid unnecessary writes for admins
         if (!profile.isAgent && !superAdminCheck) {
             updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
         }
       } else {
-        // Profile doesn't exist yet (new user), or user is a new super admin
         setUserProfile(null); 
         setIsAgent(superAdminCheck); 
         if(superAdminCheck) {
-            // Create profile for super admin on first login
             createAgentProfile(user.uid, user.email!, "Super Admin").catch(console.error);
         }
       }
+      setProfileLoading(false);
     }, (error) => {
       console.error("Auth context profile listener error:", error);
       setUserProfile(null);
+      setProfileLoading(false);
     });
 
     return () => unsubscribeProfile();
   }, [user]);
 
+  // Step 3: Handle redirection logic once all loading is complete
   useEffect(() => {
-    // This effect handles redirection logic and runs ONLY when loading is complete.
-    if (loading) return; 
+    // Wait for both auth and profile loading to finish
+    if (authLoading || profileLoading) return; 
 
     const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
     const isAdminRoute = pathname.startsWith('/admin');
@@ -127,17 +131,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.replace('/landing');
       }
     }
-  }, [user, userProfile, isAgent, isSuperAdmin, loading, pathname, router]);
+  }, [user, userProfile, isAgent, isSuperAdmin, authLoading, profileLoading, pathname, router]);
 
   const logout = async () => {
     await signOut(auth);
   };
 
-  const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
+  const value = { user, userProfile, authLoading, profileLoading, logout, isSuperAdmin, isAgent };
   
   return (
     <AuthContext.Provider value={value}>
-      {loading ? <GlobalLoader /> : children}
+      {authLoading || profileLoading ? <GlobalLoader /> : children}
     </AuthContext.Provider>
   );
 }
