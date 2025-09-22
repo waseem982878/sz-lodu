@@ -3,14 +3,64 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle } from "lucide-react";
+import { Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle, Edit } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { getBattle, setRoomCode as setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
+import { Label } from "@/components/ui/label";
+
+
+function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: string, newCode: string) => Promise<void> }) {
+    const [newCode, setNewCode] = useState(battle.roomCode || "");
+    const [isSaving, setIsSaving] = useState(false);
+    const [open, setOpen] = useState(false);
+
+    const handleSave = async () => {
+        if (!newCode.trim()) {
+            alert("Room code cannot be empty.");
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await onSave(battle.id, newCode.trim());
+            setOpen(false);
+        } catch (error) {
+             alert("Failed to update room code.");
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon"><Edit className="h-5 w-5 text-muted-foreground" /></Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="text-primary">Edit Room Code</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <Label htmlFor="room-code-edit">New Ludo King Room Code</Label>
+                    <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                         <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={handleSave} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Code
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 function RulesDialog() {
   return (
@@ -78,7 +128,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
         if (battleData) {
              if (battleData.creator.id === user.uid) {
                 setBattle(battleData);
-                if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed' || battleData.status === 'waiting_for_players_ready') {
+                if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed') {
                     router.replace(`/game/${battleId}`);
                 }
              } else {
@@ -94,11 +144,15 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     return () => unsubscribe();
   }, [battleId, user, router]);
 
-  const handleCodeSubmit = async () => {
-      if(roomCode.trim() && battle) {
+  const handleCodeSubmit = async (id?: string, code?: string) => {
+      const battleIdToUse = id || battle?.id;
+      const codeToUse = code || roomCode.trim();
+
+      if(codeToUse && battleIdToUse) {
           setIsSubmittingCode(true);
           try {
-            await setBattleRoomCode(battle.id, roomCode.trim());
+            await setBattleRoomCode(battleIdToUse, codeToUse);
+            setRoomCode(""); // Clear input after successful submission
           } catch(err) {
               alert("Failed to set room code.");
           } finally {
@@ -176,7 +230,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
                             className="text-center tracking-widest"
                             disabled={isSubmittingCode}
                         />
-                        <Button onClick={handleCodeSubmit} disabled={isSubmittingCode || !roomCode}>
+                        <Button onClick={() => handleCodeSubmit()} disabled={isSubmittingCode || !roomCode}>
                             {isSubmittingCode ? <Loader2 className="animate-spin" /> : "Set"}
                         </Button>
                     </div>
@@ -185,15 +239,16 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
             )
         }
 
-        if (battle.status === 'waiting_for_players_ready') {
+        if (battle.status === 'waiting_for_players_ready' || battle.status === 'open') {
              return (
                 <div className="text-center py-4 space-y-4">
                      <p className="text-sm text-muted-foreground">Room Code</p>
-                    <div className="flex justify-center items-center gap-4 my-2">
+                    <div className="flex justify-center items-center gap-2 my-2">
                         <p className="text-4xl font-bold tracking-widest text-primary">{battle.roomCode}</p>
                         <Button variant="ghost" size="icon" onClick={handleCopy}>
-                            <Copy className="w-6 h-6" />
+                            <Copy className="w-5 h-5" />
                         </Button>
+                        <EditCodeModal battle={battle} onSave={handleCodeSubmit} />
                     </div>
 
                     {isPlayerReady ? (

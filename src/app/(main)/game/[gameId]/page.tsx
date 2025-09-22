@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
-import { Info, Copy, Trash2, Upload, Crown, TriangleAlert, Loader2, CheckCircle, X, CircleHelp } from "lucide-react";
+import { Info, Copy, Trash2, Upload, Crown, TriangleAlert, Loader2, CheckCircle, X, CircleHelp, Edit } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -13,7 +13,56 @@ import { uploadImage } from "@/services/storage-service";
 import type { Battle } from "@/models/battle.model";
 import LudoLaunchButton from "@/components/LudoLaunchButton";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
+
+function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: string, newCode: string) => Promise<void> }) {
+    const [newCode, setNewCode] = useState(battle.roomCode || "");
+    const [isSaving, setIsSaving] = useState(false);
+    const [open, setOpen] = useState(false);
+
+    const handleSave = async () => {
+        if (!newCode.trim()) {
+            alert("Room code cannot be empty.");
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await onSave(battle.id, newCode.trim());
+            setOpen(false);
+        } catch (error) {
+             alert("Failed to update room code.");
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon"><Edit className="h-5 w-5 text-muted-foreground" /></Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="text-primary">Edit Room Code</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <Label htmlFor="room-code-edit">New Ludo King Room Code</Label>
+                    <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                         <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={handleSave} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Code
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 function RulesDialog() {
   return (
@@ -168,7 +217,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
   const [error, setError] = useState<string | null>(null);
   const [resultStatus, setResultStatus] = useState<'won' | 'lost' | null>(null);
   const [isMarkingReady, setIsMarkingReady] = useState(false);
-  const [roomCode, setRoomCode] = useState("");
+  const [roomCodeForInput, setRoomCodeForInput] = useState("");
   const [isSubmittingCode, setIsSubmittingCode] = useState(false);
 
   useEffect(() => {
@@ -178,7 +227,6 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     const unsubscribe = getBattle(gameId, (battleData) => {
         if (battleData) {
             setBattle(battleData);
-            if (battleData.roomCode) setRoomCode(battleData.roomCode);
         } else {
             setError("Battle not found or has been cancelled.");
             setTimeout(() => router.push('/play'), 3000);
@@ -221,11 +269,15 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     }
   }
 
-  const handleCodeSubmit = async () => {
-      if(roomCode.trim() && battle) {
+  const handleCodeSubmit = async (id?: string, code?: string) => {
+      const battleIdToUse = id || battle?.id;
+      const codeToUse = code || roomCodeForInput.trim();
+
+      if(codeToUse && battleIdToUse) {
           setIsSubmittingCode(true);
           try {
-            await setBattleRoomCode(battle.id, roomCode.trim());
+            await setBattleRoomCode(battleIdToUse, codeToUse);
+            setRoomCodeForInput(""); // Clear input after successful submission
           } catch(err) {
               alert("Failed to set room code.");
           } finally {
@@ -296,12 +348,12 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
                             <Input 
                                 type="text" 
                                 placeholder="Enter room code" 
-                                value={roomCode}
-                                onChange={(e) => setRoomCode(e.target.value)}
+                                value={roomCodeForInput}
+                                onChange={(e) => setRoomCodeForInput(e.target.value)}
                                 className="text-center tracking-widest"
                                 disabled={isSubmittingCode}
                             />
-                            <Button onClick={handleCodeSubmit} disabled={isSubmittingCode || !roomCode}>
+                            <Button onClick={() => handleCodeSubmit()} disabled={isSubmittingCode || !roomCodeForInput}>
                                 {isSubmittingCode ? <Loader2 className="animate-spin" /> : "Set"}
                             </Button>
                         </div>
@@ -317,22 +369,28 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
             )
         }
 
-        if (battle.status === 'waiting_for_players_ready') {
-            if (isPlayerReady) {
-                return (
-                    <div className='text-center py-4'>
-                        <p className="text-lg font-semibold my-2 text-green-600">You are ready!</p>
-                        <p>Waiting for {opponent?.name || 'opponent'} to confirm...</p>
-                    </div>
-                );
-            }
+        if (battle.status === 'waiting_for_players_ready' || battle.status === 'open') {
             return (
                  <div className="text-center py-4 space-y-4">
-                    <p className="font-semibold">Join the room in Ludo King and click Ready when you are in.</p>
-                     <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={handleReady} disabled={isMarkingReady}>
-                        {isMarkingReady ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                         I'm Ready
-                     </Button>
+                    <p className="text-sm text-muted-foreground">Room Code</p>
+                    <div className="flex justify-center items-center gap-2 my-2">
+                        <p className="text-4xl font-bold tracking-widest text-primary">{battle.roomCode}</p>
+                        <Button variant="ghost" size="icon" onClick={handleCopy}>
+                            <Copy className="w-5 h-5" />
+                        </Button>
+                        {isCreator && <EditCodeModal battle={battle} onSave={handleCodeSubmit} />}
+                    </div>
+                    {isPlayerReady ? (
+                        <div className='text-center py-4'>
+                            <p className="text-lg font-semibold my-2 text-green-600">You are ready!</p>
+                            <p>Waiting for {opponent?.name || 'opponent'} to confirm...</p>
+                        </div>
+                    ) : (
+                         <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={handleReady} disabled={isMarkingReady}>
+                            {isMarkingReady ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                             I'm Ready
+                         </Button>
+                    )}
                 </div>
             )
         }
