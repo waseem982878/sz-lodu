@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Banknote, MessageSquare, ShieldCheck, Star, Swords, Trophy, UserPlus, Zap } from "lucide-react";
 import Link from "next/link";
@@ -87,7 +88,7 @@ export default async function LandingPage() {
                                  asChild
                                  className="text-lg py-6 px-8 rounded-full font-semibold"
                             >
-                               <Link href="/home">
+                               <Link href="/login">
                                 <ArrowDown className="mr-2 h-5 w-5"/>
                                 Download App & Play
                                </Link>
@@ -184,7 +185,7 @@ export default async function LandingPage() {
                         size="lg"
                         className="text-xl py-8 px-12 rounded-full font-semibold"
                     >
-                       <Link href="/home">Download Now & Get Started</Link>
+                       <Link href="/login">Download Now & Get Started</Link>
                     </Button>
                 </section>
 
