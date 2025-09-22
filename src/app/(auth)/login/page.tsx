@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -15,7 +16,7 @@ import Link from "next/link";
 // Add a global property to the window object for reCAPTCHA
 declare global {
   interface Window {
-    recaptchaVerifier: RecaptchaVerifier;
+    recaptchaVerifier?: RecaptchaVerifier;
     confirmationResult?: ConfirmationResult;
   }
 }
@@ -27,23 +28,6 @@ export default function LoginPage() {
     const [showOtp, setShowOtp] = useState(false);
     const router = useRouter();
 
-    const setupRecaptcha = () => {
-        // It's important to only create the verifier once.
-        if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                'size': 'invisible',
-                'callback': () => {
-                    // reCAPTCHA solved, allow signInWithPhoneNumber.
-                    console.log("reCAPTCHA solved");
-                },
-                 'expired-callback': () => {
-                    // Response expired. Ask user to solve reCAPTCHA again.
-                    console.log("reCAPTCHA expired");
-                }
-            });
-        }
-    }
-
     const onSignInSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!phone || phone.length !== 10) {
@@ -51,21 +35,41 @@ export default function LoginPage() {
             return;
         }
         setLoading(true);
-        setupRecaptcha();
-        const fullPhoneNumber = `+91${phone}`;
-        const appVerifier = window.recaptchaVerifier;
+
+        // Cleanup previous verifier if it exists
+        if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+        }
 
         try {
+            // Use the recommended initialization without a DOM element,
+            // letting Firebase handle the invisible reCAPTCHA.
+            const appVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
+                'size': 'invisible',
+                'callback': (response: any) => {
+                    // reCAPTCHA solved, allow signInWithPhoneNumber.
+                    // This callback is sometimes needed for proper execution flow.
+                    console.log("reCAPTCHA solved");
+                }
+            });
+            window.recaptchaVerifier = appVerifier;
+
+            const fullPhoneNumber = `+91${phone}`;
             const confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
             window.confirmationResult = confirmationResult;
             setShowOtp(true);
             alert("OTP sent successfully!");
+
         } catch (error) {
             console.error("Error during OTP sending:", error);
             alert("Failed to send OTP. Please check your phone number and try again.");
-             // Reset reCAPTCHA UI
-            if ((window as any).grecaptcha) {
-                (window as any).grecaptcha.reset();
+            // Reset reCAPTCHA on error
+            if (window.recaptchaVerifier) {
+                window.recaptchaVerifier.render().then((widgetId) => {
+                    if (typeof grecaptcha !== 'undefined') {
+                        grecaptcha.reset(widgetId);
+                    }
+                });
             }
         } finally {
             setLoading(false);
@@ -98,7 +102,6 @@ export default function LoginPage() {
 
     return (
         <>
-            <div id="recaptcha-container"></div>
             <div className="text-center mb-6">
                  <Link href="/landing" className="flex items-center justify-center">
                     <span className="text-3xl font-extrabold bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto] font-heading">SZ LUDO</span>
@@ -135,7 +138,7 @@ export default function LoginPage() {
                                         />
                                     </div>
                                 </div>
-                                <Button type="submit" className="w-full" disabled={loading}>
+                                <Button id="sign-in-button" type="submit" className="w-full" disabled={loading}>
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Send OTP
                                 </Button>
@@ -170,3 +173,4 @@ export default function LoginPage() {
         </>
     );
 }
+
