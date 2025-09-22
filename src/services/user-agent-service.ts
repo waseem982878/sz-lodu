@@ -1,144 +1,97 @@
 
-import { db } from '@/firebase/config';
-import { doc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit, addDoc, getDoc } from 'firebase/firestore';
-import type { User } from 'firebase/auth';
-import type { UserProfile } from '@/models/user.model';
-import type { Agent } from '@/models/agent.model';
+import { doc, setDoc, serverTimestamp, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
+import type { UserProfile } from "@/models/user.model";
 
-// Create or update user profile in Firestore
-export const createUserProfile = async (user: User, name: string, phoneNumber: string | null, referralCode?: string) => {
+/**
+ * Creates or updates a user profile in Firestore.
+ * This is the primary function for managing user data upon login or changes.
+ * @param userId The user's ID.
+ * @param data The partial user data to create or merge.
+ * @returns A promise that resolves when the profile is created or updated.
+ */
+export const updateUserProfile = async (userId: string, data: Partial<UserProfile>): Promise<void> => {
     if (!db) {
-        console.error("Firestore is not initialized. Cannot create user profile.");
+        console.error("Database not available. Cannot update user profile.");
         return;
     }
-    const userRef = doc(db, 'users', user.uid);
+    const userRef = doc(db, "users", userId);
     
-    // Check if the document already exists. If so, don't overwrite to prevent race conditions.
-    const docSnap = await getDoc(userRef);
-    if (docSnap.exists()) {
-        console.log("User profile already exists for:", user.uid);
-        return;
-    }
-
-    const referralCodeForNewUser = `SZLUDO${user.uid.substring(0, 6).toUpperCase()}`;
-    
-    const userProfileData: Omit<UserProfile, 'uid'> = {
-        name: name,
-        email: user.email,
-        phoneNumber: phoneNumber,
-        avatarUrl: user.photoURL || `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`,
-        referralCode: referralCodeForNewUser,
+    // Default values for a new user, merged with any provided data
+    const defaults = {
+        uid: userId,
+        avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(data.name || 'User')}`,
         depositBalance: 0,
         winningsBalance: 0,
         kycStatus: 'Not Verified',
         gamesPlayed: 0,
         gamesWon: 0,
-        penaltyTotal: 0,
         winStreak: 0,
         losingStreak: 0,
         biggestWin: 0,
-        createdAt: serverTimestamp() as any,
-        lastSeen: serverTimestamp() as any,
-        isAgent: false, // Default to false for all new users
+        penaltyTotal: 0,
+        createdAt: serverTimestamp(),
+        lastSeen: serverTimestamp(),
     };
 
-    if (referralCode) {
-        const q = query(collection(db, 'users'), where('referralCode', '==', referralCode.trim().toUpperCase()), limit(1));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            const referrerDoc = querySnapshot.docs[0];
-            userProfileData.referredBy = referrerDoc.id;
+    const profileData = {
+        ...defaults,
+        ...data,
+    };
 
-            await addDoc(collection(db, 'referrals'), {
-                referrerId: referrerDoc.id,
-                referredId: user.uid,
-                referredName: name,
-                status: 'pending',
-                createdAt: serverTimestamp()
-            });
-        }
-    }
-    
-    // Use setDoc to guarantee the document is created.
-    // This is crucial for new user sign-ups and avoids race conditions.
-    await setDoc(userRef, userProfileData);
+    // Use setDoc with merge:true to create or update the document without overwriting existing fields.
+    return setDoc(userRef, profileData, { merge: true });
 };
 
-export const updateUserProfile = async (uid: string, data: Partial<UserProfile>) => {
-    if (!db) {
-        console.error("Firestore is not initialized. Cannot update user profile.");
-        return;
-    }
-    const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, data);
+
+/**
+ * Creates an agent profile in Firestore and marks the user as an agent.
+ * This should be used for trusted users, as it grants agent privileges.
+ * @param userId The user's ID.
+ * @param email The user's email.
+ * @param displayName The user's display name.
+ * @returns A promise that resolves when the agent profile is created.
+ */
+export async function createAgentProfile(userId: string, email: string, displayName: string): Promise<void> {
+  if (!db) {
+    console.error("Database not available. Cannot create agent profile.");
+    return;
+  }
+  const userRef = doc(db, "users", userId);
+  // This will create or update the user document with agent status
+  return updateUserProfile(userId, {
+      name: displayName,
+      email: email,
+      isAgent: true,
+  });
+}
+
+/**
+ * Updates the balances for a specific user. Intended for admin use.
+ * @param userId The ID of the user to update.
+ * @param depositBalance The new deposit balance.
+ * @param winningsBalance The new winnings balance.
+ */
+export const updateUserBalances = async (userId: string, depositBalance: number, winningsBalance: number) => {
+    if (!db) throw new Error("Database not available.");
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+        depositBalance: depositBalance,
+        winningsBalance: winningsBalance
+    });
 };
 
-export const submitKycDetails = async (uid: string, data: Partial<Omit<UserProfile, 'uid' | 'createdAt'>>) => {
-    if (!db) {
-        console.error("Firestore is not initialized. Cannot submit KYC details.");
-        return;
-    }
-    const userRef = doc(db, 'users', uid);
+
+/**
+ * Submits KYC details for a user and sets their status to 'Pending'.
+ * @param userId The user's ID.
+ * @param data The KYC data to submit.
+ */
+export const submitKycDetails = async (userId: string, data: Partial<UserProfile>) => {
+    if (!db) throw new Error("Database not available.");
+    const userRef = doc(db, 'users', userId);
     await updateDoc(userRef, {
         ...data,
         kycStatus: 'Pending',
     });
-}
-
-export const updateUserBalances = async (uid: string, depositBalance: number, winningsBalance: number) => {
-    if (!db) {
-        console.error("Firestore is not initialized. Cannot update user balances.");
-        throw new Error("Database not available.");
-    }
-    if (typeof depositBalance !== 'number' || typeof winningsBalance !== 'number' || depositBalance < 0 || winningsBalance < 0) {
-        throw new Error("Invalid balance amounts provided.");
-    }
-    const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, {
-        depositBalance: depositBalance,
-        winningsBalance: winningsBalance,
-    });
-};
-
-export const createAgentProfile = async (uid: string, email: string, name: string) => {
-    if (!db) {
-        console.error("Firestore is not initialized. Cannot create agent profile.");
-        return;
-    }
-    // This function is for the super admin, who needs both an agent profile and a user profile.
-    const agentRef = doc(db, 'agents', uid);
-    const userRef = doc(db, 'users', uid);
-
-    // 1. Create the user profile for the admin
-    const userProfileData: Omit<UserProfile, 'uid'> = {
-        name,
-        email,
-        phoneNumber: 'N/A',
-        avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`,
-        referralCode: `SZADMIN${uid.substring(0,4)}`,
-        depositBalance: 0,
-        winningsBalance: 0,
-        kycStatus: 'Verified',
-        gamesPlayed: 0,
-        gamesWon: 0,
-        penaltyTotal: 0,
-        createdAt: serverTimestamp(),
-        lastSeen: serverTimestamp(),
-        winStreak: 0,
-        losingStreak: 0,
-        biggestWin: 0,
-        isAgent: true // Super admin is an agent
-    };
-    await setDoc(userRef, userProfileData, { merge: true });
-
-    // 2. Create the agent profile
-    const agentProfileData: Omit<Agent, 'id' | 'remainingBalance'> = {
-        name: name,
-        email: email,
-        floatBalance: Infinity, // Super admin has unlimited float
-        usedAmount: 0,
-        isActive: true,
-    };
-    
-    await setDoc(agentRef, agentProfileData, { merge: true });
 };
