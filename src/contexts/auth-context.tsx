@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser); // Set user immediately
-      setLoading(false); // Stop loading as soon as auth state is known
+      setLoading(false); // **CRITICAL FIX**: Stop loading as soon as auth state is known.
     });
 
     return () => unsubscribeAuth();
@@ -53,14 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) {
+      // User is logged out
       setUserProfile(null);
       setIsSuperAdmin(false);
       setIsAgent(false);
-      fetch('/api/auth', { method: 'DELETE' });
+      fetch('/api/auth', { method: 'DELETE' }); // Clear the session cookie
       return;
     }
 
-    // User is logged in, handle profile, roles, and session
+    // User is logged in, handle profile, roles, and session cookie
     const superAdminCheck = user.email === SUPER_ADMIN_EMAIL;
     setIsSuperAdmin(superAdminCheck);
 
@@ -79,9 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(() => {});
         }
       } else {
-        setUserProfile(null); // No profile yet
-        setIsAgent(superAdminCheck); // Agent if super admin
+        // Profile doesn't exist yet (new user), or user is a new super admin
+        setUserProfile(null); 
+        setIsAgent(superAdminCheck); 
         if(superAdminCheck) {
+            // Create profile for super admin on first login
             createAgentProfile(user.uid, user.email!, "Super Admin").catch(console.error);
         }
       }
@@ -94,7 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    if (loading) return; // Don't redirect until auth state is resolved
+    // This effect handles redirection logic and runs ONLY when loading is complete.
+    if (loading) return; 
 
     const isAuthPage = pathname === '/login' || pathname === '/landing' || pathname === '/';
     const isAdminRoute = pathname.startsWith('/admin');
@@ -119,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     } else {
       // User is NOT authenticated
-      if (!isAuthPage) {
+      if (!isAuthPage && !pathname.startsWith('/terms') && !pathname.startsWith('/privacy') && !pathname.startsWith('/refund') && !pathname.startsWith('/gst')) {
         router.replace('/landing');
       }
     }
@@ -131,7 +135,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, userProfile, loading, logout, isSuperAdmin, isAgent };
   
-  // Render children only after initial loading is complete to prevent flashes of content
   return (
     <AuthContext.Provider value={value}>
       {loading ? <GlobalLoader /> : children}

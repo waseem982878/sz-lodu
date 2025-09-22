@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Users, Swords, Wallet, ShieldQuestion, IndianRupee, Clock, Loader2 } from "lucide-react";
 import type { Transaction } from "@/models/transaction.model";
-import type { Battle } from "@/models/battle.model";
 
 const initialStats = {
     totalUsers: { title: "Total Users", value: "0", icon: Users, color: "text-blue-500", note: "" },
@@ -19,10 +18,15 @@ const initialStats = {
     pendingKYCs: { title: "Pending KYCs", value: "0", icon: ShieldQuestion, color: "text-red-500", note: "" },
 };
 
-const TOTAL_LISTENERS = 6; // Total number of Firestore listeners
+const TOTAL_LISTENERS = 5; // Reduced from 6, as we are disabling the expensive revenue calculation.
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(initialStats);
+  const [stats, setStats] = useState(() => {
+      const newStats = { ...initialStats };
+      newStats.totalRevenue.value = "N/A";
+      newStats.totalRevenue.note = "Calculation disabled for performance";
+      return newStats;
+  });
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,15 +62,6 @@ export default function AdminDashboard() {
         setStats(prev => ({...prev, activeBattles: {...prev.activeBattles, value: snapshot.size.toString()}}));
         onListenerLoaded();
       }, err => { console.error("Active battles error:", err); setError("Failed to load battle data."); onListenerLoaded(); }),
-
-      // Listener for Total Revenue
-      onSnapshot(query(collection(db, "battles"), where('status', '==', 'completed')), (snapshot) => {
-        const totalRevenue = snapshot.docs
-            .map(doc => doc.data() as Battle)
-            .reduce((acc, battle) => acc + (battle.amount * 0.05), 0);
-        setStats(prev => ({...prev, totalRevenue: {...prev.totalRevenue, value: `₹${totalRevenue.toLocaleString()}`}}));
-        onListenerLoaded();
-      }, err => { console.error("Revenue listener error:", err); setError("Failed to load revenue data."); onListenerLoaded(); }),
 
       // Listener for Pending Withdrawals
       onSnapshot(query(collection(db, "transactions"), where('type', '==', 'withdrawal'), where('status', '==', 'pending')), (snapshot) => {
