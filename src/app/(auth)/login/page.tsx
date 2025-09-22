@@ -42,13 +42,8 @@ export default function LoginPage() {
         }
 
         try {
-            // Use the recommended initialization.
             const appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                 'size': 'invisible',
-                'callback': (response: any) => {
-                    // reCAPTCHA solved, allow signInWithPhoneNumber.
-                    console.log("reCAPTCHA solved, proceeding to send OTP.");
-                }
             });
             window.recaptchaVerifier = appVerifier;
 
@@ -62,12 +57,10 @@ export default function LoginPage() {
             console.error("Error during OTP sending:", error);
             alert("Failed to send OTP. Please check your phone number, refresh the page, and try again.");
             // Reset reCAPTCHA on error
-            if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.render().then((widgetId) => {
-                    if (typeof grecaptcha !== 'undefined' && grecaptcha.reset) {
-                        grecaptcha.reset(widgetId);
-                    }
-                }).catch(err => console.error("Error resetting reCAPTCHA", err));
+            // @ts-ignore
+            if (window.grecaptcha && window.recaptchaVerifier) {
+                 // @ts-ignore
+                window.grecaptcha.reset(window.recaptchaVerifier.widgetId);
             }
         } finally {
             setLoading(false);
