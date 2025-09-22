@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -48,7 +47,7 @@ function MyBattleCard({ battle }: { battle: Battle }) {
                 />
                 <div>
                     <p className="font-bold text-sm">vs {displayOpponent.name}</p>
-                    <p className="text-xs text-muted-foreground">{battle.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                    <p className="text-xs text-muted-foreground">{battle.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                 </div>
                 </div>
                 <div className="text-right">
@@ -121,50 +120,45 @@ function PlayPageContent() {
   const [amount, setAmount] = useState("");
   const [myBattles, setMyBattles] = useState<Battle[]>([]);
   const [otherOpenBattles, setOtherOpenBattles] = useState<Battle[]>([]);
-  const [loadingMyBattles, setLoadingMyBattles] = useState(true);
-  const [loadingOpenBattles, setLoadingOpenBattles] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (!user) return;
+    setLoading(true);
 
-    // Listener for battles created by the user or where the user is an opponent
-    setLoadingMyBattles(true);
     const myBattlesQuery = query(
         collection(db, "battles"), 
         or(
             where('creator.id', '==', user.uid), 
             where('opponent.id', '==', user.uid)
         ),
-        where('gameType', '==', gameType)
+        where('gameType', '==', gameType),
+        where('status', '!=', 'cancelled')
     );
+    
     const unsubMyBattles = onSnapshot(myBattlesQuery, (snapshot) => {
-        const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle))
-            .filter(b => b.status !== 'cancelled'); // Filter out cancelled battles
+        const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
         setMyBattles(battlesData);
-        setLoadingMyBattles(false);
+        setLoading(false);
     }, (err) => {
         console.error("Error fetching my battles: ", err);
-        setLoadingMyBattles(false)
+        setLoading(false);
     });
-
-
-    // Listener for open battles not created by the user
-    setLoadingOpenBattles(true);
+    
     const openBattlesQuery = query(
         collection(db, "battles"), 
         where('status', '==', 'open'),
-        where('gameType', '==', gameType)
+        where('gameType', '==', gameType),
+        where('creator.id', '!=', user.uid)
     );
     const unsubOpenBattles = onSnapshot(openBattlesQuery, (snapshot) => {
-        const battlesData = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Battle))
-            .filter(b => b.creator.id !== user.uid);
+        const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
         setOtherOpenBattles(battlesData);
-        setLoadingOpenBattles(false);
+        setLoading(false);
     }, (err) => {
         console.error("Error fetching open battles: ", err);
-        setLoadingOpenBattles(false)
+        setLoading(false);
     });
 
     return () => {
@@ -178,7 +172,7 @@ function PlayPageContent() {
     if (!user || !userProfile || isCreating) return;
 
     const newAmount = isPractice ? 0 : parseInt(amount);
-     if (isNaN(newAmount)) {
+     if (isNaN(newAmount) && !isPractice) {
         alert("Please enter a valid amount.");
         return;
     }
@@ -283,7 +277,7 @@ function PlayPageContent() {
           <>
             <SectionDivider title="My Battles" icon={Hourglass} />
             <div className="space-y-3">
-                {loadingMyBattles ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> :
+                {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> :
                 myBattles.map((battle) => (
                     <MyBattleCard key={battle.id} battle={battle} />
                 ))}
@@ -294,7 +288,7 @@ function PlayPageContent() {
       <SectionDivider title="Open Battles" icon={Trophy} />
       
       <div className="space-y-3">
-        {loadingOpenBattles ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : otherOpenBattles.length > 0 ? (
+        {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : otherOpenBattles.length > 0 ? (
             otherOpenBattles.map((battle) => (
                 <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
             ))

@@ -1,4 +1,3 @@
-
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -175,6 +174,7 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
         const creatorId = battleData.creator.id;
         const opponentId = battleData.opponent?.id;
 
+        // If an opponent has joined, apply penalty logic
         if (opponentId && !isPractice) {
             const cancellerIsCreator = userId === creatorId;
             const otherPlayerId = cancellerIsCreator ? opponentId : creatorId;
@@ -182,23 +182,23 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
             const cancellerRef = doc(db, 'users', userId);
             const otherPlayerRef = doc(db, 'users', otherPlayerId);
             
+            // Deduct penalty from canceller and refund their bet
             transaction.update(cancellerRef, {
-                winningsBalance: increment(-CANCELLATION_FEE), // Penalty
+                winningsBalance: increment(amount - CANCELLATION_FEE), 
                 penaltyTotal: increment(CANCELLATION_FEE)
             });
 
-            transaction.update(doc(db, 'users', creatorId), { winningsBalance: increment(amount) });
-            transaction.update(doc(db, 'users', opponentId), { winningsBalance: increment(amount) });
-
+            // Refund the other player and give them the penalty fee
             transaction.update(otherPlayerRef, { 
-                winningsBalance: increment(CANCELLATION_FEE) 
+                winningsBalance: increment(amount + CANCELLATION_FEE) 
             });
 
-
-        } else { 
-            if (userId !== creatorId) {
+        } else { // No opponent yet or it's a practice match
+             if (userId !== creatorId) {
+                // This case should ideally not happen if UI is correct, but as a safeguard
                 throw new Error("Only the creator can cancel an open battle.");
             }
+            // Just refund the creator if it's not a practice match
             if (!isPractice) {
                 const creatorRef = doc(db, 'users', creatorId);
                 transaction.update(creatorRef, { winningsBalance: increment(amount) });
@@ -354,7 +354,7 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         };
 
         if (!isPractice) {
-             const commissionRate = settingsSnap.exists() ? settingsSnap.data().commissionRate / 100 : 0.05;
+             const commissionRate = settingsSnap.exists() ? (settingsSnap.data().commissionRate || 5) / 100 : 0.05;
              const prizeMoney = (battleData.amount * 2) * (1 - commissionRate);
              winnerUpdate.winningsBalance = increment(prizeMoney);
 

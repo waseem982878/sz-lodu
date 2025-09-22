@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -331,7 +330,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
                  <div className="text-center py-4 space-y-4">
                     <p className="font-semibold">Join the room in Ludo King and click Ready when you are in.</p>
                      <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={handleReady} disabled={isMarkingReady}>
-                        {isMarkingReady ? <Loader2 className="mr-2 h-4 w-4 animate.spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                        {isMarkingReady ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
                          I'm Ready
                      </Button>
                 </div>

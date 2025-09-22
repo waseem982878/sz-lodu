@@ -7,7 +7,6 @@ import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
 import { Loader2 } from 'lucide-react';
-import { updateUserProfile } from '@/services/user-agent-service';
 
 // IMPORTANT: Set your admin email here
 const ADMIN_EMAIL = "ludokingbattles@gmail.com";

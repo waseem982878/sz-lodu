@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,7 @@ function GameHistoryCard({ game }: { game: Battle }) {
             case 'cancelled':
                 return { text: 'Cancelled', variant: 'secondary', color: 'text-gray-500', icon: CircleDotDashed };
             default:
-                 const statusText = game.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                 const statusText = game.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 return { text: statusText, variant: 'outline', color: 'text-yellow-500', icon: History };
         }
     }

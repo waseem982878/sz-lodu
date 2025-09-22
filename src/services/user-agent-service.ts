@@ -1,4 +1,3 @@
-
 import { doc, setDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
@@ -37,7 +36,7 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
         lastSeen: serverTimestamp(),
     };
 
-    return setDoc(userRef, profileData);
+    return setDoc(userRef, profileData, { merge: true });
 };
 
 
