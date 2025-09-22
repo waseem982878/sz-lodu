@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -121,6 +121,28 @@ export default function LoginPage() {
             setLoading(false);
         }
     }
+    
+    const handlePasswordReset = async () => {
+        if (!email) {
+            alert("Please enter your email address to reset your password.");
+            return;
+        }
+        setLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("Password reset email sent! Please check your inbox.");
+        } catch (error: any) {
+            const errorCode = error.code;
+            if (errorCode === 'auth/user-not-found') {
+                alert("No user found with this email address.");
+            } else {
+                console.error("Password reset error:", error);
+                alert("Failed to send password reset email. Please try again.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     return (
@@ -203,6 +225,11 @@ export default function LoginPage() {
                                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                         <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-10"/>
                                      </div>
+                                      <div className="text-right">
+                                        <Button type="button" variant="link" size="sm" className="px-0" onClick={handlePasswordReset}>
+                                            Forgot Password?
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="flex gap-2">
                                     <Button onClick={() => handleEmailAuth(false)} className="w-full" disabled={loading}>
