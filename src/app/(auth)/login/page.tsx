@@ -16,6 +16,7 @@ import Link from "next/link";
 declare global {
   interface Window {
     recaptchaVerifier: RecaptchaVerifier;
+    confirmationResult?: ConfirmationResult;
   }
 }
 
@@ -24,24 +25,20 @@ export default function LoginPage() {
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
-    const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     const router = useRouter();
 
     const setupRecaptcha = () => {
+        // It's important to only create the verifier once.
         if (!window.recaptchaVerifier) {
             window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                 'size': 'invisible',
                 'callback': () => {
+                    // reCAPTCHA solved, allow signInWithPhoneNumber.
                     console.log("reCAPTCHA solved");
                 },
                  'expired-callback': () => {
+                    // Response expired. Ask user to solve reCAPTCHA again.
                     console.log("reCAPTCHA expired");
-                     // It's good practice to try and re-render or ask the user to try again.
-                     if (window.recaptchaVerifier) {
-                        window.recaptchaVerifier.render().then((widgetId) => {
-                            grecaptcha.reset(widgetId);
-                        });
-                    }
                 }
             });
         }
@@ -59,18 +56,16 @@ export default function LoginPage() {
         const appVerifier = window.recaptchaVerifier;
 
         try {
-            const result = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
-            setConfirmationResult(result);
+            const confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
+            window.confirmationResult = confirmationResult;
             setShowOtp(true);
             alert("OTP sent successfully!");
         } catch (error) {
             console.error("Error during OTP sending:", error);
-            alert("Failed to send OTP. Please try again or check your phone number.");
-             // Reset reCAPTCHA if it fails
-             if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.render().then((widgetId: any) => {
-                    grecaptcha.reset(widgetId);
-                });
+            alert("Failed to send OTP. Please check your phone number and try again.");
+             // Reset reCAPTCHA UI
+            if ((window as any).grecaptcha) {
+                (window as any).grecaptcha.reset();
             }
         } finally {
             setLoading(false);
@@ -79,13 +74,18 @@ export default function LoginPage() {
 
     const onOtpVerify = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!otp || otp.length !== 6 || !confirmationResult) {
+        if (!otp || otp.length !== 6) {
             alert("Please enter a valid 6-digit OTP.");
+            return;
+        }
+        if (!window.confirmationResult) {
+            alert("Verification session expired. Please request a new OTP.");
+            setShowOtp(false);
             return;
         }
         setLoading(true);
         try {
-            await confirmationResult.confirm(otp);
+            await window.confirmationResult.confirm(otp);
             // On successful confirmation, the onAuthStateChanged listener in AuthProvider
             // will detect the user and handle redirection. No need to router.push here.
         } catch (error) {
@@ -152,7 +152,7 @@ export default function LoginPage() {
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Verify OTP
                                 </Button>
-                                <Button variant="link" size="sm" className="w-full" onClick={() => {setShowOtp(false); setOtp(""); setConfirmationResult(null);}}>
+                                <Button variant="link" size="sm" className="w-full" onClick={() => {setShowOtp(false); setOtp(""); window.confirmationResult = undefined;}}>
                                     Change Number
                                 </Button>
                             </div>

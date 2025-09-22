@@ -38,6 +38,8 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
         lastSeen: serverTimestamp(),
     };
 
+    // Use setDoc with merge:true to either create the document or merge into it
+    // if a partial document (e.g., from another process) already exists.
     return setDoc(userRef, profileData, { merge: true });
 };
 
@@ -56,7 +58,6 @@ export const updateUserProfile = async (userId: string, data: Partial<UserProfil
     }
     const userRef = doc(db, "users", userId);
     
-    // Ensure 'updatedAt' is always included
     const profileData = {
         ...data,
         updatedAt: serverTimestamp(),
