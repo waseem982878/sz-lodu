@@ -10,8 +10,6 @@ import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import imagePaths from '@/lib/image-paths.json';
 
 type LandingPageContent = {
@@ -69,25 +67,19 @@ const TestimonialCard = ({ name, text, avatarSeed }: { name: string, text: strin
 export default function LandingPage() {
     const router = useRouter();
     const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
-    const [content, setContent] = useState<Partial<LandingPageContent>>({});
-    const [loading, setLoading] = useState(true);
+    const content: Partial<LandingPageContent> = {
+        heroTitle: "SZ LUDO",
+        heroSubtitle: "The Ultimate Real Money Ludo Experience",
+        feature1Title: "Secure Platform",
+        feature1Description: "Your data and transactions are protected with top-tier security.",
+        feature2Title: "Instant Withdrawals",
+        feature2Description: "Get your winnings transferred to your account in minutes.",
+        feature3Title: "24/7 Customer Support",
+        feature3Description: "Our team is always here to help you with any issues.",
+    };
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const loadPageData = async () => {
-            const landingRef = doc(db, 'config', 'landingPage');
-            const landingSnap = await getDoc(landingRef);
-            if (landingSnap.exists()) {
-                setContent(landingSnap.data() as LandingPageContent);
-            }
-            setLoading(false);
-        };
-        
-        if (db) {
-            loadPageData();
-        } else {
-            setLoading(false);
-        }
-
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -121,7 +113,8 @@ export default function LandingPage() {
             await (deferredPrompt as any).userChoice;
             setDeferredPrompt(null);
         } else {
-            router.push('/login');
+            // As there is no login, we just go to the home page for the prototype
+            router.push('/home');
         }
     };
     
@@ -146,7 +139,7 @@ export default function LandingPage() {
                                  variant="outline"
                                  className="text-lg py-6 px-8 rounded-full font-semibold"
                             >
-                               <Link href="/login">Login to Your Account</Link>
+                               <Link href="/home">Play as Guest</Link>
                             </Button>
                         </div>
                     </div>
@@ -263,5 +256,3 @@ export default function LandingPage() {
         </div>
     );
 }
-
-    

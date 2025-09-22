@@ -8,17 +8,12 @@ import { Trophy, Swords, Hourglass, PlusCircle, BrainCircuit, Loader2, ArrowLeft
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { useAuth } from "@/contexts/auth-context";
-import { createBattle, acceptBattle } from "@/services/battle-service";
 import type { Battle, GameType } from "@/models/battle.model";
-import { onSnapshot, query, where, collection, or, and } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import { Badge } from "@/components/ui/badge";
 
 function MyBattleCard({ battle }: { battle: Battle }) {
     const router = useRouter();
-    const { user } = useAuth();
-    if (!user) return null;
+    const user = { uid: "mock-user-id" };
 
     const isCreator = battle.creator.id === user.uid;
     const isPractice = battle.amount === 0;
@@ -115,7 +110,14 @@ function PlayPageContent() {
   const gameParam = searchParams.get('game');
   const gameType: GameType = gameParam === 'popular' ? 'popular' : 'classic';
 
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const user = { uid: "mock-user-id" };
+  const userProfile = { 
+      name: "Guest Player", 
+      avatarUrl: "https://picsum.photos/seed/guest/40/40",
+      depositBalance: 1000,
+      winningsBalance: 500,
+  };
+
   const [amount, setAmount] = useState("");
   const [myBattles, setMyBattles] = useState<Battle[]>([]);
   const [otherOpenBattles, setOtherOpenBattles] = useState<Battle[]>([]);
@@ -126,69 +128,25 @@ function PlayPageContent() {
   useEffect(() => {
     if (!user) return;
 
-    const activeStatuses: Battle['status'][] = ['open', 'inprogress', 'waiting_for_players_ready', 'result_pending'];
-
-    // --- Corrected Query for "My Battles" ---
     setLoadingMyBattles(true);
-    const creatorQuery = query(
-      collection(db, 'battles'),
-      where('gameType', '==', gameType),
-      where('creator.id', '==', user.uid),
-      where('status', 'in', activeStatuses)
-    );
-    const opponentQuery = query(
-      collection(db, 'battles'),
-      where('gameType', '==', gameType),
-      where('opponent.id', '==', user.uid),
-      where('status', 'in', activeStatuses)
-    );
-
-    const unsubCreator = onSnapshot(creatorQuery, (creatorSnapshot) => {
-        const creatorBattles = creatorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-        
-        // This nested subscription ensures we have both sets of data before combining them
-        const unsubOpponent = onSnapshot(opponentQuery, (opponentSnapshot) => {
-            const opponentBattles = opponentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-            
-            // Combine and remove duplicates, which can happen if a user is both creator and opponent (though unlikely)
-            const allMyBattles = [...creatorBattles, ...opponentBattles];
-            const uniqueBattles = Array.from(new Map(allMyBattles.map(battle => [battle.id, battle])).values());
-            
-            setMyBattles(uniqueBattles);
-            setLoadingMyBattles(false);
-        }, (error) => {
-            console.error("Error fetching opponent battles:", error);
-            setLoadingMyBattles(false);
-        });
-
-        // Return a cleanup function for the nested listener
-        return () => unsubOpponent();
-    }, (error) => {
-        console.error("Error fetching creator battles:", error);
-        setLoadingMyBattles(false);
-    });
-
-    // --- Corrected Query for "Other Open Battles" ---
     setLoadingOpenBattles(true);
-    const openBattlesQuery = query(
-        collection(db, 'battles'),
-        where('gameType', '==', gameType),
-        where('status', '==', 'open'),
-        where('creator.id', '!=', user.uid)
-    );
-     const unsubOpenBattles = onSnapshot(openBattlesQuery, (snapshot) => {
-      const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-      setOtherOpenBattles(battlesData);
-      setLoadingOpenBattles(false);
-    }, (error) => {
-      console.error("Error fetching open battles:", error);
-      setLoadingOpenBattles(false);
-    });
 
-    return () => {
-        unsubCreator();
-        unsubOpenBattles();
-    };
+    // Mock fetching battles
+    setTimeout(() => {
+        const mockBattles: Battle[] = [
+            { id: 'b1', amount: 50, gameType, status: 'open', creator: { id: 'other1', name: 'Rohan', avatarUrl: 'https://picsum.photos/seed/r/40/40'}, createdAt: new Date(), updatedAt: new Date() },
+            { id: 'b2', amount: 100, gameType, status: 'open', creator: { id: 'other2', name: 'Priya', avatarUrl: 'https://picsum.photos/seed/p/40/40'}, createdAt: new Date(), updatedAt: new Date() },
+            { id: 'b3', amount: 0, gameType, status: 'open', creator: { id: 'other3', name: 'Practice Bot', avatarUrl: 'https://picsum.photos/seed/bot/40/40'}, createdAt: new Date(), updatedAt: new Date() },
+            { id: 'my-b1', amount: 150, gameType, status: 'open', creator: { id: user.uid, name: userProfile.name, avatarUrl: userProfile.avatarUrl }, createdAt: new Date(), updatedAt: new Date() },
+            { id: 'my-b2', amount: 200, gameType, status: 'inprogress', creator: { id: user.uid, name: userProfile.name, avatarUrl: userProfile.avatarUrl }, opponent: { id: 'other4', name: 'Amit', avatarUrl: 'https://picsum.photos/seed/a/40/40' }, createdAt: new Date(), updatedAt: new Date() },
+        ];
+        
+        setMyBattles(mockBattles.filter(b => b.creator.id === user.uid || b.opponent?.id === user.uid));
+        setOtherOpenBattles(mockBattles.filter(b => b.status === 'open' && b.creator.id !== user.uid));
+        
+        setLoadingMyBattles(false);
+        setLoadingOpenBattles(false);
+    }, 500);
   }, [user, gameType]);
   
   const handleCreateBattle = async (isPractice = false) => {
@@ -216,18 +174,13 @@ function PlayPageContent() {
     }
 
     setIsCreating(true);
-    try {
-        const battleId = await createBattle(newAmount, gameType, user, userProfile);
-        router.push(`/create/${battleId}`);
-    } catch (error) {
-        if (error instanceof Error) {
-            alert(`Failed to create battle: ${error.message}`);
-        } else {
-            alert("Failed to create battle. Please try again.");
-        }
-    } finally {
+    // Mock battle creation
+    setTimeout(() => {
+        const mockBattleId = `mock-${Date.now()}`;
+        alert(`Battle created (mock). ID: ${mockBattleId}`);
+        router.push(`/create/${mockBattleId}`);
         setIsCreating(false);
-    }
+    }, 500);
   };
 
   const handleAcceptBattle = async (battleId: string) => {
@@ -243,20 +196,12 @@ function PlayPageContent() {
         return;
     }
 
-    try {
-        await acceptBattle(battleId, user, userProfile);
-        router.push(`/game/${battleId}`);
-    } catch (error) {
-         if (error instanceof Error) {
-            alert(`Could not accept battle: ${error.message}`);
-        } else {
-            alert("Could not accept battle. It might have been taken or cancelled.");
-        }
-    }
+    alert(`Accepted battle ${battleId} (mock).`);
+    router.push(`/game/${battleId}`);
   };
 
 
-  if (authLoading || !userProfile) {
+  if (!userProfile) {
       return (
           <div className="flex justify-center items-center h-full py-10">
               <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -340,5 +285,3 @@ export default function Play() {
       </Suspense>
   )
 }
-
-    

@@ -7,10 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Info, TriangleAlert, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import { cn } from "@/lib/utils";
 import imagePaths from '@/lib/image-paths.json';
 
@@ -88,22 +85,8 @@ function RulesDialog() {
 }
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
-  const [notice, setNotice] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const settingsRef = doc(db, 'config', 'appSettings');
-      const docSnap = await getDoc(settingsRef);
-      if (docSnap.exists()) {
-        const settings = docSnap.data();
-        if (settings.homeNoticeText) {
-          setNotice(settings.homeNoticeText);
-        }
-      }
-    };
-    fetchSettings();
-  }, []);
+  const [loading, setLoading] = useState(false); // No more fetching
+  const notice = "This is a notice for all players. The system is currently under maintenance.";
 
   if (loading) {
     return (

@@ -3,12 +3,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, PlusCircle, Download, History, IndianRupee, Swords, TrendingUp, TrendingDown, CircleDotDashed, ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Download, History, IndianRupee, Swords, TrendingUp, TrendingDown, CircleDotDashed, ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
-import { collection, query, where, writeBatch, getDocs, onSnapshot, orderBy, or } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -42,8 +39,7 @@ function BalanceCard({ title, balance, buttonText, buttonAction, icon: Icon, var
 }
 
 function GameHistoryCard({ game }: { game: Battle }) {
-    const { user } = useAuth();
-    if (!user) return null;
+    const user = { uid: "mock-user-id" };
 
     const isCreator = game.creator.id === user.uid;
     const opponent = isCreator ? game.opponent : game.creator;
@@ -104,8 +100,8 @@ function TransactionHistoryCard({ transaction }: { transaction: Transaction }) {
     const isDeposit = transaction.type === 'deposit';
     
     const statusVariant = {
-        'completed': 'default',
         'pending': 'outline',
+        'completed': 'default',
         'rejected': 'destructive'
     } as const;
 
@@ -139,77 +135,37 @@ function TransactionHistoryCard({ transaction }: { transaction: Transaction }) {
 
 export default function WalletPage() {
   const router = useRouter();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  
+  const userProfile = { 
+      depositBalance: 1000, 
+      winningsBalance: 500,
+      kycStatus: 'Not Verified'
+  };
+  const authLoading = false;
   
   const [games, setGames] = useState<Battle[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loadingGames, setLoadingGames] = useState(true);
-  const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    
-    const markTransactionsAsRead = async () => {
-        const transQuery = query(collection(db, "transactions"), where("userId", "==", user.uid), where("isRead", "==", false));
-        const snapshot = await getDocs(transQuery);
-        if (snapshot.empty) return;
+    // Mock data fetching
+    setTimeout(() => {
+        const mockGames: Battle[] = [
+             { id: '1', amount: 100, creator: { id: 'other', name: 'Rohan', avatarUrl: 'https://picsum.photos/seed/r/40/40'}, opponent: { id: 'mock-user-id', name: 'You', avatarUrl: '...'}, status: 'completed', winnerId: 'mock-user-id', gameType: 'classic', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
+             { id: '2', amount: 50, creator: { id: 'mock-user-id', name: 'You', avatarUrl: '...'}, opponent: { id: 'other2', name: 'Priya', avatarUrl: 'https://picsum.photos/seed/p/40/40'}, status: 'completed', winnerId: 'other2', gameType: 'classic', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
+             { id: '3', amount: 200, creator: { id: 'mock-user-id', name: 'You', avatarUrl: '...'}, opponent: { id: 'other3', name: 'Amit', avatarUrl: 'https://picsum.photos/seed/a/40/40'}, status: 'cancelled', gameType: 'classic', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } }
+        ];
+        const mockTransactions: Transaction[] = [
+            { id: 't1', userId: 'mock-user-id', type: 'deposit', amount: 500, status: 'completed', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
+            { id: 't2', userId: 'mock-user-id', type: 'withdrawal', amount: 100, status: 'completed', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
+            { id: 't3', userId: 'mock-user-id', type: 'deposit', amount: 200, status: 'pending', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
+        ];
+        setGames(mockGames);
+        setTransactions(mockTransactions);
+        setLoading(false);
+    }, 500);
+  }, []);
 
-        const batch = writeBatch(db);
-        snapshot.docs.forEach(doc => {
-            batch.update(doc.ref, { isRead: true });
-        });
-        await batch.commit();
-    }
-    
-    markTransactionsAsRead();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) {
-        if (!authLoading) {
-            setLoadingGames(false);
-            setLoadingTransactions(false);
-        }
-        return;
-    };
-
-    setLoadingGames(true);
-    const gamesQuery = query(
-        collection(db, 'battles'),
-        or(
-            where('creator.id', '==', user.uid),
-            where('opponent.id', '==', user.uid)
-        ),
-        orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribeGames = onSnapshot(gamesQuery, snap => {
-         const userGames = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
-         setGames(userGames);
-         setLoadingGames(false);
-    }, error => {
-        setLoadingGames(false);
-    });
-
-    setLoadingTransactions(true);
-    const transactionsQuery = query(
-        collection(db, 'transactions'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-    );
-    const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
-        const userTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-        setTransactions(userTransactions);
-        setLoadingTransactions(false);
-    }, error => {
-        setLoadingTransactions(false);
-    });
-
-    return () => {
-        unsubscribeGames();
-        unsubscribeTransactions();
-    }
-  }, [user, authLoading]);
 
   if (authLoading || !userProfile) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
@@ -282,7 +238,7 @@ export default function WalletPage() {
                       <CardTitle className="text-primary flex items-center gap-2"><Swords className="h-5 w-5"/>Game History</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      {loadingGames ? (
+                      {loading ? (
                           <div className="flex justify-center items-center py-10">
                               <Loader2 className="h-10 w-10 animate-spin text-primary" />
                           </div>
@@ -300,7 +256,7 @@ export default function WalletPage() {
                       <CardTitle className="text-primary flex items-center gap-2"><IndianRupee className="h-5 w-5"/>Transaction History</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                     {loadingTransactions ? (
+                     {loading ? (
                           <div className="flex justify-center items-center py-10">
                               <Loader2 className="h-10 w-10 animate-spin text-primary" />
                           </div>

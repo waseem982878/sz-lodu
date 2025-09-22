@@ -2,14 +2,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Users, Swords, Banknote, ShieldCheck, Settings, LogOut, IndianRupee, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/auth-context";
 import { useAdminSidebar } from "@/contexts/admin-sidebar-context";
 
-const superAdminNavItems = [
+const navItems = [
     { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/admin/users", icon: Users, label: "Users" },
     { href: "/admin/battles", icon: Swords, label: "Battles" },
@@ -20,17 +19,16 @@ const superAdminNavItems = [
     { href: "/admin/settings", icon: Settings, label: "App Settings" },
 ];
 
-const agentNavItems = [
-    { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/transactions", icon: Banknote, label: "Transactions" },
-]
-
 export function AdminSidebar() {
   const pathname = usePathname();
-  const { logout, isSuperAdmin } = useAuth();
+  const router = useRouter();
   const { isSidebarOpen, closeSidebar } = useAdminSidebar();
 
-  const navItems = isSuperAdmin ? superAdminNavItems : agentNavItems;
+
+  const handleLogout = () => {
+    // Since auth is removed, just redirect to landing
+    router.replace('/landing');
+  };
 
   const handleLinkClick = () => {
     // Close sidebar on navigation in mobile view
@@ -82,7 +80,7 @@ export function AdminSidebar() {
         </ul>
       </nav>
       <div className="mt-auto">
-        <Button variant="outline" className="w-full" onClick={logout}>
+        <Button variant="outline" className="w-full" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           Log Out
         </Button>
@@ -91,5 +89,3 @@ export function AdminSidebar() {
     </>
   );
 }
-
-    

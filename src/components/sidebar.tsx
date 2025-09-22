@@ -3,12 +3,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
-import { useAuth } from "@/contexts/auth-context";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // Sidebar now contains links not present in the bottom navigation for a cleaner UX.
 const navItems = [
@@ -20,16 +19,14 @@ const navItems = [
     { href: "/refund", icon: FileQuestion, label: "Refund Policy" },
 ];
 
-const adminNav = { href: "/admin/dashboard", icon: ShieldCheck, label: "Admin Panel" };
-
 export function Sidebar() {
   const { isSidebarOpen, closeSidebar } = useSidebar();
-  const { user, userProfile, logout, isSuperAdmin, isAgent } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   const handleLogout = async () => {
       closeSidebar();
-      await logout();
+      router.replace('/landing');
   }
   
   const handleSupportClick = (e: React.MouseEvent) => {
@@ -38,7 +35,15 @@ export function Sidebar() {
         closeSidebar();
   }
 
-  if (!user || pathname.startsWith('/admin')) return null;
+  // Mock user profile data
+  const userProfile = {
+      avatarUrl: "https://picsum.photos/48/48",
+      name: "Guest Player",
+  };
+  const user = {
+      phoneNumber: "N/A",
+      email: "guest@example.com"
+  };
 
   return (
     <>
@@ -65,17 +70,6 @@ export function Sidebar() {
               </div>
               <nav className="flex-grow">
                   <ul>
-                       {(isSuperAdmin || isAgent) && (
-                          <li>
-                            <Link href={adminNav.href} onClick={closeSidebar} className="flex items-center justify-between p-3 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 mb-2">
-                                <div className="flex items-center gap-4">
-                                    <LayoutDashboard className="h-5 w-5" />
-                                    <span>{adminNav.label}</span>
-                                </div>
-                                <ChevronRight className="h-5 w-5" />
-                            </Link>
-                          </li>
-                       )}
                       {navItems.map((item) => (
                           <li key={item.href}>
                               <Link href={item.href} onClick={closeSidebar} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">

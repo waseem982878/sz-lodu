@@ -8,8 +8,6 @@ import { IndianRupee, FileText, CheckCircle2, ArrowLeft, Upload, Loader2, Triang
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { createDepositRequest, getActiveUpi } from '@/services/transaction-service';
 import QRCode from "qrcode.react";
 import type { PaymentUpi } from '@/models/payment-upi.model';
 
@@ -19,7 +17,7 @@ const GST_RATE = 0.18; // 18%
 
 export default function DepositPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const user = { uid: "mock-user-id" };
     const [amount, setAmount] = useState(0);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -30,13 +28,19 @@ export default function DepositPage() {
     const [step, setStep] = useState(1); // Step 1: Enter amount, Step 2: Make payment
 
     useEffect(() => {
-        const fetchUpi = async () => {
-            setLoadingUpi(true);
-            const upi = await getActiveUpi();
-            setActiveUpi(upi);
+        setLoadingUpi(true);
+        // Mock active UPI
+        setTimeout(() => {
+            setActiveUpi({
+                id: 'mock-upi-id',
+                upiId: 'mock@upi',
+                payeeName: 'SZ Ludo Mock Merchant',
+                dailyLimit: 100000,
+                currentReceived: 5000,
+                isActive: true
+            });
             setLoadingUpi(false);
-        };
-        fetchUpi();
+        }, 500);
     }, []);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,10 +60,9 @@ export default function DepositPage() {
         setAmount(isNaN(value) ? 0 : value);
     }
     
-    // The bonus is for display purposes only.
     const gstAmount = amount * GST_RATE;
-    const totalPayable = amount; // User only pays the base amount
-    const totalReceivedInWallet = amount; // User receives what they pay, bonus is not added.
+    const totalPayable = amount; 
+    const totalReceivedInWallet = amount; 
     const upiUri = activeUpi ? `upi://pay?pa=${activeUpi.upiId}&pn=${encodeURIComponent(activeUpi.payeeName)}&am=${totalPayable.toFixed(2)}&cu=INR` : '';
 
     const handleSubmit = async () => {
@@ -68,16 +71,12 @@ export default function DepositPage() {
             return;
         }
         setIsSubmitting(true);
-        try {
-            // IMPORTANT: Pass 0 as the bonus amount, regardless of what's displayed.
-            await createDepositRequest(user.uid, amount, 0, imageFile, activeUpi.upiId);
-            alert("Deposit request submitted successfully! It will be verified shortly.");
+        // Mock submission
+        setTimeout(() => {
+            alert("Deposit request submitted successfully! It will be verified shortly (mocked).");
             router.push('/wallet');
-        } catch (error) {
-            alert("Failed to submit deposit request. Please try again.");
-        } finally {
             setIsSubmitting(false);
-        }
+        }, 1000);
     };
 
     if (step === 2) {

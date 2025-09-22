@@ -5,10 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Share2, Users, Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase/config";
 import Image from "next/image";
 import imagePaths from '@/lib/image-paths.json';
 
@@ -21,8 +18,18 @@ interface Referral {
     createdAt: any;
 }
 
+const mockReferrals: Referral[] = [
+    { id: '1', referrerId: 'me', referredId: '1', referredName: 'Rohan S.', status: 'completed', createdAt: { toDate: () => new Date('2023-10-22') } },
+    { id: '2', referrerId: 'me', referredId: '2', referredName: 'Priya K.', status: 'completed', createdAt: { toDate: () => new Date('2023-10-21') } },
+    { id: '3', referrerId: 'me', referredId: '3', referredName: 'Amit G.', status: 'pending', createdAt: { toDate: () => new Date('2023-10-20') } },
+];
+
 export default function ReferPage() {
-    const { user, userProfile, loading: authLoading } = useAuth();
+    // Mock user as auth is removed
+    const user = { uid: "mock-user-id" };
+    const userProfile = { referralCode: "MOCK123" };
+    const authLoading = false;
+
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -36,18 +43,10 @@ export default function ReferPage() {
             return;
         }
         setLoading(true);
-        const q = query(collection(db, "referrals"), where("referrerId", "==", user.uid));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const referralData: Referral[] = [];
-            snapshot.forEach(doc => {
-                referralData.push({ id: doc.id, ...doc.data() } as Referral);
-            });
-            setReferrals(referralData);
+        setTimeout(() => {
+            setReferrals(mockReferrals);
             setLoading(false);
-        }, (error) => {
-            setLoading(false);
-        });
-        return () => unsubscribe();
+        }, 500);
     }, [user, authLoading]);
 
     const handleCopy = () => {

@@ -14,7 +14,7 @@ import type { Transaction } from "@/models/transaction.model";
 import type { Agent } from "@/models/agent.model";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useAuth } from "@/contexts/auth-context";
+
 
 function ScreenshotModal({ imageUrl }: { imageUrl: string }) {
     return (
@@ -38,28 +38,22 @@ export default function TransactionsPage() {
   const [deposits, setDeposits] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user: adminUser, loading: adminLoading } = useAuth();
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
 
+  
   useEffect(() => {
-    if (adminUser) {
-        // Use onSnapshot for real-time updates of the agent's profile
-        const agentQuery = query(collection(db, "agents"), where("email", "==", adminUser.email));
-        const unsubscribe = onSnapshot(agentQuery, (snapshot) => {
-            if (!snapshot.empty) {
-                const agentDoc = snapshot.docs[0];
-                const data = agentDoc.data();
-                const remainingBalance = (data.floatBalance || 0) - (data.usedAmount || 0);
-                setCurrentAgent({ id: agentDoc.id, ...data, remainingBalance } as Agent);
-            } else {
-                setCurrentAgent(null);
-            }
+    // Mock agent for now as there is no login
+     setCurrentAgent({
+            id: 'mock-agent-id',
+            name: 'Mock Agent',
+            email: 'agent@example.com',
+            floatBalance: 100000,
+            usedAmount: 0,
+            remainingBalance: 100000,
+            isActive: true,
         });
-        return () => unsubscribe();
-    }
-  }, [adminUser]);
 
-  useEffect(() => {
+
     setLoading(true);
     
     const depositQuery = query(collection(db, "transactions"), where("type", "==", "deposit"), orderBy("createdAt", "desc"));
@@ -90,7 +84,7 @@ export default function TransactionsPage() {
   }, []);
   
   const handleDeposit = async (transaction: Transaction, newStatus: 'completed' | 'rejected') => {
-      if(transaction.status !== 'pending' || !adminUser || !currentAgent) return;
+      if(transaction.status !== 'pending' || !currentAgent) return;
       const transRef = doc(db, 'transactions', transaction.id);
       const userRef = doc(db, 'users', transaction.userId);
 
@@ -125,17 +119,13 @@ export default function TransactionsPage() {
   }
   
   const handleWithdrawal = async (transaction: Transaction, newStatus: 'completed' | 'rejected') => {
-       if(transaction.status !== 'pending' || !currentAgent || !adminUser) return;
+       if(transaction.status !== 'pending' || !currentAgent) return;
        const transRef = doc(db, 'transactions', transaction.id);
        const userRef = doc(db, 'users', transaction.userId);
        
        try {
            await runTransaction(db, async (t) => {
-                const agentQuery = query(collection(db, 'agents'), where('email', '==', currentAgent.email));
-                const agentDocs = await getDocs(agentQuery);
-                if (agentDocs.empty) throw new Error("Agent not found");
-                
-                const agentRef = agentDocs.docs[0].ref;
+                const agentRef = doc(db, 'agents', currentAgent.id);
                 
                 if (newStatus === 'rejected') {
                     // Refund the amount to the user's winnings balance if rejected
@@ -186,8 +176,8 @@ export default function TransactionsPage() {
   }
 
   const renderTable = (type: 'deposit' | 'withdrawal', data: Transaction[]) => {
-    if (loading || adminLoading) return <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-    if (!currentAgent && !adminLoading) return <div className="text-center py-10 text-red-500">Your agent profile is not set up. Please contact the super admin.</div>
+    if (loading) return <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    if (!currentAgent) return <div className="text-center py-10 text-red-500">Your agent profile is not set up. Please contact the super admin.</div>
     
     return (
         <div className="overflow-x-auto">

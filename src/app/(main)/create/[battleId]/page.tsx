@@ -9,7 +9,6 @@ import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { useAuth } from "@/contexts/auth-context";
 import { getBattle, setRoomCode as setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
 
@@ -61,8 +60,16 @@ function RulesDialog() {
 export default function CreateBattlePage({ params }: { params: { battleId: string } }) {
   const router = useRouter();
   const { battleId } = params;
-  const { user, userProfile } = useAuth();
   
+  // Mock user and profile as auth is removed
+  const user = { uid: "mock-user-id" };
+  const userProfile = { 
+      name: "Creator", 
+      avatarUrl: "https://picsum.photos/seed/creator/40/40",
+      depositBalance: 1000,
+      winningsBalance: 500,
+  };
+
   const [battle, setBattle] = useState<Battle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,23 +84,15 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     };
     const unsubscribe = getBattle(battleId, (battleData) => {
         if (battleData) {
-             // If the battle creator is NOT viewing, check if they are the opponent.
-             if (battleData.creator.id !== user.uid) {
-                // If an opponent has joined and it's this user, redirect them to the main game room.
-                if (battleData.opponent?.id === user.uid) {
-                    router.replace(`/game/${battleId}`);
-                    return;
-                }
-                 // User is neither creator nor opponent.
-                 setError("You are not part of this battle.");
-                 setTimeout(() => router.push('/play'), 3000);
-
-             } else { // The creator is viewing the page
+             // Since we can't truly know the user, we'll assume they are the creator on this page
+             if (battleData.creator.id === user.uid) {
                 setBattle(battleData);
-                // If battle has moved on, redirect creator to game room too
                 if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed' || battleData.status === 'waiting_for_players_ready') {
                     router.replace(`/game/${battleId}`);
                 }
+             } else {
+                 // For now, if not creator, assume they are opponent and redirect
+                 router.replace(`/game/${battleId}`);
              }
         } else {
             setError("Battle not found or has been cancelled.");
@@ -276,5 +275,3 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     </div>
   );
 }
-
-    

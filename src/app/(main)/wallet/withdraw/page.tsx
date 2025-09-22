@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Banknote, Landmark, TriangleAlert, Loader2 } from "lucide-react";
+import { Banknote, Landmark, TriangleAlert, Loader2 } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { createWithdrawalRequest } from '@/services/transaction-service';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
@@ -40,7 +38,14 @@ function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose:
 
 export default function WithdrawPage() {
     const router = useRouter();
-    const { user, userProfile, loading } = useAuth();
+    
+    // Mock user and profile as auth is removed
+    const user = { uid: "mock-user-id" };
+    const userProfile = { 
+        winningsBalance: 500,
+        kycStatus: 'Verified' // Assume verified for this page to be useful
+    };
+    const loading = false;
     
     const [amount, setAmount] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,19 +119,12 @@ export default function WithdrawPage() {
         }
 
         setIsSubmitting(true);
-        try {
-            await createWithdrawalRequest(user.uid, amount, withdrawalDetails);
-            showDialog("Success", "Withdrawal request submitted successfully! It will be processed soon.");
+        // Mock submission
+        setTimeout(() => {
+            showDialog("Success", "Withdrawal request submitted successfully! It will be processed soon (mocked).");
             router.push('/wallet');
-        } catch (error) {
-            if (error instanceof Error) {
-                 showDialog("Error", `Error: ${error.message}`);
-            } else {
-                showDialog("Error", "Failed to submit withdrawal request.");
-            }
-        } finally {
             setIsSubmitting(false);
-        }
+        }, 1000);
     };
 
     const processingFee = amount * 0.02; // Assuming 2% processing fee

@@ -1,12 +1,16 @@
 
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit } from 'firebase/firestore';
-import type { User } from 'firebase/auth';
 import type { UserProfile } from '@/models/user.model';
 import type { Battle, GameType, ResultSubmission } from '@/models/battle.model';
 
+// Mock User interface as Firebase User is not available
+interface MockUser {
+    uid: string;
+}
+
 // Create a new battle
-export const createBattle = async (amount: number, gameType: GameType, user: User, userProfile: UserProfile): Promise<string> => {
+export const createBattle = async (amount: number, gameType: GameType, user: MockUser, userProfile: UserProfile): Promise<string> => {
     if (!db) {
         throw new Error("Database not available. Cannot create battle.");
     }
@@ -64,7 +68,7 @@ export const createBattle = async (amount: number, gameType: GameType, user: Use
 };
 
 // Accept an open battle
-export const acceptBattle = async (battleId: string, user: User, userProfile: UserProfile): Promise<void> => {
+export const acceptBattle = async (battleId: string, user: MockUser, userProfile: UserProfile): Promise<void> => {
     if (!db) {
         throw new Error("Database not available. Cannot accept battle.");
     }
@@ -175,36 +179,26 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
         const opponentId = battleData.opponent?.id;
 
         if (opponentId && !isPractice) {
-            // Logic when an opponent exists
             const cancellerIsCreator = userId === creatorId;
             const otherPlayerId = cancellerIsCreator ? opponentId : creatorId;
 
             const cancellerRef = doc(db, 'users', userId);
             const otherPlayerRef = doc(db, 'users', otherPlayerId);
             
-            // Note: We are reading the other player's doc, but only updating the current user's and the opponent's balance in separate updates.
-            // This is allowed by security rules if each update targets the authorized user.
-            // However, a better approach is to use a cloud function for inter-user transactions.
-            // For client-side, we'll refund both and penalize canceller.
-
-            // Penalize the canceller
             transaction.update(cancellerRef, {
                 winningsBalance: increment(-CANCELLATION_FEE), // Penalty
                 penaltyTotal: increment(CANCELLATION_FEE)
             });
 
-            // Refund original bet amount to both players' winnings balance
             transaction.update(doc(db, 'users', creatorId), { winningsBalance: increment(amount) });
             transaction.update(doc(db, 'users', opponentId), { winningsBalance: increment(amount) });
 
-            // Compensate the other player with the penalty amount
             transaction.update(otherPlayerRef, { 
                 winningsBalance: increment(CANCELLATION_FEE) 
             });
 
 
         } else { 
-            // If no opponent, only refund the creator (if it's not a practice match)
             if (userId !== creatorId) {
                 throw new Error("Only the creator can cancel an open battle.");
             }
@@ -214,7 +208,6 @@ export const cancelBattle = async (battleId: string, userId: string, amount: num
             }
         }
 
-        // Finally, update the battle status
         transaction.update(battleRef, { 
             status: 'cancelled', 
             updatedAt: serverTimestamp() 
@@ -377,7 +370,6 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         transaction.update(loserRef, loserUpdate);
 
         if (!isPractice) {
-            // Check if this was the first game for either player to award referral bonus
             if (winnerProfile.gamesPlayed === 0) {
                 await awardReferralBonus(transaction, winnerId);
             }

@@ -6,14 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Gamepad2, Gift, Pencil, LogOut, Loader2, ShieldQuestion, UserCheck, TrendingUp, TrendingDown, Star, Wallet, ChevronRight, X, Save } from "lucide-react";
 import Image from "next/image";
-import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { uploadImage } from "@/services/storage-service";
-import { updateUserProfile } from "@/services/user-agent-service";
 import type { UserProfile } from "@/models/user.model";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import imagePaths from '@/lib/image-paths.json';
 
 
@@ -67,27 +63,36 @@ function KycSection({ kycStatus }: { kycStatus: UserProfile['kycStatus'] }) {
 }
 
 export default function ProfilePage() {
-  const { user, userProfile, logout, loading: authLoading } = useAuth();
   const router = useRouter();
+  
+  // Mock user and profile as auth is removed
+  const user = { uid: "mock-user-id", phoneNumber: "N/A", email: "guest@example.com" };
+  const initialProfile: UserProfile = {
+      uid: user.uid,
+      name: 'Guest Player',
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      avatarUrl: "https://picsum.photos/seed/guest/96/96",
+      referralCode: 'MOCK123',
+      depositBalance: 1000,
+      winningsBalance: 500,
+      kycStatus: 'Not Verified',
+      gamesPlayed: 10,
+      gamesWon: 5,
+      penaltyTotal: 0,
+      createdAt: new Date(),
+      winStreak: 2,
+      losingStreak: 0,
+      biggestWin: 100,
+  };
+
+  const [userProfile, setUserProfile] = useState<UserProfile>(initialProfile);
+  const [authLoading, setAuthLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState(initialProfile.name);
   const [isSaving, setIsSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   
-  useEffect(() => {
-    if (userProfile) {
-      setDisplayName(userProfile.name);
-    }
-  }, [userProfile]);
-
-  if (authLoading || !userProfile || !user) {
-    return (
-        <div className="flex justify-center items-center h-full">
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        </div>
-    );
-  }
-
   const handleEditToggle = () => {
     if(isEditing) {
        setDisplayName(userProfile.name); // Reset changes if cancelled
@@ -98,29 +103,32 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!user || !displayName.trim()) return;
     setIsSaving(true);
-    try {
-      await updateUserProfile(user.uid, { name: displayName.trim() });
-      setIsEditing(false);
-    } catch (error) {
-      alert("Could not save profile. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    // Mock saving
+    setTimeout(() => {
+        setUserProfile(prev => ({...prev, name: displayName.trim()}));
+        setIsEditing(false);
+        setIsSaving(false);
+        alert("Profile saved (mocked).");
+    }, 500);
   };
   
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && user) {
         const file = e.target.files[0];
         setIsSaving(true);
-        try {
-            const avatarUrl = await uploadImage(file, `avatars/${user.uid}`);
-            await updateUserProfile(user.uid, { avatarUrl });
-        } catch (error) {
-            alert("Could not upload avatar.");
-        } finally {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const newAvatarUrl = reader.result as string;
+            setUserProfile(prev => ({...prev, avatarUrl: newAvatarUrl}));
             setIsSaving(false);
-        }
+            alert("Avatar updated (mocked).");
+        };
+        reader.readAsDataURL(file);
     }
+  }
+
+  const logout = () => {
+      router.replace('/landing');
   }
 
   const winRate = userProfile.gamesPlayed > 0 ? Math.round((userProfile.gamesWon / userProfile.gamesPlayed) * 100) : 0;

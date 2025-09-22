@@ -8,7 +8,6 @@ import { Info, Copy, Trash2, Upload, Crown, TriangleAlert, Loader2, CheckCircle,
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "@/contexts/auth-context";
 import { getBattle, cancelBattle, uploadResult, markPlayerAsReady, setRoomCode as setBattleRoomCode } from "@/services/battle-service";
 import { uploadImage } from "@/services/storage-service";
 import type { Battle } from "@/models/battle.model";
@@ -66,7 +65,8 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  // Mock user as auth is removed
+  const user = { uid: "mock-user-id" };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
@@ -162,7 +162,13 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
 export default function GameRoomPage({ params }: { params: { gameId: string } }) {
   const router = useRouter();
   const { gameId } = params;
-  const { user, userProfile } = useAuth();
+  
+  // Mock user and profile as auth is removed
+  const user = { uid: "mock-user-id" };
+  const userProfile = { 
+      name: "Player", 
+      avatarUrl: "https://picsum.photos/seed/player/40/40" 
+  };
   
   const [battle, setBattle] = useState<Battle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,12 +184,6 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     };
     const unsubscribe = getBattle(gameId, (battleData) => {
         if (battleData) {
-             const isParticipant = battleData.creator.id === user.uid || battleData.opponent?.id === user.uid;
-             if (!isParticipant && battleData.status !== 'open') {
-                setError("You are not part of this battle.");
-                setTimeout(() => router.push('/play'), 3000);
-                return;
-             }
             setBattle(battleData);
             if (battleData.roomCode) setRoomCode(battleData.roomCode);
         } else {

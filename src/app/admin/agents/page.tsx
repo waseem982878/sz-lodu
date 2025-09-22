@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Loader2, IndianRupee, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { collection, onSnapshot, addDoc, updateDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, updateDoc, doc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { Agent } from "@/models/agent.model";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -99,8 +99,9 @@ export default function AgentsPage() {
         });
         setNewName("");
         setNewEmail("");
+        alert("Agent added and user role updated successfully.");
     } catch (error) {
-        alert("Failed to add agent.");
+        alert(`Failed to add agent: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
         setIsSaving(false);
     }
@@ -159,6 +160,7 @@ export default function AgentsPage() {
                     <TableHeader>
                     <TableRow>
                         <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
                         <TableHead>Float Balance</TableHead>
                         <TableHead>Used Amount</TableHead>
                         <TableHead>Remaining</TableHead>
@@ -169,6 +171,7 @@ export default function AgentsPage() {
                     {agents.map((agent) => (
                         <TableRow key={agent.id}>
                             <TableCell className="font-medium">{agent.name}</TableCell>
+                            <TableCell>{agent.email}</TableCell>
                             <TableCell className="flex items-center gap-2 whitespace-nowrap">
                                <IndianRupee className="h-4 w-4 text-muted-foreground"/> {agent.floatBalance.toLocaleString()}
                                <EditFloatModal agent={agent} onSave={handleUpdateFloat} />

@@ -1,11 +1,11 @@
 
-import { doc, setDoc, serverTimestamp, getDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
 
 /**
  * Creates or updates a user profile in Firestore.
- * This is the primary function for managing user data upon login or changes.
+ * This is the primary function for managing user data.
  * @param userId The user's ID.
  * @param data The partial user data to create or merge.
  * @returns A promise that resolves when the profile is created or updated.
@@ -39,32 +39,8 @@ export const updateUserProfile = async (userId: string, data: Partial<UserProfil
         ...data,
     };
 
-    // Use setDoc with merge:true to create or update the document without overwriting existing fields.
     return setDoc(userRef, profileData, { merge: true });
 };
-
-
-/**
- * Creates an agent profile in Firestore and marks the user as an agent.
- * This should be used for trusted users, as it grants agent privileges.
- * @param userId The user's ID.
- * @param email The user's email.
- * @param displayName The user's display name.
- * @returns A promise that resolves when the agent profile is created.
- */
-export async function createAgentProfile(userId: string, email: string, displayName: string): Promise<void> {
-  if (!db) {
-    console.error("Database not available. Cannot create agent profile.");
-    return;
-  }
-  const userRef = doc(db, "users", userId);
-  // This will create or update the user document with agent status
-  return updateUserProfile(userId, {
-      name: displayName,
-      email: email,
-      isAgent: true,
-  });
-}
 
 /**
  * Updates the balances for a specific user. Intended for admin use.
@@ -80,7 +56,6 @@ export const updateUserBalances = async (userId: string, depositBalance: number,
         winningsBalance: winningsBalance
     });
 };
-
 
 /**
  * Submits KYC details for a user and sets their status to 'Pending'.
