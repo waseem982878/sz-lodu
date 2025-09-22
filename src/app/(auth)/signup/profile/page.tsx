@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -26,7 +27,7 @@ export default function CreateProfilePage() {
 
         setLoading(true);
         try {
-            await createUserProfile(user, name, user.phoneNumber!);
+            await createUserProfile(user, name);
             // The AuthProvider will detect the profile and redirect automatically.
         } catch (error) {
             console.error("Error creating profile:", error);

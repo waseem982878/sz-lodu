@@ -8,10 +8,9 @@ import type { User } from "firebase/auth";
  * Creates a user profile in Firestore after signup.
  * @param user The Firebase user object.
  * @param name The user's chosen display name.
- * @param phoneNumber The user's phone number.
  * @returns A promise that resolves when the profile is created.
  */
-export const createUserProfile = async (user: User, name: string, phoneNumber: string): Promise<void> => {
+export const createUserProfile = async (user: User, name: string): Promise<void> => {
     if (!db) {
         throw new Error("Database not available. Cannot create user profile.");
     }
@@ -22,7 +21,7 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
         uid: user.uid,
         name,
         email: user.email || null,
-        phoneNumber: phoneNumber,
+        phoneNumber: user.phoneNumber || null,
         avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`,
         referralCode: referralCode,
         depositBalance: 0,

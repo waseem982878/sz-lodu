@@ -3,15 +3,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Phone } from "lucide-react";
+import { Loader2, Phone, Mail, Lock } from "lucide-react";
 import { FaShieldAlt } from "react-icons/fa";
 import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Add a global property to the window object for reCAPTCHA
 declare global {
@@ -24,11 +25,14 @@ declare global {
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
+    const [activeTab, setActiveTab] = useState("phone");
     const router = useRouter();
 
-    const onSignInSubmit = async (e: React.FormEvent) => {
+    const onPhoneSignInSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!phone || phone.length !== 10) {
             alert("Please enter a valid 10-digit phone number.");
@@ -36,7 +40,6 @@ export default function LoginPage() {
         }
         setLoading(true);
 
-        // Cleanup previous verifier if it exists
         if (window.recaptchaVerifier) {
             window.recaptchaVerifier.clear();
         }
@@ -56,7 +59,6 @@ export default function LoginPage() {
         } catch (error) {
             console.error("Error during OTP sending:", error);
             alert("Failed to send OTP. Please check your phone number, refresh the page, and try again.");
-            // Reset reCAPTCHA on error
             // @ts-ignore
             if (window.grecaptcha && window.recaptchaVerifier) {
                  // @ts-ignore
@@ -81,8 +83,6 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await window.confirmationResult.confirm(otp);
-            // On successful confirmation, the onAuthStateChanged listener in AuthProvider
-            // will detect the user and handle redirection.
         } catch (error) {
             console.error("Error during OTP verification:", error);
             alert("Invalid OTP. Please try again.");
@@ -90,6 +90,38 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
+    
+    const handleEmailAuth = async (isSignUp: boolean) => {
+        if (!email || !password) {
+            alert("Please enter both email and password.");
+            return;
+        }
+        setLoading(true);
+        try {
+            if (isSignUp) {
+                await createUserWithEmailAndPassword(auth, email, password);
+                // AuthProvider will redirect to profile creation
+            } else {
+                await signInWithEmailAndPassword(auth, email, password);
+                // AuthProvider will redirect to home
+            }
+        } catch (error: any) {
+            const errorCode = error.code;
+            let friendlyMessage = "An error occurred. Please try again.";
+            if (errorCode === 'auth/email-already-in-use') {
+                friendlyMessage = "This email is already in use. Please log in or use a different email.";
+            } else if (errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
+                friendlyMessage = "Invalid email or password. Please try again.";
+            } else if (errorCode === 'auth/weak-password') {
+                friendlyMessage = "The password is too weak. It should be at least 6 characters long.";
+            }
+            console.error("Email auth error:", error);
+            alert(friendlyMessage);
+        } finally {
+            setLoading(false);
+        }
+    }
+
 
     return (
         <>
@@ -103,56 +135,88 @@ export default function LoginPage() {
             <Card className="shadow-2xl">
                  <CardHeader>
                     <CardTitle className="text-2xl text-center">
-                        {showOtp ? "Enter OTP" : "Login or Sign Up"}
+                        {activeTab === 'phone' && showOtp ? "Enter OTP" : "Login or Sign Up"}
                     </CardTitle>
                     <CardDescription className="text-center">
-                        {showOtp ? `We've sent a 6-digit code to +91 ${phone}` : "Enter your phone number to continue"}
+                        {activeTab === 'phone' ? (showOtp ? `We've sent a 6-digit code to +91 ${phone}` : "Enter your phone number to continue") : "Use your email and password"}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {!showOtp ? (
-                        <form onSubmit={onSignInSubmit}>
-                            <div className="space-y-4">
+                    <Tabs defaultValue="phone" onValueChange={setActiveTab}>
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="phone">Phone</TabsTrigger>
+                            <TabsTrigger value="email">Email</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="phone">
+                             {!showOtp ? (
+                                <form onSubmit={onPhoneSignInSubmit} className="space-y-4 pt-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">Phone Number</Label>
+                                        <div className="relative">
+                                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                            <span className="absolute left-10 top-1/2 -translate-y-1/2 text-sm">+91 |</span>
+                                            <Input 
+                                                id="phone" 
+                                                type="tel" 
+                                                placeholder="9876543210" 
+                                                value={phone} 
+                                                onChange={(e) => setPhone(e.target.value)} 
+                                                required
+                                                className="pl-24"
+                                                maxLength={10}
+                                            />
+                                        </div>
+                                    </div>
+                                    <Button id="sign-in-button" type="submit" className="w-full" disabled={loading}>
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Send OTP
+                                    </Button>
+                                </form>
+                            ) : (
+                                <form onSubmit={onOtpVerify} className="space-y-4 pt-4">
+                                     <div className="space-y-2">
+                                        <Label htmlFor="otp">6-Digit OTP</Label>
+                                        <Input id="otp" type="tel" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value)} required maxLength={6}/>
+                                    </div>
+                                    <Button type="submit" className="w-full" disabled={loading}>
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Verify OTP
+                                    </Button>
+                                    <Button variant="link" size="sm" className="w-full" onClick={() => {setShowOtp(false); setOtp(""); window.confirmationResult = undefined;}}>
+                                        Change Number
+                                    </Button>
+                                </form>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="email">
+                           <div className="space-y-4 pt-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="phone">Phone Number</Label>
+                                    <Label htmlFor="email">Email</Label>
                                     <div className="relative">
-                                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                        <span className="absolute left-10 top-1/2 -translate-y-1/2 text-sm">+91 |</span>
-                                        <Input 
-                                            id="phone" 
-                                            type="tel" 
-                                            placeholder="9876543210" 
-                                            value={phone} 
-                                            onChange={(e) => setPhone(e.target.value)} 
-                                            required
-                                            className="pl-24"
-                                            maxLength={10}
-                                        />
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                        <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="pl-10"/>
                                     </div>
                                 </div>
-                                <Button id="sign-in-button" type="submit" className="w-full" disabled={loading}>
-                                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Send OTP
-                                </Button>
-                            </div>
-                        </form>
-                    ) : (
-                        <form onSubmit={onOtpVerify}>
-                            <div className="space-y-4">
                                  <div className="space-y-2">
-                                    <Label htmlFor="otp">6-Digit OTP</Label>
-                                    <Input id="otp" type="tel" placeholder="123456" value={otp} onChange={(e) => setOtp(e.target.value)} required maxLength={6}/>
+                                    <Label htmlFor="password">Password</Label>
+                                     <div className="relative">
+                                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                        <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-10"/>
+                                     </div>
                                 </div>
-                                <Button type="submit" className="w-full" disabled={loading}>
-                                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Verify OTP
-                                </Button>
-                                <Button variant="link" size="sm" className="w-full" onClick={() => {setShowOtp(false); setOtp(""); window.confirmationResult = undefined;}}>
-                                    Change Number
-                                </Button>
-                            </div>
-                        </form>
-                    )}
+                                <div className="flex gap-2">
+                                    <Button onClick={() => handleEmailAuth(false)} className="w-full" disabled={loading}>
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Login
+                                    </Button>
+                                     <Button onClick={() => handleEmailAuth(true)} variant="secondary" className="w-full" disabled={loading}>
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Sign Up
+                                    </Button>
+                                </div>
+                           </div>
+                        </TabsContent>
+                    </Tabs>
                 </CardContent>
                  <CardFooter className="flex-col text-xs text-center text-muted-foreground space-y-2">
                     <div className="flex items-center justify-center gap-1">
