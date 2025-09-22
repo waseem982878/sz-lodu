@@ -1,3 +1,4 @@
+
 import { doc, setDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
@@ -17,7 +18,8 @@ export const createUserProfile = async (user: User, name: string, phoneNumber: s
     const userRef = doc(db, "users", user.uid);
     const referralCode = `SZLUDO${user.uid.substring(0, 6).toUpperCase()}`;
 
-    const profileData: Omit<UserProfile, 'uid'> = {
+    const profileData: UserProfile = {
+        uid: user.uid,
         name,
         email: user.email || null,
         phoneNumber: phoneNumber,
@@ -54,6 +56,7 @@ export const updateUserProfile = async (userId: string, data: Partial<UserProfil
     }
     const userRef = doc(db, "users", userId);
     
+    // Ensure 'updatedAt' is always included
     const profileData = {
         ...data,
         updatedAt: serverTimestamp(),
