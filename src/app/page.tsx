@@ -7,10 +7,10 @@ import { useAuth } from '@/contexts/auth-context';
 // This is a simple client component that shows a loader while the AuthProvider decides where to go.
 // The AuthProvider, which wraps this in the root layout, handles all logic.
 export default function RootPage() {
-  const { loading } = useAuth();
+  const { authLoading, profileLoading } = useAuth();
 
   // This loader is a fallback. The main global loader is in AuthProvider.
-  if (loading) {
+  if (authLoading || profileLoading) {
      return (
         <div className="flex flex-col justify-center items-center h-screen bg-background text-center p-4">
             <span className="text-4xl font-bold mb-4 text-primary font-heading">SZ LUDO</span>
@@ -29,3 +29,4 @@ export default function RootPage() {
     </div>
   );
 }
+
