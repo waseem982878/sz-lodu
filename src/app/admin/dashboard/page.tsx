@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -19,67 +19,71 @@ const initialStats = {
     pendingKYCs: { title: "Pending KYCs", value: "0", icon: ShieldQuestion, color: "text-red-500", note: "" },
 };
 
+const TOTAL_LISTENERS = 6; // Total number of Firestore listeners
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState(initialStats);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadedListeners = useRef(0);
+
+  const onListenerLoaded = () => {
+    loadedListeners.current += 1;
+    if (loadedListeners.current >= TOTAL_LISTENERS) {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
     setError(null);
+    loadedListeners.current = 0;
 
-    // Listener for Users & Pending KYCs
-    const usersQuery = collection(db, "users");
-    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
+    const listeners = [
+      // Listener for Users
+      onSnapshot(collection(db, "users"), (snapshot) => {
         setStats(prev => ({ ...prev, totalUsers: { ...prev.totalUsers, value: snapshot.size.toString() } }));
-    }, err => { console.error("User listener error:", err); setError("Failed to load user data."); });
+        onListenerLoaded();
+      }, err => { console.error("User listener error:", err); setError("Failed to load user data."); onListenerLoaded(); }),
 
-    const pendingKycsQuery = query(usersQuery, where("kycStatus", "==", "Pending"));
-    const unsubKycs = onSnapshot(pendingKycsQuery, (snapshot) => {
+      // Listener for Pending KYCs
+      onSnapshot(query(collection(db, "users"), where("kycStatus", "==", "Pending")), (snapshot) => {
         setStats(prev => ({ ...prev, pendingKYCs: { ...prev.pendingKYCs, value: snapshot.size.toString() } }));
-    }, err => { console.error("KYC listener error:", err); setError("Failed to load KYC data."); });
+        onListenerLoaded();
+      }, err => { console.error("KYC listener error:", err); setError("Failed to load KYC data."); onListenerLoaded(); }),
 
-    // Listener for Battles Stats
-    const battlesCollection = collection(db, "battles");
-    const activeBattlesQuery = query(battlesCollection, where('status', 'in', ['inprogress', 'result_pending', 'waiting_for_players_ready']));
-    const unsubActiveBattles = onSnapshot(activeBattlesQuery, (snapshot) => {
-        setStats(prev => ({...prev, activeBattles: {...prev.activeBattles, value: snapshot.size.toString()}}))
-    }, err => { console.error("Active battles error:", err); setError("Failed to load battle data."); });
+      // Listener for Active Battles
+      onSnapshot(query(collection(db, "battles"), where('status', 'in', ['inprogress', 'result_pending', 'waiting_for_players_ready'])), (snapshot) => {
+        setStats(prev => ({...prev, activeBattles: {...prev.activeBattles, value: snapshot.size.toString()}}));
+        onListenerLoaded();
+      }, err => { console.error("Active battles error:", err); setError("Failed to load battle data."); onListenerLoaded(); }),
 
-    const completedBattlesQuery = query(battlesCollection, where('status', '==', 'completed'));
-    const unsubCompletedBattles = onSnapshot(completedBattlesQuery, (snapshot) => {
+      // Listener for Total Revenue
+      onSnapshot(query(collection(db, "battles"), where('status', '==', 'completed')), (snapshot) => {
         const totalRevenue = snapshot.docs
             .map(doc => doc.data() as Battle)
             .reduce((acc, battle) => acc + (battle.amount * 0.05), 0);
-        setStats(prev => ({...prev, totalRevenue: {...prev.totalRevenue, value: `₹${totalRevenue.toLocaleString()}`}}))
-    }, err => { console.error("Revenue listener error:", err); setError("Failed to load revenue data."); });
+        setStats(prev => ({...prev, totalRevenue: {...prev.totalRevenue, value: `₹${totalRevenue.toLocaleString()}`}}));
+        onListenerLoaded();
+      }, err => { console.error("Revenue listener error:", err); setError("Failed to load revenue data."); onListenerLoaded(); }),
 
-    // Listener for Pending Withdrawals
-    const pendingWithdrawalsQuery = query(collection(db, "transactions"), where('type', '==', 'withdrawal'), where('status', '==', 'pending'));
-    const unsubWithdrawals = onSnapshot(pendingWithdrawalsQuery, (snapshot) => {
-        setStats(prev => ({...prev, pendingWithdrawals: {...prev.pendingWithdrawals, value: snapshot.size.toString()}}))
-    }, err => { console.error("Withdrawals listener error:", err); setError("Failed to load withdrawal data."); });
-    
-    // Listener for recent transactions
-    const recentTransQuery = query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(5));
-    const unsubRecentTrans = onSnapshot(recentTransQuery, (snapshot) => {
+      // Listener for Pending Withdrawals
+      onSnapshot(query(collection(db, "transactions"), where('type', '==', 'withdrawal'), where('status', '==', 'pending')), (snapshot) => {
+        setStats(prev => ({...prev, pendingWithdrawals: {...prev.pendingWithdrawals, value: snapshot.size.toString()}}));
+        onListenerLoaded();
+      }, err => { console.error("Withdrawals listener error:", err); setError("Failed to load withdrawal data."); onListenerLoaded(); }),
+
+      // Listener for Recent Transactions
+      onSnapshot(query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(5)), (snapshot) => {
         const recentTransactionsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
         setRecentTransactions(recentTransactionsData);
-    }, err => { console.error("Recent transactions error:", err); setError("Failed to load transaction data."); });
+        onListenerLoaded();
+      }, err => { console.error("Recent transactions error:", err); setError("Failed to load transaction data."); onListenerLoaded(); }),
+    ];
 
-    // Simulate loading for at least a moment to avoid flashing
-    setTimeout(() => setLoading(false), 500);
-
-
-    // Cleanup function
     return () => {
-        unsubUsers();
-        unsubKycs();
-        unsubActiveBattles();
-        unsubCompletedBattles();
-        unsubWithdrawals();
-        unsubRecentTrans();
+        listeners.forEach(unsub => unsub());
     };
   }, []);
 
@@ -87,7 +91,7 @@ export default function AdminDashboard() {
     return <div className="flex justify-center items-center h-[80vh]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
   
-  if (error) {
+  if (error && recentTransactions.length === 0) { // Only show full-page error if nothing loads
     return (
         <div className="flex flex-col items-center justify-center h-[80vh] text-center">
             <h2 className="text-2xl font-bold text-destructive mb-4">Dashboard Error</h2>
@@ -96,11 +100,12 @@ export default function AdminDashboard() {
     );
   }
 
-
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
       
+      {error && <p className="text-destructive text-center">{error}</p>} {/* Show non-critical errors at the top */}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {Object.values(stats).map((stat) => (
             <Card key={stat.title} className="hover:shadow-lg transition-shadow">
