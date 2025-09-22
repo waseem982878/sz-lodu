@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import QRCode from "qrcode.react";
 import type { PaymentUpi } from '@/models/payment-upi.model';
+import { useAuth } from '@/contexts/auth-context';
+import { getActiveUpi, createDepositRequest } from '@/services/transaction-service';
+
 
 const shortcutAmounts = [100, 200, 500, 1000, 2000, 5000];
 const MINIMUM_DEPOSIT = 100;
@@ -17,7 +20,7 @@ const GST_RATE = 0.18; // 18%
 
 export default function DepositPage() {
     const router = useRouter();
-    const user = { uid: "mock-user-id" };
+    const { user, loading: authLoading } = useAuth();
     const [amount, setAmount] = useState(0);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -28,19 +31,13 @@ export default function DepositPage() {
     const [step, setStep] = useState(1); // Step 1: Enter amount, Step 2: Make payment
 
     useEffect(() => {
-        setLoadingUpi(true);
-        // Mock active UPI
-        setTimeout(() => {
-            setActiveUpi({
-                id: 'mock-upi-id',
-                upiId: 'mock@upi',
-                payeeName: 'SZ Ludo Mock Merchant',
-                dailyLimit: 100000,
-                currentReceived: 5000,
-                isActive: true
-            });
+        const fetchUpi = async () => {
+            setLoadingUpi(true);
+            const upi = await getActiveUpi();
+            setActiveUpi(upi);
             setLoadingUpi(false);
-        }, 500);
+        }
+        fetchUpi();
     }, []);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,13 +68,20 @@ export default function DepositPage() {
             return;
         }
         setIsSubmitting(true);
-        // Mock submission
-        setTimeout(() => {
-            alert("Deposit request submitted successfully! It will be verified shortly (mocked).");
+        try {
+            await createDepositRequest(user.uid, amount, gstAmount, imageFile, activeUpi.upiId);
+            alert("Deposit request submitted successfully! It will be verified shortly.");
             router.push('/wallet');
+        } catch (e) {
+            alert(`Failed to submit deposit request: ${(e as Error).message}`);
+        } finally {
             setIsSubmitting(false);
-        }, 1000);
+        }
     };
+
+    if (authLoading) {
+        return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+    }
 
     if (step === 2) {
         return (

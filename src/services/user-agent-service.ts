@@ -70,5 +70,3 @@ export const submitKycDetails = async (userId: string, data: Partial<UserProfile
         kycStatus: 'Pending',
     });
 };
-
-    

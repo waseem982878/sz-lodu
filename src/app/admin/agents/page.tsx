@@ -90,6 +90,16 @@ export default function AgentsPage() {
     }
     setIsSaving(true);
     try {
+        // 1. Find the user by email
+        const usersQuery = query(collection(db, "users"), where("email", "==", newEmail));
+        const userSnapshot = await getDocs(usersQuery);
+
+        if (userSnapshot.empty) {
+            throw new Error("No user found with this email. The user must sign up first.");
+        }
+        const userDoc = userSnapshot.docs[0];
+
+        // 2. Create the agent document
         await addDoc(collection(db, "agents"), {
             name: newName,
             email: newEmail,
@@ -97,6 +107,12 @@ export default function AgentsPage() {
             usedAmount: 0,
             isActive: true,
         });
+
+        // 3. Update the user document to mark them as an agent
+        await updateDoc(doc(db, "users", userDoc.id), {
+            isAgent: true
+        });
+
         setNewName("");
         setNewEmail("");
         alert("Agent added and user role updated successfully.");
@@ -125,7 +141,7 @@ export default function AgentsPage() {
         <Card>
             <CardHeader>
                 <CardTitle className="text-primary">Add New Agent</CardTitle>
-                <CardDescription>Create a new agent profile. You can add their float balance later.</CardDescription>
+                <CardDescription>Create a new agent profile from an existing user. The user must have an account first. You can add their float balance later.</CardDescription>
             </CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -133,8 +149,8 @@ export default function AgentsPage() {
                     <Input id="new-agent-name" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g., Rajesh Kumar"/>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="new-agent-email">Agent Email</Label>
-                    <Input id="new-agent-email" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="e.g., agent@example.com"/>
+                    <Label htmlFor="new-agent-email">User's Email</Label>
+                    <Input id="new-agent-email" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="e.g., user@example.com"/>
                 </div>
             </CardContent>
             <CardFooter>
@@ -192,3 +208,5 @@ export default function AgentsPage() {
     </div>
   );
 }
+
+    

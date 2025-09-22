@@ -4,17 +4,30 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Wallet } from "lucide-react";
 import { useSidebar } from "@/contexts/sidebar-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 
 export function Header() {
     const { openSidebar } = useSidebar();
-    const bannerText = "Play Ludo & Win Real Cash on SZ LUDO 😍";
+    const { user, userProfile } = useAuth();
+    const [bannerText, setBannerText] = useState("Play Ludo & Win Real Cash on SZ LUDO 😍");
     const [hasUnread, setHasUnread] = useState(false);
 
-    // Mock total balance since auth is removed
-    const totalBalance = 1000;
+    useEffect(() => {
+        const settingsRef = doc(db, 'config', 'appSettings');
+        const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
+            if(docSnap.exists()) {
+                setBannerText(docSnap.data().headerBannerText);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const totalBalance = (userProfile?.depositBalance ?? 0) + (userProfile?.winningsBalance ?? 0);
 
     return (
         <header className="w-full">

@@ -11,6 +11,9 @@ import { useState, useRef, useEffect } from "react";
 import type { UserProfile } from "@/models/user.model";
 import Link from "next/link";
 import imagePaths from '@/lib/image-paths.json';
+import { useAuth } from "@/contexts/auth-context";
+import { uploadImage } from "@/services/storage-service";
+import { updateUserProfile } from "@/services/user-agent-service";
 
 
 type MetricProps = {
@@ -64,37 +67,21 @@ function KycSection({ kycStatus }: { kycStatus: UserProfile['kycStatus'] }) {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { user, userProfile, loading: authLoading, logout } = useAuth();
   
-  // Mock user and profile as auth is removed
-  const user = { uid: "mock-user-id", phoneNumber: "N/A", email: "guest@example.com" };
-  const initialProfile: UserProfile = {
-      uid: user.uid,
-      name: 'Guest Player',
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      avatarUrl: "https://picsum.photos/seed/guest/96/96",
-      referralCode: 'MOCK123',
-      depositBalance: 1000,
-      winningsBalance: 500,
-      kycStatus: 'Not Verified',
-      gamesPlayed: 10,
-      gamesWon: 5,
-      penaltyTotal: 0,
-      createdAt: new Date(),
-      winStreak: 2,
-      losingStreak: 0,
-      biggestWin: 100,
-  };
-
-  const [userProfile, setUserProfile] = useState<UserProfile>(initialProfile);
-  const [authLoading, setAuthLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState(initialProfile.name);
+  const [displayName, setDisplayName] = useState(userProfile?.name || "");
   const [isSaving, setIsSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   
+  useEffect(() => {
+    if (userProfile) {
+        setDisplayName(userProfile.name);
+    }
+  }, [userProfile]);
+
   const handleEditToggle = () => {
-    if(isEditing) {
+    if(isEditing && userProfile) {
        setDisplayName(userProfile.name); // Reset changes if cancelled
     }
     setIsEditing(!isEditing);
@@ -103,32 +90,38 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!user || !displayName.trim()) return;
     setIsSaving(true);
-    // Mock saving
-    setTimeout(() => {
-        setUserProfile(prev => ({...prev, name: displayName.trim()}));
+    try {
+        await updateUserProfile(user.uid, { name: displayName.trim() });
         setIsEditing(false);
+    } catch (e) {
+        alert("Failed to save profile.");
+    } finally {
         setIsSaving(false);
-        alert("Profile saved (mocked).");
-    }, 500);
+    }
   };
   
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && user) {
         const file = e.target.files[0];
         setIsSaving(true);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const newAvatarUrl = reader.result as string;
-            setUserProfile(prev => ({...prev, avatarUrl: newAvatarUrl}));
+        try {
+            const avatarUrl = await uploadImage(file, `avatars/${user.uid}`);
+            await updateUserProfile(user.uid, { avatarUrl });
+        } catch (e) {
+            alert("Failed to update avatar.");
+        } finally {
             setIsSaving(false);
-            alert("Avatar updated (mocked).");
-        };
-        reader.readAsDataURL(file);
+        }
     }
   }
 
-  const logout = () => {
-      router.replace('/landing');
+
+  if (authLoading || !userProfile || !user) {
+    return (
+        <div className="flex justify-center items-center h-full py-10">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    )
   }
 
   const winRate = userProfile.gamesPlayed > 0 ? Math.round((userProfile.gamesWon / userProfile.gamesPlayed) * 100) : 0;
@@ -245,5 +238,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

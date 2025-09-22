@@ -1,16 +1,13 @@
-
-"use client";
-
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { ArrowDown, Banknote, MessageSquare, ShieldCheck, Star, Swords, Trophy, UserPlus, Zap } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import imagePaths from '@/lib/image-paths.json';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
+
 
 type LandingPageContent = {
     heroTitle: string;
@@ -64,86 +61,40 @@ const TestimonialCard = ({ name, text, avatarSeed }: { name: string, text: strin
     </Card>
 )
 
-export default function LandingPage() {
-    const router = useRouter();
-    const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
-    const content: Partial<LandingPageContent> = {
-        heroTitle: "SZ LUDO",
-        heroSubtitle: "The Ultimate Real Money Ludo Experience",
-        feature1Title: "Secure Platform",
-        feature1Description: "Your data and transactions are protected with top-tier security.",
-        feature2Title: "Instant Withdrawals",
-        feature2Description: "Get your winnings transferred to your account in minutes.",
-        feature3Title: "24/7 Customer Support",
-        feature3Description: "Our team is always here to help you with any issues.",
-    };
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        const handleBeforeInstallPrompt = (e: Event) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
-        };
-
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-        // This script dynamically sets the viewport just for this page
-        // to achieve the "desktop view on mobile" effect.
-        const viewport = document.querySelector("meta[name=viewport]");
-        let originalContent: string | null = null;
-        if (viewport) {
-            originalContent = viewport.getAttribute('content');
-            if (window.innerWidth < 1024) {
-                viewport.setAttribute('content', 'width=1280');
-            }
+export default async function LandingPage() {
+    
+    let content: Partial<LandingPageContent> = {};
+    try {
+        const landingRef = doc(db, 'config', 'landingPage');
+        const landingSnap = await getDoc(landingRef);
+        if (landingSnap.exists()) {
+            content = landingSnap.data() as LandingPageContent;
         }
-
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-            // Restore original viewport on component unmount
-            if (viewport && originalContent) {
-                viewport.setAttribute('content', originalContent);
-            }
-        };
-    }, []);
-
-    const handleInstallClick = async () => {
-        if (deferredPrompt) {
-            (deferredPrompt as any).prompt();
-            await (deferredPrompt as any).userChoice;
-            setDeferredPrompt(null);
-        } else {
-            // As there is no login, we just go to the home page for the prototype
-            router.push('/home');
-        }
-    };
+    } catch (error) {
+        console.error("Could not fetch landing page content, using defaults.", error);
+    }
     
     return (
         <div className="bg-background text-foreground font-sans">
             {/* Hero Section */}
             <header className="py-28 px-4 bg-red-50/50">
-                 <div className="container mx-auto grid grid-cols-2 items-center gap-8">
+                 <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-8">
                     <div className="text-left">
                         <h1 className="text-6xl lg:text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
                         <p className="text-2xl mt-4 max-w-2xl text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
-                        <div className="mt-8 flex flex-row gap-4 justify-start">
+                        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-start">
                             <Button
+                                 asChild
                                  className="text-lg py-6 px-8 rounded-full font-semibold"
-                                 onClick={handleInstallClick}
                             >
+                               <Link href="/home">
                                 <ArrowDown className="mr-2 h-5 w-5"/>
                                 Download App & Play
-                            </Button>
-                             <Button
-                                 asChild
-                                 variant="outline"
-                                 className="text-lg py-6 px-8 rounded-full font-semibold"
-                            >
-                               <Link href="/home">Play as Guest</Link>
+                               </Link>
                             </Button>
                         </div>
                     </div>
-                     <div className="flex justify-center">
+                     <div className="hidden md:flex justify-center">
                          <Image src={imagePaths.landingHero.path} alt={imagePaths.landingHero.alt} width={500} height={500} className="rounded-lg shadow-2xl" />
                      </div>
                 </div>
@@ -155,7 +106,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-center text-primary">
                         Why Choose SZ Ludo?
                      </h2>
-                    <div className="grid grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <FeatureCard icon={ShieldCheck} title={content.feature1Title || "Secure Platform"} description={content.feature1Description || "Your data and transactions are protected with top-tier security."} />
                         <FeatureCard icon={Zap} title={content.feature2Title || "Instant Withdrawals"} description={content.feature2Description || "Get your winnings transferred to your account in minutes."} />
                         <FeatureCard icon={MessageSquare} title={content.feature3Title || "24/7 Customer Support"} description={content.feature3Description || "Our team is always here to help you with any issues."} />
@@ -166,7 +117,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-primary">
                         How to Get Started
                      </h2>
-                     <div className="grid grid-cols-4 items-start gap-12">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 items-start gap-12">
                         <HowToPlayCard icon={UserPlus} title="1. Create Account" description="Quickly sign up with your details to create a secure profile."/>
                         <HowToPlayCard icon={Swords} title="2. Join a Battle" description="Choose an ongoing battle or create your own challenge to play."/>
                         <HowToPlayCard icon={Trophy} title="3. Play & Win" description="Use your Ludo skills to defeat your opponent and win real prizes."/>
@@ -178,7 +129,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-primary">
                         Glimpse of the Action
                      </h2>
-                    <div className="grid grid-cols-3 gap-12">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
                        <ScreenshotCard src={imagePaths.landingScreenshot1.path} alt={imagePaths.landingScreenshot1.alt} data-ai-hint={imagePaths.landingScreenshot1['data-ai-hint']} />
                        <ScreenshotCard src={imagePaths.landingScreenshot2.path} alt={imagePaths.landingScreenshot2.alt} data-ai-hint={imagePaths.landingScreenshot2['data-ai-hint']} />
                        <ScreenshotCard src={imagePaths.landingScreenshot3.path} alt={imagePaths.landingScreenshot3.alt} data-ai-hint={imagePaths.landingScreenshot3['data-ai-hint']} />
@@ -190,7 +141,7 @@ export default function LandingPage() {
                      <h2 className="text-5xl font-bold mb-16 text-center text-primary">
                         What Our Players Say
                      </h2>
-                    <div className="grid grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <TestimonialCard name="Rohan S." text="Amazing app! The withdrawals are super fast. I won ₹500 and got it in my account in 10 minutes." avatarSeed="Rohan" />
                         <TestimonialCard name="Priya K." text="Fair gameplay and a great community. I play here every day after work." avatarSeed="Priya" />
                         <TestimonialCard name="Amit G." text="The best real money Ludo app out there. The support team is also very helpful." avatarSeed="Amit" />
@@ -228,12 +179,12 @@ export default function LandingPage() {
                     <h2 className="text-5xl font-bold mb-4">Ready to Play?</h2>
                     <p className="max-w-3xl mx-auto mb-8 text-xl">Join thousands of players and start winning real cash prizes today. The next Ludo king could be you!</p>
                      <Button
+                        asChild
                         variant="secondary"
                         size="lg"
                         className="text-xl py-8 px-12 rounded-full font-semibold"
-                        onClick={handleInstallClick}
                     >
-                        Download Now & Get Started
+                       <Link href="/home">Download Now & Get Started</Link>
                     </Button>
                 </section>
 
@@ -241,7 +192,7 @@ export default function LandingPage() {
 
             <footer className="bg-muted/40 py-8 px-4 text-center mt-16">
                  <div className="container mx-auto">
-                    <div className="flex flex-row gap-6 justify-center mb-4">
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center mb-4">
                         <Link href="/terms" className="text-muted-foreground hover:text-primary">Terms & Conditions</Link>
                         <Link href="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</Link>
                         <Link href="/refund" className="text-muted-foreground hover:text-primary">Refund Policy</Link>

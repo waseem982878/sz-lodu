@@ -9,6 +9,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
  *  @returns A promise that resolves with the public download URL of the uploaded file.
  */
 export const uploadImage = async (file: File, path: string): Promise<string> => {
+    if (!storage) {
+        throw new Error("Storage not available. Cannot upload image.");
+    }
     if (!file || !path) {
         throw new Error("A file and a destination path must be provided.");
     }

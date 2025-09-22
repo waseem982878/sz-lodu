@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Trophy, Award, Medal } from "lucide-react";
 import Image from "next/image";
 import imagePaths from '@/lib/image-paths.json';
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-6 w-6 text-yellow-500" />;
@@ -16,36 +18,23 @@ const getRankIcon = (rank: number) => {
     return <span className="font-bold text-sm w-6 text-center">{rank}</span>;
 }
 
-const mockPlayers: UserProfile[] = Array.from({ length: 20 }, (_, i) => ({
-    uid: `mock-player-${i}`,
-    name: `Player ${i + 1}`,
-    email: `player${i+1}@example.com`,
-    phoneNumber: `+9198765432${i > 9 ? i : '0' + i}`,
-    avatarUrl: `https://picsum.photos/seed/player${i}/40/40`,
-    referralCode: `MOCK${i}`,
-    depositBalance: 0,
-    winningsBalance: 0,
-    kycStatus: 'Verified',
-    gamesPlayed: 100 + Math.floor(Math.random() * 50),
-    gamesWon: 50 + Math.floor(Math.random() * 50),
-    penaltyTotal: 0,
-    createdAt: new Date(),
-    winStreak: 0,
-    losingStreak: 0,
-    biggestWin: 0
-})).sort((a,b) => b.gamesWon - a.gamesWon);
-
-
 export default function LeaderboardPage() {
     const [topPlayers, setTopPlayers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Mock fetching data
-        setTimeout(() => {
-            setTopPlayers(mockPlayers);
+        const playersQuery = query(collection(db, "users"), orderBy("gamesWon", "desc"), limit(20));
+        const unsubscribe = onSnapshot(playersQuery, (snapshot) => {
+            const players: UserProfile[] = [];
+            snapshot.forEach(doc => players.push(doc.data() as UserProfile));
+            setTopPlayers(players);
             setLoading(false);
-        }, 500);
+        }, (error) => {
+            console.error("Error fetching leaderboard:", error);
+            setLoading(false);
+        });
+        
+        return () => unsubscribe();
     }, []);
 
     return (

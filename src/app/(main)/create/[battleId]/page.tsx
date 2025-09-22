@@ -6,9 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/auth-context";
 import { getBattle, setRoomCode as setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
 
@@ -60,16 +61,8 @@ function RulesDialog() {
 export default function CreateBattlePage({ params }: { params: { battleId: string } }) {
   const router = useRouter();
   const { battleId } = params;
+  const { user, userProfile } = useAuth();
   
-  // Mock user and profile as auth is removed
-  const user = { uid: "mock-user-id" };
-  const userProfile = { 
-      name: "Creator", 
-      avatarUrl: "https://picsum.photos/seed/creator/40/40",
-      depositBalance: 1000,
-      winningsBalance: 500,
-  };
-
   const [battle, setBattle] = useState<Battle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,14 +77,12 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     };
     const unsubscribe = getBattle(battleId, (battleData) => {
         if (battleData) {
-             // Since we can't truly know the user, we'll assume they are the creator on this page
              if (battleData.creator.id === user.uid) {
                 setBattle(battleData);
                 if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed' || battleData.status === 'waiting_for_players_ready') {
                     router.replace(`/game/${battleId}`);
                 }
              } else {
-                 // For now, if not creator, assume they are opponent and redirect
                  router.replace(`/game/${battleId}`);
              }
         } else {
@@ -275,5 +266,3 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     </div>
   );
 }
-
-    

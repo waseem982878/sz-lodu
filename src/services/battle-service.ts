@@ -1,16 +1,13 @@
 
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import type { UserProfile } from '@/models/user.model';
 import type { Battle, GameType, ResultSubmission } from '@/models/battle.model';
 
-// Mock User interface as Firebase User is not available
-interface MockUser {
-    uid: string;
-}
 
 // Create a new battle
-export const createBattle = async (amount: number, gameType: GameType, user: MockUser, userProfile: UserProfile): Promise<string> => {
+export const createBattle = async (amount: number, gameType: GameType, user: User, userProfile: UserProfile): Promise<string> => {
     if (!db) {
         throw new Error("Database not available. Cannot create battle.");
     }
@@ -68,7 +65,7 @@ export const createBattle = async (amount: number, gameType: GameType, user: Moc
 };
 
 // Accept an open battle
-export const acceptBattle = async (battleId: string, user: MockUser, userProfile: UserProfile): Promise<void> => {
+export const acceptBattle = async (battleId: string, user: User, userProfile: UserProfile): Promise<void> => {
     if (!db) {
         throw new Error("Database not available. Cannot accept battle.");
     }
@@ -379,5 +376,3 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
         }
     });
 }
-
-    

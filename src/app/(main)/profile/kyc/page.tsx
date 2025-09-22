@@ -9,24 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/contexts/auth-context";
+import { uploadImage } from "@/services/storage-service";
+import { submitKycDetails } from "@/services/user-agent-service";
 
 export default function KycPage() {
   const router = useRouter();
-
-  // Mock user and profile as auth is removed
-  const user = { uid: "mock-user-id" };
-  const userProfile = { 
-      name: "Guest Player", 
-      dob: "",
-      panNumber: "",
-      aadhaarNumber: "",
-      upiId: "",
-      panCardUrl: null,
-      aadhaarCardUrl: null,
-      kycStatus: 'Not Verified',
-      kycNotes: ""
-  };
-
+  const { user, userProfile, loading } = useAuth();
+  
   // Form state
   const [name, setName] = useState(userProfile?.name || "");
   const [dob, setDob] = useState(userProfile?.dob || "");
@@ -44,7 +34,6 @@ export default function KycPage() {
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
 
 
   if (loading) {
@@ -74,20 +63,44 @@ export default function KycPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setIsSubmitting(true);
     
-    if (!panPreview || !aadhaarPreview) {
-        alert("Please upload both Aadhaar and PAN card images.");
-        setIsSubmitting(false);
-        return;
-    }
+    let panCardUrl = userProfile.panCardUrl;
+    let aadhaarCardUrl = userProfile.aadhaarCardUrl;
     
-    // Mock submission
-    setTimeout(() => {
-        alert("KYC details submitted successfully! Our team will review them shortly (mocked).");
+    try {
+        if (panFile) {
+            panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/pan_card`);
+        }
+        if (aadhaarFile) {
+            aadhaarCardUrl = await uploadImage(aadhaarFile, `kyc/${user.uid}/aadhaar_card`);
+        }
+        
+        if (!panCardUrl || !aadhaarCardUrl) {
+            alert("Please upload both Aadhaar and PAN card images.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        await submitKycDetails(user.uid, {
+            name,
+            dob,
+            panNumber,
+            aadhaarNumber,
+            upiId,
+            panCardUrl,
+            aadhaarCardUrl,
+        });
+        
+        alert("KYC details submitted successfully! Our team will review them shortly.");
         router.push('/profile');
+
+    } catch (error) {
+        alert("Failed to submit KYC details.");
+    } finally {
         setIsSubmitting(false);
-    }, 1000);
+    }
   };
   
   const isPendingOrVerified = userProfile.kycStatus === 'Pending' || userProfile.kycStatus === 'Verified';

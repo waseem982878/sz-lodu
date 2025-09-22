@@ -7,7 +7,8 @@ import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight,
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 
 // Sidebar now contains links not present in the bottom navigation for a cleaner UX.
 const navItems = [
@@ -21,11 +22,12 @@ const navItems = [
 
 export function Sidebar() {
   const { isSidebarOpen, closeSidebar } = useSidebar();
-  const pathname = usePathname();
+  const { user, userProfile, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
       closeSidebar();
+      await logout();
       router.replace('/landing');
   }
   
@@ -34,16 +36,6 @@ export function Sidebar() {
         window.open("https://wa.me/918955982878?text=Hello%2C%20I%20need%20support%20with%20SZ%20LUDO%20app.", "_blank", "noopener,noreferrer");
         closeSidebar();
   }
-
-  // Mock user profile data
-  const userProfile = {
-      avatarUrl: "https://picsum.photos/48/48",
-      name: "Guest Player",
-  };
-  const user = {
-      phoneNumber: "N/A",
-      email: "guest@example.com"
-  };
 
   return (
     <>
@@ -65,7 +57,7 @@ export function Sidebar() {
                    <Image src={userProfile?.avatarUrl || "https://picsum.photos/48/48"} alt="User Avatar" width={48} height={48} className="rounded-full" />
                    <div>
                       <h3 className="font-bold text-lg">{userProfile?.name || "New Player"} 👋</h3>
-                      <p className="text-sm text-muted-foreground">{user.phoneNumber || user.email}</p>
+                      <p className="text-sm text-muted-foreground">{user?.phoneNumber || user?.email}</p>
                    </div>
               </div>
               <nav className="flex-grow">

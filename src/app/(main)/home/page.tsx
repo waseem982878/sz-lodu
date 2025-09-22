@@ -10,6 +10,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import imagePaths from '@/lib/image-paths.json';
+import { useAuth } from "@/contexts/auth-context";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 type GameCardProps = {
   title: string;
@@ -85,10 +88,23 @@ function RulesDialog() {
 }
 
 export default function HomePage() {
-  const [loading, setLoading] = useState(false); // No more fetching
-  const notice = "This is a notice for all players. The system is currently under maintenance.";
+  const { loading: authLoading } = useAuth();
+  const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const settingsRef = doc(db, 'config', 'appSettings');
+    const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setNotice(docSnap.data().homeNoticeText || null);
+      }
+      setLoading(false);
+    }, () => setLoading(false));
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading || authLoading) {
     return (
       <div className="flex justify-center items-center h-full">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

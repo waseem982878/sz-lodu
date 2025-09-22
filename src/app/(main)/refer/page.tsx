@@ -8,6 +8,9 @@ import { Copy, Share2, Users, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import imagePaths from '@/lib/image-paths.json';
+import { useAuth } from "@/contexts/auth-context";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 interface Referral {
     id: string;
@@ -18,23 +21,15 @@ interface Referral {
     createdAt: any;
 }
 
-const mockReferrals: Referral[] = [
-    { id: '1', referrerId: 'me', referredId: '1', referredName: 'Rohan S.', status: 'completed', createdAt: { toDate: () => new Date('2023-10-22') } },
-    { id: '2', referrerId: 'me', referredId: '2', referredName: 'Priya K.', status: 'completed', createdAt: { toDate: () => new Date('2023-10-21') } },
-    { id: '3', referrerId: 'me', referredId: '3', referredName: 'Amit G.', status: 'pending', createdAt: { toDate: () => new Date('2023-10-20') } },
-];
 
 export default function ReferPage() {
-    // Mock user as auth is removed
-    const user = { uid: "mock-user-id" };
-    const userProfile = { referralCode: "MOCK123" };
-    const authLoading = false;
+    const { user, userProfile, loading: authLoading } = useAuth();
 
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [loading, setLoading] = useState(true);
 
     const referralCode = userProfile?.referralCode || "LOADING...";
-    const shareUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/landing?ref=${referralCode}` : '';
     const shareText = `I'm winning real cash on SZ LUDO. Join using my referral code: ${referralCode} and get a bonus!`;
 
     useEffect(() => {
@@ -43,10 +38,16 @@ export default function ReferPage() {
             return;
         }
         setLoading(true);
-        setTimeout(() => {
-            setReferrals(mockReferrals);
+        const q = query(collection(db, "referrals"), where("referrerId", "==", user.uid));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const referralData: Referral[] = [];
+            snapshot.forEach(doc => {
+                referralData.push({ id: doc.id, ...doc.data() } as Referral);
+            });
+            setReferrals(referralData);
             setLoading(false);
-        }, 500);
+        });
+        return () => unsubscribe();
     }, [user, authLoading]);
 
     const handleCopy = () => {
@@ -152,5 +153,3 @@ export default function ReferPage() {
     </div>
   );
 }
-
-    

@@ -10,10 +10,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import type { Battle, GameType } from "@/models/battle.model";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/auth-context";
+import { createBattle, acceptBattle } from "@/services/battle-service";
+import { collection, query, where, onSnapshot, or } from "firebase/firestore";
+import { db } from "@/firebase/config";
+
 
 function MyBattleCard({ battle }: { battle: Battle }) {
     const router = useRouter();
-    const user = { uid: "mock-user-id" };
+    const { user } = useAuth();
+    if (!user) return null;
 
     const isCreator = battle.creator.id === user.uid;
     const isPractice = battle.amount === 0;
@@ -110,13 +116,7 @@ function PlayPageContent() {
   const gameParam = searchParams.get('game');
   const gameType: GameType = gameParam === 'popular' ? 'popular' : 'classic';
 
-  const user = { uid: "mock-user-id" };
-  const userProfile = { 
-      name: "Guest Player", 
-      avatarUrl: "https://picsum.photos/seed/guest/40/40",
-      depositBalance: 1000,
-      winningsBalance: 500,
-  };
+  const { user, userProfile, loading: authLoading } = useAuth();
 
   const [amount, setAmount] = useState("");
   const [myBattles, setMyBattles] = useState<Battle[]>([]);
@@ -128,26 +128,51 @@ function PlayPageContent() {
   useEffect(() => {
     if (!user) return;
 
+    // Listener for battles created by the user or where the user is an opponent
     setLoadingMyBattles(true);
-    setLoadingOpenBattles(true);
-
-    // Mock fetching battles
-    setTimeout(() => {
-        const mockBattles: Battle[] = [
-            { id: 'b1', amount: 50, gameType, status: 'open', creator: { id: 'other1', name: 'Rohan', avatarUrl: 'https://picsum.photos/seed/r/40/40'}, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'b2', amount: 100, gameType, status: 'open', creator: { id: 'other2', name: 'Priya', avatarUrl: 'https://picsum.photos/seed/p/40/40'}, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'b3', amount: 0, gameType, status: 'open', creator: { id: 'other3', name: 'Practice Bot', avatarUrl: 'https://picsum.photos/seed/bot/40/40'}, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'my-b1', amount: 150, gameType, status: 'open', creator: { id: user.uid, name: userProfile.name, avatarUrl: userProfile.avatarUrl }, createdAt: new Date(), updatedAt: new Date() },
-            { id: 'my-b2', amount: 200, gameType, status: 'inprogress', creator: { id: user.uid, name: userProfile.name, avatarUrl: userProfile.avatarUrl }, opponent: { id: 'other4', name: 'Amit', avatarUrl: 'https://picsum.photos/seed/a/40/40' }, createdAt: new Date(), updatedAt: new Date() },
-        ];
-        
-        setMyBattles(mockBattles.filter(b => b.creator.id === user.uid || b.opponent?.id === user.uid));
-        setOtherOpenBattles(mockBattles.filter(b => b.status === 'open' && b.creator.id !== user.uid));
-        
+    const myBattlesQuery = query(
+        collection(db, "battles"), 
+        or(
+            where('creator.id', '==', user.uid), 
+            where('opponent.id', '==', user.uid)
+        ),
+        where('gameType', '==', gameType)
+    );
+    const unsubMyBattles = onSnapshot(myBattlesQuery, (snapshot) => {
+        const battlesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle))
+            .filter(b => b.status !== 'cancelled'); // Filter out cancelled battles
+        setMyBattles(battlesData);
         setLoadingMyBattles(false);
+    }, (err) => {
+        console.error("Error fetching my battles: ", err);
+        setLoadingMyBattles(false)
+    });
+
+
+    // Listener for open battles not created by the user
+    setLoadingOpenBattles(true);
+    const openBattlesQuery = query(
+        collection(db, "battles"), 
+        where('status', '==', 'open'),
+        where('gameType', '==', gameType)
+    );
+    const unsubOpenBattles = onSnapshot(openBattlesQuery, (snapshot) => {
+        const battlesData = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Battle))
+            .filter(b => b.creator.id !== user.uid);
+        setOtherOpenBattles(battlesData);
         setLoadingOpenBattles(false);
-    }, 500);
-  }, [user, gameType]);
+    }, (err) => {
+        console.error("Error fetching open battles: ", err);
+        setLoadingOpenBattles(false)
+    });
+
+    return () => {
+        unsubMyBattles();
+        unsubOpenBattles();
+    };
+}, [user, gameType]);
+
   
   const handleCreateBattle = async (isPractice = false) => {
     if (!user || !userProfile || isCreating) return;
@@ -174,13 +199,13 @@ function PlayPageContent() {
     }
 
     setIsCreating(true);
-    // Mock battle creation
-    setTimeout(() => {
-        const mockBattleId = `mock-${Date.now()}`;
-        alert(`Battle created (mock). ID: ${mockBattleId}`);
-        router.push(`/create/${mockBattleId}`);
+    try {
+        const battleId = await createBattle(newAmount, gameType, user, userProfile);
+        router.push(`/create/${battleId}`);
+    } catch (e) {
+        alert(`Failed to create battle: ${(e as Error).message}`);
         setIsCreating(false);
-    }, 500);
+    }
   };
 
   const handleAcceptBattle = async (battleId: string) => {
@@ -196,12 +221,16 @@ function PlayPageContent() {
         return;
     }
 
-    alert(`Accepted battle ${battleId} (mock).`);
-    router.push(`/game/${battleId}`);
+    try {
+        await acceptBattle(battleId, user, userProfile);
+        router.push(`/game/${battleId}`);
+    } catch (e) {
+        alert(`Failed to accept battle: ${(e as Error).message}`);
+    }
   };
 
 
-  if (!userProfile) {
+  if (authLoading || !userProfile) {
       return (
           <div className="flex justify-center items-center h-full py-10">
               <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -285,5 +314,3 @@ export default function Play() {
       </Suspense>
   )
 }
-
-    

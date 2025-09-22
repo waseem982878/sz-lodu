@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import type { Battle } from "@/models/battle.model";
 import type { Transaction } from "@/models/transaction.model";
 import imagePaths from '@/lib/image-paths.json';
+import { useAuth } from "@/contexts/auth-context";
+import { collection, query, where, orderBy, onSnapshot, or } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 
 function BalanceCard({ title, balance, buttonText, buttonAction, icon: Icon, variant }: {
@@ -39,7 +42,8 @@ function BalanceCard({ title, balance, buttonText, buttonAction, icon: Icon, var
 }
 
 function GameHistoryCard({ game }: { game: Battle }) {
-    const user = { uid: "mock-user-id" };
+    const { user } = useAuth();
+    if (!user) return null;
 
     const isCreator = game.creator.id === user.uid;
     const opponent = isCreator ? game.opponent : game.creator;
@@ -135,36 +139,38 @@ function TransactionHistoryCard({ transaction }: { transaction: Transaction }) {
 
 export default function WalletPage() {
   const router = useRouter();
-  
-  const userProfile = { 
-      depositBalance: 1000, 
-      winningsBalance: 500,
-      kycStatus: 'Not Verified'
-  };
-  const authLoading = false;
+  const { user, userProfile, loading: authLoading } = useAuth();
   
   const [games, setGames] = useState<Battle[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data fetching
-    setTimeout(() => {
-        const mockGames: Battle[] = [
-             { id: '1', amount: 100, creator: { id: 'other', name: 'Rohan', avatarUrl: 'https://picsum.photos/seed/r/40/40'}, opponent: { id: 'mock-user-id', name: 'You', avatarUrl: '...'}, status: 'completed', winnerId: 'mock-user-id', gameType: 'classic', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
-             { id: '2', amount: 50, creator: { id: 'mock-user-id', name: 'You', avatarUrl: '...'}, opponent: { id: 'other2', name: 'Priya', avatarUrl: 'https://picsum.photos/seed/p/40/40'}, status: 'completed', winnerId: 'other2', gameType: 'classic', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
-             { id: '3', amount: 200, creator: { id: 'mock-user-id', name: 'You', avatarUrl: '...'}, opponent: { id: 'other3', name: 'Amit', avatarUrl: 'https://picsum.photos/seed/a/40/40'}, status: 'cancelled', gameType: 'classic', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } }
-        ];
-        const mockTransactions: Transaction[] = [
-            { id: 't1', userId: 'mock-user-id', type: 'deposit', amount: 500, status: 'completed', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
-            { id: 't2', userId: 'mock-user-id', type: 'withdrawal', amount: 100, status: 'completed', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
-            { id: 't3', userId: 'mock-user-id', type: 'deposit', amount: 200, status: 'pending', createdAt: { toDate: () => new Date() }, updatedAt: { toDate: () => new Date() } },
-        ];
-        setGames(mockGames);
-        setTransactions(mockTransactions);
+    if (!user) {
+        if (!authLoading) setLoading(false);
+        return;
+    }
+
+    setLoading(true);
+    const gamesQuery = query(collection(db, 'battles'), or(where('creator.id', '==', user.uid), where('opponent.id', '==', user.uid)), orderBy('createdAt', 'desc'));
+    const transQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+
+    const unsubGames = onSnapshot(gamesQuery, (snap) => {
+        setGames(snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Battle)));
         setLoading(false);
-    }, 500);
-  }, []);
+    }, () => setLoading(false));
+
+    const unsubTrans = onSnapshot(transQuery, (snap) => {
+        setTransactions(snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Transaction)));
+        setLoading(false);
+    }, () => setLoading(false));
+
+    return () => {
+        unsubGames();
+        unsubTrans();
+    };
+
+  }, [user, authLoading]);
 
 
   if (authLoading || !userProfile) {
