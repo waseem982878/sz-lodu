@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { auth } from "@/firebase/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -10,29 +10,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Phone } from "lucide-react";
 import { FaShieldAlt } from "react-icons/fa";
-import Image from "next/image";
 import Link from "next/link";
-import imagePaths from "@/lib/image-paths.json";
+
+// Add a global property to the window object for reCAPTCHA
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+  }
+}
 
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
     const [loading, setLoading] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
-    const [confirmationResult, setConfirmationResult] = useState<any>(null);
+    const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     const router = useRouter();
 
     const setupRecaptcha = () => {
         if (!window.recaptchaVerifier) {
             window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                 'size': 'invisible',
-                'callback': (response: any) => {
-                    // reCAPTCHA solved, allow signInWithPhoneNumber.
+                'callback': () => {
                     console.log("reCAPTCHA solved");
                 },
                  'expired-callback': () => {
-                    // Response expired. Ask user to solve reCAPTCHA again.
                     console.log("reCAPTCHA expired");
+                     // It's good practice to try and re-render or ask the user to try again.
+                     if (window.recaptchaVerifier) {
+                        window.recaptchaVerifier.render().then((widgetId) => {
+                            grecaptcha.reset(widgetId);
+                        });
+                    }
                 }
             });
         }
@@ -56,8 +65,8 @@ export default function LoginPage() {
             alert("OTP sent successfully!");
         } catch (error) {
             console.error("Error during OTP sending:", error);
-            alert("Failed to send OTP. Please try again.");
-            // Reset reCAPTCHA if it fails
+            alert("Failed to send OTP. Please try again or check your phone number.");
+             // Reset reCAPTCHA if it fails
              if (window.recaptchaVerifier) {
                 window.recaptchaVerifier.render().then((widgetId: any) => {
                     grecaptcha.reset(widgetId);
@@ -70,14 +79,15 @@ export default function LoginPage() {
 
     const onOtpVerify = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!otp || otp.length !== 6) {
+        if (!otp || otp.length !== 6 || !confirmationResult) {
             alert("Please enter a valid 6-digit OTP.");
             return;
         }
         setLoading(true);
         try {
             await confirmationResult.confirm(otp);
-            // AuthProvider will handle the redirect
+            // On successful confirmation, the onAuthStateChanged listener in AuthProvider
+            // will detect the user and handle redirection. No need to router.push here.
         } catch (error) {
             console.error("Error during OTP verification:", error);
             alert("Invalid OTP. Please try again.");
@@ -101,7 +111,7 @@ export default function LoginPage() {
                         {showOtp ? "Enter OTP" : "Login or Sign Up"}
                     </CardTitle>
                     <CardDescription className="text-center">
-                        {showOtp ? `We've sent a 6-digit code to +91${phone}` : "Enter your phone number to continue"}
+                        {showOtp ? `We've sent a 6-digit code to +91 ${phone}` : "Enter your phone number to continue"}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -142,7 +152,7 @@ export default function LoginPage() {
                                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Verify OTP
                                 </Button>
-                                <Button variant="link" size="sm" className="w-full" onClick={() => {setShowOtp(false); setPhone(""); setOtp(""); setConfirmationResult(null);}}>
+                                <Button variant="link" size="sm" className="w-full" onClick={() => {setShowOtp(false); setOtp(""); setConfirmationResult(null);}}>
                                     Change Number
                                 </Button>
                             </div>
@@ -159,12 +169,4 @@ export default function LoginPage() {
             </Card>
         </>
     );
-}
-
-// Add a global property to the window object for reCAPTCHA
-declare global {
-  interface Window {
-    recaptchaVerifier: any;
-    confirmationResult: any;
-  }
 }

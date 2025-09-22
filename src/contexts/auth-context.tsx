@@ -71,28 +71,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return; 
 
-    const isAuthRoute = ['/landing', '/login', '/signup/profile'].some(p => pathname.startsWith(p));
+    const isPublicRoute = ['/landing', '/terms', '/privacy', '/refund', '/gst'].some(p => pathname.startsWith(p));
+    const isAuthRoute = ['/login', '/signup/profile'].some(p => pathname.startsWith(p));
     const isAdminRoute = pathname.startsWith('/admin');
-    const isPolicyRoute = ['/terms', '/privacy', '/refund', '/gst'].some(p => pathname.startsWith(p));
 
     if (!user) {
-      if (!isAuthRoute && !isPolicyRoute) {
-        router.replace('/landing');
-      }
+        // User is not logged in
+        if (!isPublicRoute && !isAuthRoute) {
+            router.replace('/landing');
+        }
     } else {
-      if (isAdmin) {
-        if (!isAdminRoute) {
-          router.replace('/admin/dashboard');
+        // User is logged in
+        if (isAdmin) {
+            if (!isAdminRoute) {
+                router.replace('/admin/dashboard');
+            }
+        } else {
+            // Regular user logic
+            if (isAdminRoute) {
+                router.replace('/home'); // Non-admin on admin route
+            } else if (!userProfile && pathname !== '/signup/profile') {
+                router.replace('/signup/profile'); // Profile doesn't exist, force creation
+            } else if (userProfile && isAuthRoute) {
+                router.replace('/home'); // Profile exists, but user is on login/signup page
+            }
         }
-      } else {
-        if (isAdminRoute) {
-          router.replace('/home');
-        } else if (userProfile === null && pathname !== '/signup/profile') {
-          router.replace('/signup/profile');
-        } else if (userProfile && isAuthRoute) {
-          router.replace('/home');
-        }
-      }
     }
   }, [user, userProfile, isAdmin, loading, pathname, router]);
 
