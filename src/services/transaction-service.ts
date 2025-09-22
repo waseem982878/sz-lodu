@@ -33,7 +33,7 @@ export const createDepositRequest = async (
     const screenshotUrl = await uploadImage(screenshotFile, filePath);
 
     const transactionsCollection = collection(db, 'transactions');
-    const newTransactionData: Omit<Transaction, 'id'> = {
+    const newTransactionData: Partial<Transaction> = {
       userId,
       amount,
       bonusAmount,
@@ -98,7 +98,7 @@ export const createWithdrawalRequest = async (
 
     const newTransactionRef = doc(collection(db, "transactions"));
     
-    const transactionData: Omit<Transaction, 'id' | 'bonusAmount' | 'screenshotUrl' | 'upiId'> = {
+    const transactionData: Partial<Transaction> = {
         userId,
         amount,
         type: 'withdrawal',

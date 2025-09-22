@@ -1,38 +1,52 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Helper function for auth check
-    function isAuthenticated() {
-      return request.auth != null;
+  
+    // Helper function to check ownership
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    // Images can be read by anyone (public access for avatars, etc.)
-    // Writes are restricted to authenticated users for their own files.
+    // Default Deny: Disallow all reads/writes by default
     match /{allPaths=**} {
-      allow read;
-      allow write: if isAuthenticated();
+      allow read, write: if false;
     }
 
-    // Specific rule for user avatars - only the user can write to their avatar path
+    // Profile Avatars:
+    // - Path: /avatars/{userId}
+    // - Allow write if the user is authenticated and is the owner of the profile.
+    // - Allow anyone to read (profile pictures are public).
     match /avatars/{userId} {
-        allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isOwner(userId);
+      allow read: if true;
+    }
+    
+    // KYC Documents:
+    // - Path: /kyc/{userId}/{document}
+    // - Allow write if the user is authenticated and is the owner.
+    // - Disallow public reads. Only specific backend processes/admins should access.
+    match /kyc/{userId}/{document} {
+        allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+        allow read: if isOwner(userId); // Or setup admin access
     }
 
-    // Specific rule for KYC documents - only the user can write
-    match /kyc/{userId}/{allPaths=**} {
-         allow write: if isAuthenticated() && request.auth.uid == userId;
+    // Deposit Screenshots:
+    // - Path: /deposits/{userId}/{fileName}
+    // - Allow write if the user is authenticated and is the owner.
+    // - Disallow public reads.
+    match /deposits/{userId}/{fileName} {
+      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+      allow read: if isOwner(userId); // Or setup admin access
     }
     
-    // Result screenshots
+    // Game Result Screenshots:
+    // - Path: /results/{battleId}/{userId}
+    // - Allow write if the user is authenticated and is the owner.
+    // - Disallow public reads.
     match /results/{battleId}/{userId} {
-        allow write: if isAuthenticated() && request.auth.uid == userId;
-    }
-    
-    // Deposit screenshots
-    match /deposits/{userId}/{allPaths=**} {
-        allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+      allow read: if isOwner(userId); // Or setup admin access
     }
   }
 }
