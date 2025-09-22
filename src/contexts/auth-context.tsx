@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -32,7 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
         const adminCheck = firebaseUser.email === ADMIN_EMAIL;
@@ -47,16 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               updateDoc(userRef, { lastSeen: serverTimestamp() }).catch(err => console.log("Failed to update lastSeen"));
             }
           } else {
-             // If user exists in auth but not in DB (e.g., first time admin login), create a profile.
-             if (adminCheck) {
-                 const name = firebaseUser.displayName || 'Admin';
-                 const email = firebaseUser.email || '';
-                 updateUserProfile(firebaseUser.uid, { name, email, isAgent: true });
-             } else {
-                // This case is for a regular user who is authenticated but has no profile.
-                // It's handled by the redirect logic below, which sends them to /profile/create
-                setUserProfile(null);
-             }
+             setUserProfile(null);
           }
           setLoading(false);
         }, (error) => {
@@ -68,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribeProfile();
 
       } else {
-        // No user is signed in
         setUser(null);
         setUserProfile(null);
         setIsAdmin(false);
@@ -80,32 +70,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (loading) return; // Wait until authentication state is resolved
+    if (loading) return; 
 
-    const isAuthRoute = ['/landing', '/login', '/signup'].includes(pathname)
+    const isAuthRoute = ['/landing', '/login', '/signup/profile'].some(p => pathname.startsWith(p));
     const isAdminRoute = pathname.startsWith('/admin');
+    const isPolicyRoute = ['/terms', '/privacy', '/refund', '/gst'].some(p => pathname.startsWith(p));
 
     if (!user) {
-      // User not logged in, redirect to landing unless it's a public policy page.
-      if (!isAuthRoute && !pathname.startsWith('/terms') && !pathname.startsWith('/privacy') && !pathname.startsWith('/refund') && !pathname.startsWith('/gst')) {
+      if (!isAuthRoute && !isPolicyRoute) {
         router.replace('/landing');
       }
     } else {
-      // User is logged in
       if (isAdmin) {
         if (!isAdminRoute) {
           router.replace('/admin/dashboard');
         }
       } else {
-        // Regular user logic
-        if (isAdminRoute) { // Don't allow regular users in admin area
+        if (isAdminRoute) {
           router.replace('/home');
-        } else if (isAuthRoute) { // If logged in and on an auth page, go home
+        } else if (userProfile === null && pathname !== '/signup/profile') {
+          router.replace('/signup/profile');
+        } else if (userProfile && isAuthRoute) {
           router.replace('/home');
-        } else if (!userProfile && pathname !== '/profile/create') {
-            // This is a crucial fix: if a user is logged in but has no profile,
-            // they must be redirected to create one.
-            router.replace('/profile/create');
         }
       }
     }

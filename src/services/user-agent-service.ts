@@ -2,6 +2,44 @@
 import { doc, setDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
+import type { User } from "firebase/auth";
+
+/**
+ * Creates a user profile in Firestore after signup.
+ * @param user The Firebase user object.
+ * @param name The user's chosen display name.
+ * @param phoneNumber The user's phone number.
+ * @returns A promise that resolves when the profile is created.
+ */
+export const createUserProfile = async (user: User, name: string, phoneNumber: string): Promise<void> => {
+    if (!db) {
+        throw new Error("Database not available. Cannot create user profile.");
+    }
+    const userRef = doc(db, "users", user.uid);
+    const referralCode = `SZLUDO${user.uid.substring(0, 6).toUpperCase()}`;
+
+    const profileData: Omit<UserProfile, 'uid'> = {
+        name,
+        email: user.email || null,
+        phoneNumber: phoneNumber,
+        avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`,
+        referralCode: referralCode,
+        depositBalance: 0,
+        winningsBalance: 0,
+        kycStatus: 'Not Verified',
+        gamesPlayed: 0,
+        gamesWon: 0,
+        winStreak: 0,
+        losingStreak: 0,
+        biggestWin: 0,
+        penaltyTotal: 0,
+        createdAt: serverTimestamp(),
+        lastSeen: serverTimestamp(),
+    };
+
+    return setDoc(userRef, profileData);
+};
+
 
 /**
  * Creates or updates a user profile in Firestore.
@@ -17,26 +55,9 @@ export const updateUserProfile = async (userId: string, data: Partial<UserProfil
     }
     const userRef = doc(db, "users", userId);
     
-    // Default values for a new user, merged with any provided data
-    const defaults = {
-        uid: userId,
-        avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(data.name || 'User')}`,
-        depositBalance: 0,
-        winningsBalance: 0,
-        kycStatus: 'Not Verified',
-        gamesPlayed: 0,
-        gamesWon: 0,
-        winStreak: 0,
-        losingStreak: 0,
-        biggestWin: 0,
-        penaltyTotal: 0,
-        createdAt: serverTimestamp(),
-        lastSeen: serverTimestamp(),
-    };
-
     const profileData = {
-        ...defaults,
         ...data,
+        updatedAt: serverTimestamp(),
     };
 
     return setDoc(userRef, profileData, { merge: true });
