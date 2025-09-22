@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -41,14 +42,12 @@ export default function LoginPage() {
         }
 
         try {
-            // Use the recommended initialization without a DOM element,
-            // letting Firebase handle the invisible reCAPTCHA.
-            const appVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
+            // Use the recommended initialization.
+            const appVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                 'size': 'invisible',
                 'callback': (response: any) => {
                     // reCAPTCHA solved, allow signInWithPhoneNumber.
-                    // This callback is sometimes needed for proper execution flow.
-                    console.log("reCAPTCHA solved");
+                    console.log("reCAPTCHA solved, proceeding to send OTP.");
                 }
             });
             window.recaptchaVerifier = appVerifier;
@@ -61,14 +60,14 @@ export default function LoginPage() {
 
         } catch (error) {
             console.error("Error during OTP sending:", error);
-            alert("Failed to send OTP. Please check your phone number and try again.");
+            alert("Failed to send OTP. Please check your phone number, refresh the page, and try again.");
             // Reset reCAPTCHA on error
             if (window.recaptchaVerifier) {
                 window.recaptchaVerifier.render().then((widgetId) => {
-                    if (typeof grecaptcha !== 'undefined') {
+                    if (typeof grecaptcha !== 'undefined' && grecaptcha.reset) {
                         grecaptcha.reset(widgetId);
                     }
-                });
+                }).catch(err => console.error("Error resetting reCAPTCHA", err));
             }
         } finally {
             setLoading(false);
@@ -90,7 +89,7 @@ export default function LoginPage() {
         try {
             await window.confirmationResult.confirm(otp);
             // On successful confirmation, the onAuthStateChanged listener in AuthProvider
-            // will detect the user and handle redirection. No need to router.push here.
+            // will detect the user and handle redirection.
         } catch (error) {
             console.error("Error during OTP verification:", error);
             alert("Invalid OTP. Please try again.");
@@ -101,6 +100,7 @@ export default function LoginPage() {
 
     return (
         <>
+            <div id="recaptcha-container"></div>
             <div className="text-center mb-6">
                  <Link href="/landing" className="flex items-center justify-center">
                     <span className="text-3xl font-extrabold bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto] font-heading">SZ LUDO</span>
