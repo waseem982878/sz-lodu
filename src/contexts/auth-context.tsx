@@ -8,9 +8,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
 import { Loader2 } from 'lucide-react';
 
-// IMPORTANT: Set your admin email here
-const ADMIN_EMAIL = "ludokingbattles@gmail.com";
-
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
@@ -34,21 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
-        const adminCheck = firebaseUser.email === ADMIN_EMAIL;
-        setIsAdmin(adminCheck);
-
+        
         const userRef = doc(db, 'users', firebaseUser.uid);
         
         const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
-            setUserProfile(docSnap.data() as UserProfile);
+            const profile = docSnap.data() as UserProfile;
+            setUserProfile(profile);
+            // Check for admin status from the profile
+            setIsAdmin(!!profile.isAdmin); 
           } else {
              setUserProfile(null);
+             setIsAdmin(false);
           }
           setLoading(false);
         }, (error) => {
           console.error("Error fetching user profile:", error);
           setUserProfile(null);
+          setIsAdmin(false);
           setLoading(false);
         });
         

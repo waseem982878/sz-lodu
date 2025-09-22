@@ -1,67 +1,57 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Helper function to check if the user is the owner of the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    // Helper function to check if the user is an admin
+    // Helper function to check for admin role
     function isAdmin() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Users can only read/write their own profile
+    // Users can read their own profile, admins can read any
     match /users/{userId} {
-      allow read, write: if isAuthenticated() && isOwner(userId);
-      allow list: if isAdmin(); // Admins can list users
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if request.auth.uid == userId || isAdmin();
     }
     
-    // Config can be read by anyone, but only written by admins
-    match /config/{configId} {
-        allow read: if isAuthenticated();
+    // Config can only be read by authenticated users, only written by admins
+    match /config/{docId} {
+        allow read: if request.auth != null;
         allow write: if isAdmin();
     }
     
-    // Battles can be created/read/updated by authenticated users
-    match /battles/{battleId} {
-      allow read, create, update: if isAuthenticated();
-      allow list: if isAuthenticated();
-      allow delete: if isAdmin(); // Only admins can delete battles
+    // Only admins can manage agents and payment UPIs
+    match /agents/{agentId} {
+        allow read, write: if isAdmin();
     }
-    
-    // Transactions can be created by users, but only read by the owner or an admin
-    match /transactions/{transactionId} {
-        allow create: if isAuthenticated();
-        allow read, update: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin());
-        allow list: if isAdmin();
-    }
-    
-    // Referrals can be created by users, read by participants
-    match /referrals/{referralId} {
-        allow create: if isAuthenticated();
-        allow read: if isAuthenticated() && (isOwner(resource.data.referrerId) || isOwner(resource.data.referredId));
-        allow list: if isAdmin();
-    }
-    
-    // Payment UPIs can only be managed by admins
     match /payment_upis/{upiId} {
-        allow read: if isAuthenticated(); // All users can read to find an active UPI
-        allow list: if isAuthenticated();
-        allow create, update, delete: if isAdmin();
+        allow read, write: if isAdmin();
     }
 
-    // Agents can only be managed by admins
-    match /agents/{agentId} {
-        allow read, list, create, update, delete: if isAdmin();
+    // Battles can be read by anyone authenticated, but written under specific logic or by admins
+    match /battles/{battleId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null; // Further logic is in backend
+      allow update: if request.auth != null || isAdmin(); // Further logic is in backend
+    }
+    
+    // Transactions can only be read by the user they belong to or an admin
+    // Transactions can only be created by the user, and updated by an admin
+    match /transactions/{transactionId} {
+        allow read: if request.auth.uid == resource.data.userId || isAdmin();
+        allow create: if request.auth.uid == request.resource.data.userId;
+        allow update: if isAdmin();
+    }
+    
+    // Referrals can be read by the referrer or the referred, and written by backend logic or admin
+     match /referrals/{referralId} {
+      allow read: if request.auth.uid == resource.data.referrerId || request.auth.uid == resource.data.referredId || isAdmin();
+      allow write: if request.auth != null || isAdmin(); // Logic handled in backend
+    }
+
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

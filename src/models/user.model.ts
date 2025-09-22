@@ -34,4 +34,5 @@ export interface UserProfile {
 
     // Role management
     isAgent?: boolean;
+    isAdmin?: boolean; // Added for admin role
 }
