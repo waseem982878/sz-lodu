@@ -128,11 +128,16 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
         if (battleData) {
              if (battleData.creator.id === user.uid) {
                 setBattle(battleData);
-                if(battleData.status === 'inprogress' || battleData.status === 'result_pending' || battleData.status === 'completed') {
-                    router.replace(`/game/${battleId}`);
-                }
-             } else {
+                // When opponent joins, status becomes 'waiting_for_players_ready'.
+                // Creator should stay on this page to enter code.
+                // Do not redirect creator from here.
+             } else if (battleData.opponent?.id === user.uid) {
+                // This is the opponent, they should be on the game page.
                  router.replace(`/game/${battleId}`);
+             } else {
+                 // User is not part of this battle.
+                 setError("You are not part of this battle.");
+                 setTimeout(() => router.push('/play'), 3000);
              }
         } else {
             setError("Battle not found or has been cancelled.");
@@ -208,6 +213,11 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
 
 
    const renderGameControl = () => {
+        if (battle.status === 'inprogress' || battle.status === 'result_pending' || battle.status === 'completed') {
+            router.replace(`/game/${battleId}`);
+            return <p className="text-center text-muted-foreground">Redirecting to game...</p>;
+        }
+
         if (!isOpponentJoined) {
             return (
                 <div className='text-center py-4'>
@@ -220,7 +230,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
         if (!battle.roomCode) {
             return (
                  <>
-                    <p className="text-sm text-muted-foreground">Enter Ludo King Room Code</p>
+                    <p className="text-sm text-muted-foreground">An opponent has joined! Enter the Ludo King Room Code.</p>
                     <div className="flex items-center gap-2 my-2">
                         <Input 
                             type="text" 
@@ -266,7 +276,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
             )
         }
         
-        return <p className="text-center text-muted-foreground">Redirecting to game...</p>;
+        return <p className="text-center text-muted-foreground">Loading game state...</p>;
     }
 
 
