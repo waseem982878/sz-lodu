@@ -157,9 +157,7 @@ export const cancelBattle = async (battleId: string, userId: string) => {
 
             const cancellerRef = doc(db, 'users', userId);
             const otherPlayerRef = doc(db, 'users', otherPlayerId);
-            const cancellerName = cancellerIsCreator ? creator.name : opponent.name;
-            const otherPlayerName = cancellerIsCreator ? opponent.name : creator.name;
-
+            
             // Refund canceller minus penalty
             transaction.update(cancellerRef, {
                 winningsBalance: increment(amount - CANCELLATION_FEE),
@@ -169,48 +167,11 @@ export const cancelBattle = async (battleId: string, userId: string) => {
             transaction.update(otherPlayerRef, {
                 winningsBalance: increment(amount + CANCELLATION_FEE)
             });
-
-            // Create transactions
-            _createTransaction(transaction, {
-                userId: userId,
-                type: 'cancellation_penalty',
-                amount: CANCELLATION_FEE,
-                description: `Penalty for cancelling match vs ${otherPlayerName}`,
-                battleId: battleId
-            });
-            _createTransaction(transaction, {
-                userId: userId,
-                type: 'refund',
-                amount: amount - CANCELLATION_FEE,
-                description: `Refund for cancelled match vs ${otherPlayerName}`,
-                battleId: battleId
-            });
-            _createTransaction(transaction, {
-                userId: otherPlayerId,
-                type: 'cancellation_bonus',
-                amount: CANCELLATION_FEE,
-                description: `Bonus from ${cancellerName} cancelling the match`,
-                battleId: battleId
-            });
-             _createTransaction(transaction, {
-                userId: otherPlayerId,
-                type: 'refund',
-                amount: amount,
-                description: `Refund for cancelled match vs ${cancellerName}`,
-                battleId: battleId
-            });
-
+            
         } else if (!isPractice) { // No opponent yet
             if (userId !== creator.id) throw new Error("Only the creator can cancel an open battle.");
             const creatorRef = doc(db, 'users', creator.id);
             transaction.update(creatorRef, { winningsBalance: increment(amount) });
-             _createTransaction(transaction, {
-                userId: creator.id,
-                type: 'refund',
-                amount: amount,
-                description: `Refund for cancelled open battle`,
-                battleId: battleId
-            });
         }
 
         transaction.update(battleRef, {
@@ -248,72 +209,34 @@ export const markPlayerAsReady = async (battleId: string, userId: string) => {
     });
 };
 
-// New uploadResult function with automated completion logic
+// New simplified uploadResult function
 export const uploadResult = async (battleId: string, userId: string, status: 'won' | 'lost', screenshotUrl?: string) => {
     if (!db) throw new Error("Database not available.");
     const battleRef = doc(db, 'battles', battleId);
 
-    await runTransaction(db, async (transaction) => {
-        const battleDoc = await transaction.get(battleRef);
-        if (!battleDoc.exists()) throw new Error("Battle not found");
+    const battleDoc = await getDoc(battleRef);
+    if (!battleDoc.exists()) {
+        throw new Error("Battle not found");
+    }
 
-        const battleData = battleDoc.data() as Battle;
-        if (battleData.status !== 'inprogress' && battleData.status !== 'result_pending') {
-            throw new Error("Can only submit result for an active game.");
-        }
-        if (battleData.result?.[userId]) {
-            throw new Error("You have already submitted your result.");
-        }
+    const battleData = battleDoc.data() as Battle;
+    if (battleData.status !== 'inprogress' && battleData.status !== 'result_pending') {
+        throw new Error("Can only submit result for an active game.");
+    }
+    if (battleData.result?.[userId]) {
+        throw new Error("You have already submitted your result.");
+    }
 
-        // 1. Update the user's result submission
-        const resultSubmission: ResultSubmission = {
-            status,
-            screenshotUrl: status === 'won' ? screenshotUrl : undefined,
-            submittedAt: serverTimestamp()
-        };
-        
-        const updatedResult = { ...battleData.result, [userId]: resultSubmission };
-
-        transaction.update(battleRef, {
-            result: updatedResult,
-            status: 'result_pending',
-            updatedAt: serverTimestamp()
-        });
-        
-        // 2. Check the opponent's result to decide the next step
-        const opponentId = battleData.creator.id === userId ? battleData.opponent?.id : battleData.creator.id;
-        const userResult = status;
-        const opponentResult = opponentId ? updatedResult?.[opponentId]?.status : undefined;
-
-        if (!opponentId || !opponentResult) {
-            // Waiting for the other player, do nothing more
-            return;
-        }
-
-        // Both players have submitted results, let's resolve the battle
-        const creatorResult = battleData.creator.id === userId ? userResult : opponentResult;
-        const opponentResultFinal = battleData.opponent?.id === userId ? userResult : opponentResult;
-        
-        if (creatorResult === 'won' && opponentResultFinal === 'lost') {
-            await _completeBattle(transaction, battleId, battleData.creator.id, battleData);
-        } else if (creatorResult === 'lost' && opponentResultFinal === 'won') {
-            await _completeBattle(transaction, battleId, battleData.opponent!.id, battleData);
-        } else if (creatorResult === 'won' && opponentResultFinal === 'won') {
-            // Both claim victory, mark as disputed for admin review
-            transaction.update(battleRef, { status: 'disputed', updatedAt: serverTimestamp() });
-        } else if (creatorResult === 'lost' && opponentResultFinal === 'lost') {
-            // Both claim loss, cancel the game and refund
-             const isPractice = battleData.amount === 0;
-             if(!isPractice) {
-                const creatorRef = doc(db, 'users', battleData.creator.id);
-                const opponentRef = doc(db, 'users', battleData.opponent!.id);
-                transaction.update(creatorRef, { winningsBalance: increment(battleData.amount) });
-                transaction.update(opponentRef, { winningsBalance: increment(battleData.amount) });
-                 _createTransaction(transaction, { userId: battleData.creator.id, type: 'refund', amount: battleData.amount, description: "Mutual loss reported. Battle cancelled.", battleId });
-                 _createTransaction(transaction, { userId: battleData.opponent!.id, type: 'refund', amount: battleData.amount, description: "Mutual loss reported. Battle cancelled.", battleId });
-             }
-            transaction.update(battleRef, { status: 'cancelled', updatedAt: serverTimestamp() });
-        }
+    const resultSubmission: ResultSubmission = {
+        status,
+        screenshotUrl: status === 'won' ? screenshotUrl : undefined,
+        submittedAt: serverTimestamp()
+    };
+    
+    await updateDoc(battleRef, {
+        [`result.${userId}`]: resultSubmission,
+        status: 'result_pending',
+        updatedAt: serverTimestamp()
     });
 };
 
@@ -378,7 +301,7 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
         losingStreak: increment(1),
     };
 
-    // 3. Handle Prize Money & Create Transactions
+    // 3. Handle Prize Money
     if (!isPractice) {
         const commissionRate = settingsSnap.exists() ? (settingsSnap.data().commissionRate || 10) / 100 : 0.10;
         const totalPot = battleData.amount * 2;
@@ -390,25 +313,6 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
         if (prizeMoney > (winnerProfile.biggestWin || 0)) {
             winnerUpdate.biggestWin = prizeMoney;
         }
-
-        // Create transactions for both players
-        _createTransaction(transaction, {
-            userId: winnerId,
-            type: 'game_win',
-            amount: prizeMoney,
-            description: `Won battle vs ${loserProfile.name}`,
-            battleId,
-            opponent: { id: loserId, name: loserProfile.name }
-        });
-
-        _createTransaction(transaction, {
-            userId: loserId,
-            type: 'game_loss',
-            amount: battleData.amount, // The amount they lost
-            description: `Lost battle vs ${winnerProfile.name}`,
-            battleId,
-            opponent: { id: winnerId, name: winnerProfile.name }
-        });
     }
 
     transaction.update(winnerRef, winnerUpdate);
@@ -416,30 +320,20 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
 
     // 4. Handle Referral Bonus
     if (!isPractice) {
-        if (winnerProfile.gamesPlayed === 0) {
-            await _awardReferralBonus(transaction, winnerId);
-        }
-        if (loserProfile.gamesPlayed === 0) {
-            await _awardReferralBonus(transaction, loserId);
-        }
+        // These are not awaited to prevent transaction issues. They will run in the background.
+        _awardReferralBonus(transaction, winnerId, winnerProfile.gamesPlayed);
+        _awardReferralBonus(transaction, loserId, loserProfile.gamesPlayed);
     }
 }
 
-function _createTransaction(transaction: FirestoreTransaction, data: Omit<Transaction, 'id' | 'createdAt'>) {
-    const txRef = doc(collection(db, 'transactions'));
-    const transactionData: Omit<Transaction, 'id'> = {
-        ...data,
-        createdAt: serverTimestamp(),
-    }
-    transaction.set(txRef, transactionData);
-}
 
-async function _awardReferralBonus(transaction: FirestoreTransaction, referredUserId: string) {
-    // This needs to be adapted to be transaction-safe if possible
-    // For now, we are reading outside and writing inside transaction, which is acceptable
+async function _awardReferralBonus(transaction: FirestoreTransaction, referredUserId: string, gamesPlayed: number) {
+    if (gamesPlayed !== 0) return; // Only award for the very first game
+
     const referralQuery = query(collection(db, 'referrals'), where('referredId', '==', referredUserId), where('status', '==', 'pending'), limit(1));
     const settingsRef = doc(db, 'config', 'appSettings');
     
+    // We get docs outside of the main transaction path to avoid contention.
     const [referralSnap, settingsSnap] = await Promise.all([
         getDocs(referralQuery),
         getDoc(settingsRef)
@@ -455,12 +349,5 @@ async function _awardReferralBonus(transaction: FirestoreTransaction, referredUs
         
         transaction.update(referrerRef, { winningsBalance: increment(referralBonus) });
         transaction.update(referralRef, { status: 'completed' });
-
-        _createTransaction(transaction, {
-            userId: referrerId,
-            type: 'referral_bonus',
-            amount: referralBonus,
-            description: `Bonus for referring user ${referredUserId}`
-        });
     }
 }
