@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ function RulesDialog() {
   )
 }
 
-function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: 'won' | 'lost' | null, onClose: () => void, battle: Battle, onResultSubmitted: (status: 'won' | 'lost') => void }) {
+function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: 'won' | 'lost' | null, onClose: () => void, battle: Battle, onResultSubmitted: (status: 'won' | 'lost', screenshotUrl?: string) => void }) {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,17 +140,12 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
                 return;
             }
             const imageUrl = await uploadImage(image, `results/${battle.id}/${user.uid}`);
-            await uploadResult(battle.id, user.uid, 'won', imageUrl);
-            alert("Result submitted for verification.");
+            onResultSubmitted(status, imageUrl);
         } else if (status === 'lost') {
-            await uploadResult(battle.id, user.uid, 'lost');
-            alert("Loss confirmed. The result will be verified by the admin.");
+            onResultSubmitted(status);
         }
-        onResultSubmitted(status);
-        onClose();
     } catch (error) {
         alert("Failed to submit result.");
-    } finally {
         setIsSubmitting(false);
     }
   }
@@ -248,7 +244,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     if (!battle || !user) return;
     if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
       try {
-        await cancelBattle(battle.id, user.uid, battle.amount);
+        await cancelBattle(battle.id, user.uid);
         alert("Battle cancelled.");
         router.push('/play');
       } catch (err) {
@@ -286,8 +282,15 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
       }
   }
 
-  const onResultSubmitted = () => {
-      // The onSnapshot listener will handle UI updates automatically.
+  const onResultSubmitted = async (status: 'won' | 'lost', screenshotUrl?: string) => {
+    if (!user || !battle) return;
+    try {
+        await uploadResult(battle.id, user.uid, status, screenshotUrl);
+        alert("Result submitted for verification.");
+        setResultStatus(null);
+    } catch (error) {
+        alert(`Failed to submit result: ${(error as Error).message}`);
+    }
   }
 
   if (loading || !userProfile) {
