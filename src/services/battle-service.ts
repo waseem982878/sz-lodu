@@ -1,3 +1,4 @@
+
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -266,11 +267,13 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
             submittedAt: serverTimestamp()
         };
 
-        transaction.update(battleRef, {
+        const updateData = {
             [`result.${userId}`]: resultSubmission,
             status: 'result_pending', 
             updatedAt: serverTimestamp()
-        });
+        };
+
+        transaction.update(battleRef, updateData);
     });
 };
 
