@@ -4,7 +4,7 @@ import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, whe
 import type { User } from 'firebase/auth';
 import type { UserProfile } from '@/models/user.model';
 import type { Battle, GameType, ResultSubmission } from '@/models/battle.model';
-import { Transaction, TransactionType } from '@/models/transaction.model';
+import { Transaction } from '@/models/transaction.model';
 
 // Create a new battle
 export const createBattle = async (amount: number, gameType: GameType, user: User, userProfile: UserProfile): Promise<string> => {
