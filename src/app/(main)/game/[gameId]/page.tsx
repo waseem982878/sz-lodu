@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Info, Copy, Trash2, Upload, Crown, TriangleAlert, Loader2, CheckCircle, X, CircleHelp, Edit } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -484,5 +484,3 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     </div>
   );
 }
-
-    
