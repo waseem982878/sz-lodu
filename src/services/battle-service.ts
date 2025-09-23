@@ -1,4 +1,3 @@
-
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -374,13 +373,13 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
 
         if (!isPractice) {
             if (winnerProfile.gamesPlayed === 0) {
-                // Do not await this call inside the transaction
                 awardReferralBonus(transaction, winnerId);
             }
             if (loserProfile.gamesPlayed === 0) {
-                 // Do not await this call inside the transaction
                  awardReferralBonus(transaction, loserId);
             }
         }
     });
 }
+
+    
