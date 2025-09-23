@@ -189,7 +189,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     if (!battle || !user) return;
     if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
       try {
-        await cancelBattle(battle.id, user.uid, battle.amount);
+        await cancelBattle(battle.id, user.uid);
         alert("Battle cancelled.");
         router.push('/play');
       } catch (err) {
