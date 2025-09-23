@@ -1,4 +1,4 @@
-'''
+
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit, writeBatch, Transaction as FirestoreTransaction } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -459,4 +459,3 @@ async function _awardReferralBonus(transaction: FirestoreTransaction, referredUs
         });
     }
 }
-''
