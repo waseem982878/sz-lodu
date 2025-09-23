@@ -257,7 +257,7 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
         const battleDoc = await transaction.get(battleRef);
         if (!battleDoc.exists()) throw new Error("Battle not found");
 
-        let battleData = battleDoc.data() as Battle;
+        const battleData = battleDoc.data() as Battle;
         if (battleData.status !== 'inprogress' && battleData.status !== 'result_pending') {
             throw new Error("Can only submit result for an active game.");
         }
@@ -271,8 +271,11 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
             screenshotUrl: status === 'won' ? screenshotUrl : undefined,
             submittedAt: serverTimestamp()
         };
+        
+        const updatedResult = { ...battleData.result, [userId]: resultSubmission };
+
         transaction.update(battleRef, {
-            [`result.${userId}`]: resultSubmission,
+            result: updatedResult,
             status: 'result_pending',
             updatedAt: serverTimestamp()
         });
@@ -313,6 +316,7 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
         }
     });
 };
+
 
 
 // This function is for admins to manually set a winner
