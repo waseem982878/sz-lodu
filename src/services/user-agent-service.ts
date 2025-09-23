@@ -61,12 +61,13 @@ export const updateUserProfile = async (userId: string, data: Partial<UserProfil
     }
     const userRef = doc(db, "users", userId);
     
-    const profileData = {
+    // Add the updatedAt timestamp to any update operation
+    const profileDataWithTimestamp = {
         ...data,
         updatedAt: serverTimestamp(),
     };
 
-    return setDoc(userRef, profileData, { merge: true });
+    return updateDoc(userRef, profileDataWithTimestamp);
 };
 
 /**
@@ -95,5 +96,6 @@ export const submitKycDetails = async (userId: string, data: Partial<UserProfile
     await updateDoc(userRef, {
         ...data,
         kycStatus: 'Pending',
+        updatedAt: serverTimestamp(),
     });
 };
