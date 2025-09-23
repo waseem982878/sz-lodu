@@ -94,22 +94,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             router.replace('/home'); // Non-admin on admin route
         } else if (!userProfile && pathname !== '/signup/profile') {
             router.replace('/signup/profile'); // Profile doesn't exist, force creation
-        } else if (userProfile && (authRoutes.some(p => pathname.startsWith(p)) || pathname === '/landing')) {
-             router.replace('/home'); // Profile exists, but user is on a public/auth page
+        } else if (userProfile && (authRoutes.some(p => pathname.startsWith(p)) || pathname === '/landing' || pathname === '/')) {
+             router.replace('/home'); // Profile exists, but user is on a public/auth page or root
         }
     }
   }, [user, userProfile, isAdmin, loading, pathname, router]);
 
   const logout = async () => {
     if (user) {
-       // Only update lastSeen if there is a user
-       await updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(err => console.log("Failed to update lastSeen on logout"));
+       // Only update lastSeen if there is a user and they are not an admin
+       if (!isAdmin) {
+          await updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(err => console.log("Failed to update lastSeen on logout"));
+       }
     }
     await signOut(auth);
     router.replace('/landing');
   };
   
-   if (loading || (!user && !pathname.startsWith('/landing') && !pathname.startsWith('/login'))) {
+   if (loading) {
       return (
         <div className="flex flex-col justify-center items-center h-screen bg-background text-center p-4">
             <span className="text-4xl font-bold mb-4 text-primary font-heading">SZ LUDO</span>

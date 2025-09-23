@@ -10,19 +10,25 @@ import { useRouter } from "next/navigation";
 // The actual content is determined by the AuthProvider, which will redirect
 // to either the landing page or the home page.
 export default function RootPage() {
-    const { loading, user } = useAuth();
+    const { loading, user, userProfile, isAdmin } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
+        // The redirection logic is now fully handled in AuthProvider.
+        // This component just shows a loader while AuthProvider works.
+        // We can add a fallback here just in case, but it shouldn't be necessary.
         if (!loading) {
-            if (user) {
-                // This might be redundant if AuthProvider already handles it, but it's a good fallback
-                // router.replace('/home');
-            } else {
+            if (!user) {
                 router.replace('/landing');
+            } else if (isAdmin) {
+                router.replace('/admin/dashboard');
+            } else if (userProfile) {
+                router.replace('/home');
+            } else {
+                router.replace('/signup/profile');
             }
         }
-    }, [loading, user, router]);
+    }, [loading, user, userProfile, isAdmin, router]);
 
 
     // This loader is a fallback while the AuthProvider decides where to redirect.
