@@ -283,7 +283,7 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
         // 2. Check the opponent's result to decide the next step
         const opponentId = battleData.creator.id === userId ? battleData.opponent?.id : battleData.creator.id;
         const userResult = status;
-        const opponentResult = opponentId ? battleData.result?.[opponentId]?.status : undefined;
+        const opponentResult = opponentId ? updatedResult?.[opponentId]?.status : undefined;
 
         if (!opponentId || !opponentResult) {
             // Waiting for the other player, do nothing more
@@ -295,9 +295,9 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
         const opponentResultFinal = battleData.opponent?.id === userId ? userResult : opponentResult;
         
         if (creatorResult === 'won' && opponentResultFinal === 'lost') {
-            await _completeBattle(transaction, battleId, battleData.creator.id);
+            await _completeBattle(transaction, battleId, battleData.creator.id, battleData);
         } else if (creatorResult === 'lost' && opponentResultFinal === 'won') {
-            await _completeBattle(transaction, battleId, battleData.opponent!.id);
+            await _completeBattle(transaction, battleId, battleData.opponent!.id, battleData);
         } else if (creatorResult === 'won' && opponentResultFinal === 'won') {
             // Both claim victory, mark as disputed for admin review
             transaction.update(battleRef, { status: 'disputed', updatedAt: serverTimestamp() });
@@ -322,19 +322,20 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
 // This function is for admins to manually set a winner
 export const updateBattleStatus = async (battleId: string, winnerId: string) => {
     if (!db) throw new Error("Database not available.");
+    const battleRef = doc(db, 'battles', battleId);
     await runTransaction(db, async (transaction) => {
-        await _completeBattle(transaction, battleId, winnerId);
+        const battleDoc = await transaction.get(battleRef);
+        if (!battleDoc.exists()) throw new Error("Battle not found");
+        const battleData = battleDoc.data() as Battle;
+        await _completeBattle(transaction, battleId, winnerId, battleData);
     });
 }
 
 // Internal function to handle the logic of completing a battle
 // Can be called from a transaction in uploadResult or updateBattleStatus
-async function _completeBattle(transaction: FirestoreTransaction, battleId: string, winnerId: string) {
+async function _completeBattle(transaction: FirestoreTransaction, battleId: string, winnerId: string, battleData: Battle) {
     const battleRef = doc(db, 'battles', battleId);
-    const battleDoc = await transaction.get(battleRef);
-    if (!battleDoc.exists()) throw new Error("Battle not found");
 
-    const battleData = battleDoc.data() as Battle;
     if (battleData.status === 'completed') return; // Already completed
 
     const loserId = battleData.creator.id === winnerId ? battleData.opponent?.id : battleData.creator.id;
