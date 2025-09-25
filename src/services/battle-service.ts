@@ -1,4 +1,5 @@
 
+
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit, writeBatch, Transaction as FirestoreTransaction } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -155,8 +156,8 @@ export const cancelBattle = async (battleId: string, userId: string) => {
         const battleData = battleDoc.data() as Battle;
         const { status, amount, creator, opponent } = battleData;
 
-        if (['cancelled', 'completed', 'disputed'].includes(status)) {
-            throw new Error("Battle cannot be cancelled as it's already concluded.");
+        if (['cancelled', 'completed'].includes(status)) {
+            throw new Error("Battle cannot be cancelled as it's already concluded or cancelled.");
         }
 
         const isPractice = amount === 0;
