@@ -11,6 +11,19 @@ export const createBattle = async (amount: number, gameType: GameType, user: Use
     if (!db) {
         throw new Error("Database not available. Cannot create battle.");
     }
+
+    // Check for existing active battles
+    const activeBattlesQuery = query(
+        collection(db, 'battles'),
+        where('creator.id', '==', user.uid),
+        where('status', 'in', ['open', 'waiting_for_players_ready', 'inprogress', 'result_pending'])
+    );
+
+    const activeBattlesSnap = await getDocs(activeBattlesQuery);
+    if (activeBattlesSnap.size >= 3) {
+        throw new Error("You can only have a maximum of 3 active battles.");
+    }
+
     const userRef = doc(db, 'users', user.uid);
     const isPractice = amount === 0;
 
@@ -229,9 +242,11 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
 
     const resultSubmission: ResultSubmission = {
         status,
-        screenshotUrl: status === 'won' ? screenshotUrl : undefined,
         submittedAt: serverTimestamp()
     };
+    if (status === 'won' && screenshotUrl) {
+        resultSubmission.screenshotUrl = screenshotUrl;
+    }
     
     await updateDoc(battleRef, {
         [`result.${userId}`]: resultSubmission,
