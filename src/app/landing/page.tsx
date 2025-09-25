@@ -183,7 +183,7 @@ export default async function LandingPage() {
                         asChild
                         variant="secondary"
                         size="lg"
-                        className="text-xl py-8 px-12 rounded-full font-semibold"
+                        className="text-lg md:text-xl py-4 md:py-8 px-6 md:px-12 rounded-full font-semibold"
                     >
                        <Link href="/login">Download Now & Get Started</Link>
                     </Button>
