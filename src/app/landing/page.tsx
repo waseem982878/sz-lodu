@@ -179,14 +179,16 @@ export default async function LandingPage() {
                 <section className="py-20 px-4 text-center bg-primary text-primary-foreground rounded-xl my-24">
                     <h2 className="text-5xl font-bold mb-4">Ready to Play?</h2>
                     <p className="max-w-3xl mx-auto mb-8 text-xl">Join thousands of players and start winning real cash prizes today. The next Ludo king could be you!</p>
-                     <Button
-                        asChild
-                        variant="secondary"
-                        size="lg"
-                        className="text-lg md:text-xl py-4 md:py-8 px-6 md:px-12 rounded-full font-semibold"
-                    >
-                       <Link href="/login">Download Now & Get Started</Link>
-                    </Button>
+                     <div className="flex justify-center">
+                        <Button
+                            asChild
+                            variant="secondary"
+                            size="lg"
+                            className="text-lg md:text-xl py-4 md:py-8 px-6 md:px-12 rounded-full font-semibold"
+                        >
+                           <Link href="/login">Download Now & Get Started</Link>
+                        </Button>
+                    </div>
                 </section>
 
             </main>
