@@ -41,6 +41,21 @@ const initialMockBattles: Battle[] = [
     { id: 'mock20', amount: 9000, gameType: 'classic', status: 'inprogress', creator: { id: 'c20', name: 'Last King', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=LastKing' }, opponent: { id: 'o20', name: 'Final Boss', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Final' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
 ];
 
+const initialMockOpenBattles: Battle[] = [
+    { id: 'mock-open-1', amount: 100, gameType: 'classic', status: 'open', creator: { id: 'c21', name: 'New Challenger', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=NewChallenger' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-2', amount: 500, gameType: 'classic', status: 'open', creator: { id: 'c22', name: 'Ludo Pro', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=LudoPro' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-3', amount: 2000, gameType: 'popular', status: 'open', creator: { id: 'c23', name: 'Big Player', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=BigPlayer' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-4', amount: 50, gameType: 'classic', status: 'open', creator: { id: 'c24', name: 'Friendly Match', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Friendly' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-5', amount: 300, gameType: 'popular', status: 'open', creator: { id: 'c25', name: 'Quick Game', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Quick' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-6', amount: 7500, gameType: 'classic', status: 'open', creator: { id: 'c26', name: 'High Stakes', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=HighStakes' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-7', amount: 150, gameType: 'classic', status: 'open', creator: { id: 'c27', name: 'Evening Game', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Evening' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-8', amount: 4000, gameType: 'popular', status: 'open', creator: { id: 'c28', name: 'Pro Gamer', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=ProGamer' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-9', amount: 600, gameType: 'classic', status: 'open', creator: { id: 'c29', name: 'Challenge Me', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=ChallengeMe' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-10', amount: 10000, gameType: 'classic', status: 'open', creator: { id: 'c30', name: 'The King', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=TheKing' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-11', amount: 250, gameType: 'popular', status: 'open', creator: { id: 'c31', name: 'Let\'s Play', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=LetsPlay' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock-open-12', amount: 1200, gameType: 'classic', status: 'open', creator: { id: 'c32', name: 'Master Player', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Master' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+];
+
 
 function MyBattleCard({ battle }: { battle: Battle }) {
     const router = useRouter();
@@ -188,6 +203,7 @@ function PlayPageContent() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [mockBattles, setMockBattles] = useState<Battle[]>(() => [...initialMockBattles].sort(() => Math.random() - 0.5));
+  const [mockOpenBattles, setMockOpenBattles] = useState<Battle[]>(() => [...initialMockOpenBattles].sort(() => Math.random() - 0.5));
 
   useEffect(() => {
     AOS.init({
@@ -287,8 +303,15 @@ function PlayPageContent() {
   const handleAcceptBattle = async (battleId: string) => {
     if (!user || !userProfile) return;
 
-    const battleToAccept = openBattles.find(b => b.id === battleId);
+    // Check both real and mock open battles
+    const battleToAccept = openBattles.find(b => b.id === battleId) || mockOpenBattles.find(b => b.id === battleId);
     if (!battleToAccept) return;
+    
+    // If it's a mock battle, just show an alert and don't proceed
+    if (battleToAccept.id.startsWith('mock-open-')) {
+        alert("This is a sample battle. Create your own to play!");
+        return;
+    }
     
     const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
     if (battleToAccept.amount > 0 && totalBalance < battleToAccept.amount) {
@@ -316,6 +339,7 @@ function PlayPageContent() {
   
   const pageTitle = gameType === 'classic' ? 'Ludo Classic' : 'Popular Ludo';
   const displayOngoingBattles = ongoingBattles.length > 0 ? ongoingBattles : mockBattles;
+  const displayOpenBattles = openBattles.length > 0 ? openBattles : mockOpenBattles;
   
   const cardAnimationVariants = {
     initial: { opacity: 0, x: -50 },
@@ -376,8 +400,8 @@ function PlayPageContent() {
       <SectionDivider title="Open Battles" icon={Trophy} />
       
       <div className="space-y-3">
-        {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : openBattles.length > 0 ? (
-            openBattles.map((battle) => (
+        {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : displayOpenBattles.length > 0 ? (
+            displayOpenBattles.map((battle) => (
                 <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
             ))
         ) : (
