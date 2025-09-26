@@ -44,10 +44,11 @@ export const createDepositRequest = async (
     const filePath = `deposits/${userId}/${Date.now()}_${screenshotFile.name}`;
     const screenshotUrl = await uploadImage(screenshotFile, filePath);
 
-    // Create transaction with additional safety checks
+    // Create transaction document.
+    // The balance update will happen on the admin side after approval.
     const newTransactionRef = doc(collection(db, "transactions"));
     
-    const newTransactionData: Omit<Transaction, 'id'|'createdAt'|'updatedAt'> = {
+    const newTransactionData: Omit<Transaction, 'id'> = {
         userId,
         amount,
         bonusAmount: gstBonusAmount || 0,
@@ -55,14 +56,12 @@ export const createDepositRequest = async (
         status: 'pending',
         screenshotUrl,
         upiId: upiId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         isRead: false,
     };
     
-    await setDoc(newTransactionRef, {
-        ...newTransactionData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-    });
+    await setDoc(newTransactionRef, newTransactionData);
 
     return newTransactionRef.id;
 
@@ -70,16 +69,6 @@ export const createDepositRequest = async (
     console.error('Deposit request error:', error);
     
     if (error instanceof Error) {
-      if (error.message.includes('not-found')) {
-        throw new Error("Payment method not found. Please try again.");
-      }
-      if (error.message.includes('permission-denied')) {
-        throw new Error("You don't have permission to perform this action.");
-      }
-      if (error.message.includes('failed-precondition')) {
-        throw new Error("System busy. Please try again in a moment.");
-      }
-      
       throw new Error(`Deposit request failed: ${error.message}`);
     }
     

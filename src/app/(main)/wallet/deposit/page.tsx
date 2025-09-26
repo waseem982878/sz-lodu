@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { IndianRupee, FileText, CheckCircle2, ArrowLeft, Upload, Loader2, TriangleAlert, Gift, Copy } from "lucide-react";
+import { IndianRupee, FileText, CheckCircle2, ArrowLeft, Upload, Loader2, TriangleAlert, Gift, Copy, Share } from "lucide-react";
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
@@ -189,9 +189,13 @@ export default function DepositPage() {
                             )}
                         </div>
                         {activeUpi && (
-                             <div className="text-center space-y-2">
-                                <p className="text-muted-foreground text-sm">Payable to:</p>
-                                <p className="font-bold text-lg">{activeUpi.payeeName}</p>
+                             <div className="text-center space-y-3">
+                                <Button asChild className="w-full">
+                                    <a href={upiUri}>
+                                        <Share className="mr-2 h-4 w-4"/> Pay via UPI App
+                                    </a>
+                                </Button>
+                                <p className="text-muted-foreground text-sm">Payable to: <span className="font-bold text-lg text-foreground">{activeUpi.payeeName}</span></p>
                                 <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
                                     <p className="font-mono text-primary flex-shrink-1 overflow-x-auto whitespace-nowrap">{activeUpi.upiId}</p>
                                     <Button size="icon" variant="ghost" onClick={() => handleCopy(activeUpi.upiId)}><Copy className="w-4 h-4"/></Button>
