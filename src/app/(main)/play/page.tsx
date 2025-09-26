@@ -2,7 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Trophy, Swords, Hourglass, PlusCircle, BrainCircuit, Loader2, ArrowLeft, Users } from "lucide-react";
 import Image from "next/image";
@@ -16,6 +16,7 @@ import { collection, query, where, onSnapshot, Timestamp } from "firebase/firest
 import { db } from "@/firebase/config";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { motion, AnimatePresence } from "framer-motion";
 
 const initialMockBattles: Battle[] = [
     { id: 'mock1', amount: 5000, gameType: 'classic', status: 'inprogress', creator: { id: 'c1', name: 'Thunder Bolt', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Thunder' }, opponent: { id: 'o1', name: 'Captain Ludo', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Captain' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
@@ -135,7 +136,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     }
 
     return (
-        <Card className="p-2 bg-card border-l-4 border-blue-500 shadow-md cursor-pointer" onClick={handleViewBattle} data-aos="fade-up">
+        <Card className="p-2 bg-card border-l-4 border-blue-500 shadow-md cursor-pointer" onClick={handleViewBattle}>
             <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
                 LIVE
             </div>
@@ -186,15 +187,13 @@ function PlayPageContent() {
   const [allActiveBattles, setAllActiveBattles] = useState<Battle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const [mockBattles, setMockBattles] = useState<Battle[]>([]);
+  const [mockBattles, setMockBattles] = useState<Battle[]>([...initialMockBattles].sort(() => Math.random() - 0.5));
 
   useEffect(() => {
     AOS.init({
         duration: 500,
         once: true,
     });
-    // Shuffle the mock battles on initial load
-    setMockBattles([...initialMockBattles].sort(() => Math.random() - 0.5));
   }, []);
 
   useEffect(() => {
@@ -219,6 +218,26 @@ function PlayPageContent() {
 
     return () => unsubscribe();
   }, [user, gameType]);
+
+  // Mock data circulation effect
+   useEffect(() => {
+    const interval = setInterval(() => {
+      setMockBattles(currentBattles => {
+        if (currentBattles.length <= 1) return currentBattles;
+        
+        // Take the first battle and move it to the end
+        const newBattles = [...currentBattles];
+        const shifted = newBattles.shift();
+        if(shifted) {
+            newBattles.push(shifted);
+        }
+        return newBattles;
+      });
+    }, 4000); // Circulate every 4 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
 
   const { myBattles, openBattles, ongoingBattles } = useMemo(() => {
     if (!user) return { myBattles: [], openBattles: [], ongoingBattles: [] };
@@ -297,6 +316,12 @@ function PlayPageContent() {
   
   const pageTitle = gameType === 'classic' ? 'Ludo Classic' : 'Popular Ludo';
   const displayOngoingBattles = ongoingBattles.length > 0 ? ongoingBattles : mockBattles;
+  
+  const cardAnimationVariants = {
+    initial: { opacity: 0, x: -50 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -50, transition: { duration: 0.3 } },
+  };
 
   return (
     <div className="space-y-2">
@@ -365,14 +390,22 @@ function PlayPageContent() {
       <div className="space-y-3">
          {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div>
-         ) : displayOngoingBattles.length > 0 ? (
-            displayOngoingBattles.map((battle) => (
-                <OngoingBattleCard key={battle.id} battle={battle} />
-            ))
          ) : (
-            // This case should ideally not be reached because of mock data
-            <p className="text-center text-muted-foreground py-8">No other battles are in progress.</p>
-        )}
+            <AnimatePresence>
+                {displayOngoingBattles.map((battle) => (
+                    <motion.div
+                        key={battle.id}
+                        layout
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        variants={cardAnimationVariants}
+                    >
+                        <OngoingBattleCard battle={battle} />
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+         )}
       </div>
 
     </div>
