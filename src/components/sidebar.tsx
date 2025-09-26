@@ -26,7 +26,7 @@ const navItems = [
 
 export function Sidebar() {
   const { isSidebarOpen, closeSidebar } = useSidebar();
-  const { user, userProfile, logout } = useAuth();
+  const { user, userProfile, logout, isAdmin } = useAuth();
   const router = useRouter();
   const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
 
@@ -82,6 +82,17 @@ export function Sidebar() {
               </div>
               <nav className="flex-grow">
                   <ul>
+                      {isAdmin && (
+                         <li>
+                              <Link href="/admin/dashboard" onClick={closeSidebar} className="flex items-center justify-between p-3 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 mb-2">
+                                  <div className="flex items-center gap-4">
+                                      <Shield className="h-5 w-5" />
+                                      <span className="font-bold">Admin Panel</span>
+                                  </div>
+                                  <ChevronRight className="h-5 w-5" />
+                              </Link>
+                          </li>
+                      )}
                       {navItems.map((item) => (
                           <li key={item.href}>
                               <Link href={item.href} onClick={closeSidebar} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -115,5 +126,3 @@ export function Sidebar() {
     </>
   )
 }
-
-    
