@@ -23,7 +23,6 @@ export function Header() {
             if (docSnap.exists()) {
                 const text = docSnap.data().headerBannerText;
                 if (text && typeof text === 'string') {
-                    // Split by newline and filter out empty lines
                     const lines = text.split('\n').filter(line => line.trim() !== '');
                     if (lines.length > 0) {
                         setBannerLines(lines);
@@ -39,7 +38,7 @@ export function Header() {
 
         const interval = setInterval(() => {
             setCurrentIndex(prevIndex => (prevIndex + 1) % bannerLines.length);
-        }, 4000); // Change text every 4 seconds
+        }, 4000); 
 
         return () => clearInterval(interval);
     }, [bannerLines]);
@@ -48,16 +47,15 @@ export function Header() {
 
     return (
         <header className="w-full">
-            <div className="bg-primary text-primary-foreground text-center py-1 text-xs sm:text-sm font-semibold overflow-hidden h-[28px] relative flex items-center justify-center">
-                 <div className="w-full h-full flex items-center justify-center">
+            <div className="bg-primary text-primary-foreground text-center text-xs sm:text-sm font-semibold overflow-hidden h-6 flex items-center justify-center">
+                <div className="relative h-full w-full">
                     {bannerLines.map((line, index) => (
                         <span
                             key={index}
                             className={cn(
-                                "absolute transition-transform duration-500 ease-in-out",
-                                index === currentIndex ? "translate-y-0 opacity-100" : "opacity-0",
-                                index > currentIndex ? "translate-y-full" : "-translate-y-full",
-                                {"hidden": index !== currentIndex && index !== (currentIndex - 1 + bannerLines.length) % bannerLines.length && index !== (currentIndex + 1) % bannerLines.length}
+                                "absolute w-full h-full flex items-center justify-center transition-transform duration-500 ease-in-out",
+                                index === currentIndex ? "translate-y-0" : "translate-y-full",
+                                {"-translate-y-full": index === (currentIndex - 1 + bannerLines.length) % bannerLines.length}
                             )}
                         >
                             {line}

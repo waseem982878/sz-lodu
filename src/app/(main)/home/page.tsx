@@ -2,9 +2,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Info, TriangleAlert, Loader2 } from "lucide-react";
+import { Info, TriangleAlert, Loader2, ShieldAlert, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -89,8 +89,28 @@ function RulesDialog() {
   )
 }
 
+function KycNoticeBanner() {
+    return (
+        <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 mb-6">
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                    <ShieldAlert className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-1 flex-shrink-0" />
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        <span className="font-bold">KYC not verified.</span> Complete it now for fast and easy withdrawals.
+                    </p>
+                </div>
+                <Button asChild size="sm" className="flex-shrink-0">
+                    <Link href="/profile/kyc">
+                        Complete KYC <ChevronRight className="ml-1 h-4 w-4" />
+                    </Link>
+                </Button>
+            </div>
+        </Card>
+    );
+}
+
 export default function HomePage() {
-  const { loading: authLoading } = useAuth();
+  const { userProfile, loading: authLoading } = useAuth();
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -114,8 +134,12 @@ export default function HomePage() {
     );
   }
 
+  const showKycBanner = userProfile && userProfile.kycStatus !== 'Verified';
+
   return (
     <>
+      {showKycBanner && <KycNoticeBanner />}
+
       {notice && (
         <Card className="bg-yellow-100 border-yellow-300 p-3 mb-6 dark:bg-yellow-900/30 dark:border-yellow-700">
           <div className="flex items-start">
