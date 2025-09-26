@@ -17,14 +17,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: string, newCode: string) => Promise<void> }) {
     const [newCode, setNewCode] = useState(battle.roomCode || "");
     const [isSaving, setIsSaving] = useState(false);
     const [open, setOpen] = useState(false);
+    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+    const showDialog = (title: string, message: string) => {
+        setDialogState({ open: true, title, message });
+    };
 
     const handleSave = async () => {
         if (!newCode.trim()) {
-            alert("Room code cannot be empty.");
+            showDialog("Error", "Room code cannot be empty.");
             return;
         }
         setIsSaving(true);
@@ -32,13 +57,20 @@ function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: 
             await onSave(battle.id, newCode.trim());
             setOpen(false);
         } catch (error) {
-             alert("Failed to update room code.");
+             showDialog("Error", "Failed to update room code.");
         } finally {
             setIsSaving(false);
         }
     }
 
     return (
+        <>
+        <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="icon"><Edit className="h-5 w-5 text-muted-foreground" /></Button>
@@ -62,6 +94,7 @@ function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: 
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+        </>
     )
 }
 
@@ -116,6 +149,11 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+  const showDialog = (title: string, message: string) => {
+    setDialogState({ open: true, title, message });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
@@ -135,7 +173,7 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
     try {
         if (status === 'won') {
             if (!image) {
-                alert("Please upload a screenshot of the win screen.");
+                showDialog("Error", "Please upload a screenshot of the win screen.");
                 setIsSubmitting(false);
                 return;
             }
@@ -146,7 +184,7 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
             onResultSubmitted(status);
         }
     } catch (error: any) {
-        alert(`Failed to submit result: ${error.message}`);
+        showDialog("Error", `Failed to submit result: ${error.message}`);
         setIsSubmitting(false);
     }
   }
@@ -154,6 +192,13 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
   if (!status) return null;
 
   return (
+    <>
+    <InfoDialog 
+        open={dialogState.open} 
+        onClose={() => setDialogState({ ...dialogState, open: false })} 
+        title={dialogState.title}
+        message={dialogState.message} 
+    />
     <Dialog open={!!status} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
@@ -201,6 +246,7 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
         </div>
       </DialogContent>
     </Dialog>
+    </>
   )
 }
 
@@ -216,6 +262,12 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
   const [isMarkingReady, setIsMarkingReady] = useState(false);
   const [roomCodeForInput, setRoomCodeForInput] = useState("");
   const [isSubmittingCode, setIsSubmittingCode] = useState(false);
+  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+  const showDialog = (title: string, message: string) => {
+    setDialogState({ open: true, title, message });
+  };
+
 
   useEffect(() => {
     if (!gameId || !user) {
@@ -237,7 +289,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
   const handleCopy = () => {
     if (battle?.roomCode) {
       navigator.clipboard.writeText(battle.roomCode);
-      alert("Room code copied!");
+      showDialog("Copied", "Room code copied to clipboard!");
     }
   };
   
@@ -246,10 +298,10 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
       try {
         await cancelBattle(battle.id, user.uid);
-        alert("Battle cancelled.");
+        showDialog("Success", "Battle cancelled.");
         router.push('/play');
       } catch (err) {
-        alert(`Failed to cancel battle: ${(err as Error).message}`);
+        showDialog("Error", `Failed to cancel battle: ${(err as Error).message}`);
       }
     }
   };
@@ -260,7 +312,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     try {
         await markPlayerAsReady(battle.id, user.uid);
     } catch (err) {
-        alert("Could not mark as ready.");
+        showDialog("Error", "Could not mark as ready.");
     } finally {
         setIsMarkingReady(false);
     }
@@ -276,7 +328,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
             await setBattleRoomCode(battleIdToUse, codeToUse);
             setRoomCodeForInput(""); // Clear input after successful submission
           } catch(err) {
-              alert("Failed to set room code.");
+              showDialog("Error", "Failed to set room code.");
           } finally {
               setIsSubmittingCode(false);
           }
@@ -287,10 +339,10 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     if (!user || !battle) return;
     try {
         await uploadResult(battle.id, user.uid, status, screenshotUrl);
-        alert("Result submitted for verification.");
+        showDialog("Success", "Result submitted for verification.");
         setResultStatus(null);
     } catch (error) {
-        alert(`Failed to submit result: ${(error as Error).message}`);
+        showDialog("Error", `Failed to submit result: ${(error as Error).message}`);
     }
   }
 
@@ -413,6 +465,12 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
 
   return (
     <div className="space-y-4">
+       <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
       <div className="flex justify-end items-center">
         <RulesDialog />
       </div>

@@ -126,7 +126,6 @@ export default function WithdrawPage() {
             router.push('/wallet');
         } catch (e) {
              showDialog("Error", `Failed to submit withdrawal request: ${(e as Error).message}`);
-        } finally {
              setIsSubmitting(false);
         }
     };
@@ -261,3 +260,5 @@ export default function WithdrawPage() {
         </div>
     );
 }
+
+    

@@ -13,6 +13,7 @@ import { Loader2, Phone, Mail, Lock } from "lucide-react";
 import { FaShieldAlt } from "react-icons/fa";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 // Add a global property to the window object for reCAPTCHA
 declare global {
@@ -22,6 +23,27 @@ declare global {
   }
 }
 
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
     const [otp, setOtp] = useState("");
@@ -30,12 +52,17 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
     const [activeTab, setActiveTab] = useState("phone");
+    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
     const router = useRouter();
+    
+    const showDialog = (title: string, message: string) => {
+        setDialogState({ open: true, title, message });
+    };
 
     const onPhoneSignInSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!phone || phone.length !== 10) {
-            alert("Please enter a valid 10-digit phone number.");
+            showDialog("Error", "Please enter a valid 10-digit phone number.");
             return;
         }
         setLoading(true);
@@ -54,11 +81,11 @@ export default function LoginPage() {
             const confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
             window.confirmationResult = confirmationResult;
             setShowOtp(true);
-            alert("OTP sent successfully!");
+            showDialog("Success", "OTP sent successfully!");
 
         } catch (error) {
             console.error("Error during OTP sending:", error);
-            alert("Failed to send OTP. Please check your phone number, refresh the page, and try again.");
+            showDialog("Error", "Failed to send OTP. Please check your phone number, refresh the page, and try again.");
             // @ts-ignore
             if (window.grecaptcha && window.recaptchaVerifier) {
                  // @ts-ignore
@@ -72,11 +99,11 @@ export default function LoginPage() {
     const onOtpVerify = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!otp || otp.length !== 6) {
-            alert("Please enter a valid 6-digit OTP.");
+            showDialog("Error", "Please enter a valid 6-digit OTP.");
             return;
         }
         if (!window.confirmationResult) {
-            alert("Verification session expired. Please request a new OTP.");
+            showDialog("Error", "Verification session expired. Please request a new OTP.");
             setShowOtp(false);
             return;
         }
@@ -85,7 +112,7 @@ export default function LoginPage() {
             await window.confirmationResult.confirm(otp);
         } catch (error) {
             console.error("Error during OTP verification:", error);
-            alert("Invalid OTP. Please try again.");
+            showDialog("Error", "Invalid OTP. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -93,7 +120,7 @@ export default function LoginPage() {
     
     const handleEmailAuth = async (isSignUp: boolean) => {
         if (!email || !password) {
-            alert("Please enter both email and password.");
+            showDialog("Error", "Please enter both email and password.");
             return;
         }
         setLoading(true);
@@ -116,7 +143,7 @@ export default function LoginPage() {
                 friendlyMessage = "The password is too weak. It should be at least 6 characters long.";
             }
             console.error("Email auth error:", error);
-            alert(friendlyMessage);
+            showDialog("Error", friendlyMessage);
         } finally {
             setLoading(false);
         }
@@ -124,20 +151,20 @@ export default function LoginPage() {
     
     const handlePasswordReset = async () => {
         if (!email) {
-            alert("Please enter your email address to reset your password.");
+            showDialog("Error", "Please enter your email address to reset your password.");
             return;
         }
         setLoading(true);
         try {
             await sendPasswordResetEmail(auth, email);
-            alert("Password reset email sent! Please check your inbox.");
+            showDialog("Success", "Password reset email sent! Please check your inbox.");
         } catch (error: any) {
             const errorCode = error.code;
             if (errorCode === 'auth/user-not-found') {
-                alert("No user found with this email address.");
+                showDialog("Error", "No user found with this email address.");
             } else {
                 console.error("Password reset error:", error);
-                alert("Failed to send password reset email. Please try again.");
+                showDialog("Error", "Failed to send password reset email. Please try again.");
             }
         } finally {
             setLoading(false);
@@ -147,6 +174,12 @@ export default function LoginPage() {
 
     return (
         <>
+             <InfoDialog 
+                open={dialogState.open} 
+                onClose={() => setDialogState({ ...dialogState, open: false })} 
+                title={dialogState.title}
+                message={dialogState.message} 
+            />
             <div id="recaptcha-container"></div>
             <div className="text-center mb-6">
                  <Link href="/landing" className="flex items-center justify-center">
@@ -256,4 +289,5 @@ export default function LoginPage() {
         </>
     );
 }
+
     

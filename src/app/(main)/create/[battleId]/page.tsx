@@ -15,14 +15,40 @@ import type { Battle } from "@/models/battle.model";
 import { Label } from "@/components/ui/label";
 
 
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: string, newCode: string) => Promise<void> }) {
     const [newCode, setNewCode] = useState(battle.roomCode || "");
     const [isSaving, setIsSaving] = useState(false);
     const [open, setOpen] = useState(false);
+    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+    const showDialog = (title: string, message: string) => {
+        setDialogState({ open: true, title, message });
+    };
 
     const handleSave = async () => {
         if (!newCode.trim()) {
-            alert("Room code cannot be empty.");
+            showDialog("Error", "Room code cannot be empty.");
             return;
         }
         setIsSaving(true);
@@ -30,36 +56,44 @@ function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: 
             await onSave(battle.id, newCode.trim());
             setOpen(false);
         } catch (error) {
-             alert("Failed to update room code.");
+             showDialog("Error", "Failed to update room code.");
         } finally {
             setIsSaving(false);
         }
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon"><Edit className="h-5 w-5 text-muted-foreground" /></Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle className="text-primary">Edit Room Code</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <Label htmlFor="room-code-edit">New Ludo King Room Code</Label>
-                    <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" />
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                         <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={handleSave} disabled={isSaving}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Code
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <>
+            <InfoDialog 
+                open={dialogState.open} 
+                onClose={() => setDialogState({ ...dialogState, open: false })} 
+                title={dialogState.title}
+                message={dialogState.message} 
+            />
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon"><Edit className="h-5 w-5 text-muted-foreground" /></Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-primary">Edit Room Code</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <Label htmlFor="room-code-edit">New Ludo King Room Code</Label>
+                        <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" />
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                             <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button onClick={handleSave} disabled={isSaving}>
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Code
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }
 
@@ -119,6 +153,11 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
   const [roomCode, setRoomCode] = useState("");
   const [isSubmittingCode, setIsSubmittingCode] = useState(false);
   const [isMarkingReady, setIsMarkingReady] = useState(false);
+  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+  const showDialog = (title: string, message: string) => {
+    setDialogState({ open: true, title, message });
+  };
 
 
   useEffect(() => {
@@ -160,7 +199,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
             await setBattleRoomCode(battleIdToUse, codeToUse);
             setRoomCode(""); // Clear input after successful submission
           } catch(err) {
-              alert("Failed to set room code.");
+              showDialog("Error", "Failed to set room code.");
           } finally {
               setIsSubmittingCode(false);
           }
@@ -173,7 +212,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     try {
         await markPlayerAsReady(battle.id, user.uid);
     } catch (err) {
-        alert("Could not mark as ready.");
+        showDialog("Error", "Could not mark as ready.");
     } finally {
         setIsMarkingReady(false);
     }
@@ -182,7 +221,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
   const handleCopy = () => {
     if (battle?.roomCode) {
       navigator.clipboard.writeText(battle.roomCode);
-      alert("Copied!");
+      showDialog("Copied", "Room code copied to clipboard!");
     }
   }
   
@@ -191,10 +230,10 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
       try {
         await cancelBattle(battle.id, user.uid);
-        alert("Battle cancelled.");
+        showDialog("Success", "Battle cancelled.");
         router.push('/play');
       } catch (err) {
-        alert(`Failed to cancel battle: ${(err as Error).message}`);
+        showDialog("Error", `Failed to cancel battle: ${(err as Error).message}`);
       }
     }
   }
@@ -283,6 +322,12 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
 
   return (
     <div className="space-y-4">
+       <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
       <div className="flex justify-end items-center">
         <RulesDialog />
       </div>

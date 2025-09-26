@@ -15,6 +15,27 @@ import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
 import { collection, query, where, orderBy, onSnapshot, Unsubscribe, or, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 
 const mockTransactions: Transaction[] = [
@@ -159,6 +180,12 @@ export default function WalletPage() {
   const [games, setGames] = useState<Battle[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+  const showDialog = (title: string, message: string) => {
+    setDialogState({ open: true, title, message });
+  };
+
 
   useEffect(() => {
     if (!user) {
@@ -224,7 +251,7 @@ export default function WalletPage() {
 
   const handleWithdraw = () => {
     if (userProfile.kycStatus !== 'Verified') {
-      alert("Please complete your KYC verification before withdrawing.");
+      showDialog("KYC Required", "Please complete your KYC verification before withdrawing.");
       router.push('/profile/kyc');
       return;
     }
@@ -235,6 +262,12 @@ export default function WalletPage() {
 
   return (
     <div className="space-y-6">
+        <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
        <Card className="bg-primary text-primary-foreground overflow-hidden p-4 h-[88px] flex items-center">
          <div className="flex items-center justify-between w-full">
             <div className="text-left">
@@ -319,3 +352,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    

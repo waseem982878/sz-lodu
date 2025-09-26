@@ -12,6 +12,28 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { uploadImage } from "@/services/storage-service";
 import { submitKycDetails } from "@/services/user-agent-service";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function KycPage() {
   const router = useRouter();
@@ -34,6 +56,11 @@ export default function KycPage() {
   const aadhaarInputRef = useRef<HTMLInputElement>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+  const showDialog = (title: string, message: string) => {
+    setDialogState({ open: true, title, message });
+  };
 
 
   if (loading) {
@@ -66,11 +93,11 @@ export default function KycPage() {
     if (!user) return;
     
     if (!panFile && !userProfile.panCardUrl) {
-      alert("Please upload your PAN card photo.");
+      showDialog("Error", "Please upload your PAN card photo.");
       return;
     }
     if (!aadhaarFile && !userProfile.aadhaarCardUrl) {
-      alert("Please upload your Aadhaar card photo.");
+      showDialog("Error", "Please upload your Aadhaar card photo.");
       return;
     }
     
@@ -99,11 +126,11 @@ export default function KycPage() {
             aadhaarCardUrl,
         });
         
-        alert("KYC details submitted successfully! Our team will review them shortly.");
+        showDialog("Success", "KYC details submitted successfully! Our team will review them shortly.");
         router.push('/profile');
 
     } catch (error: any) {
-        alert(`Failed to submit KYC details: ${error.message}`);
+        showDialog("Error", `Failed to submit KYC details: ${error.message}`);
     } finally {
         setIsSubmitting(false);
     }
@@ -113,6 +140,12 @@ export default function KycPage() {
 
   return (
     <div className="space-y-6 pb-10">
+       <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
       <Card>
         <CardHeader>
           <CardTitle className="text-primary">KYC Verification</CardTitle>
@@ -209,3 +242,5 @@ export default function KycPage() {
     </div>
   )
 }
+
+    

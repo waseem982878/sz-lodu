@@ -13,10 +13,33 @@ import type { PaymentUpi } from '@/models/payment-upi.model';
 import { useAuth } from '@/contexts/auth-context';
 import { getActiveUpi, createDepositRequest } from '@/services/transaction-service';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 const shortcutAmounts = [100, 200, 500, 1000, 2000, 5000];
 const MINIMUM_DEPOSIT = 100;
 const GST_RATE = 0.28; // 28% GST as per government norms
+
+
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function PaymentSummary({ amount, gstAmount, totalReceivedInWallet }: { amount: number, gstAmount: number, totalReceivedInWallet: number }) {
     if (amount < MINIMUM_DEPOSIT) return null;
@@ -67,6 +90,11 @@ export default function DepositPage() {
     const [activeUpi, setActiveUpi] = useState<PaymentUpi | null>(null);
     const [loadingUpi, setLoadingUpi] = useState(true);
     const [step, setStep] = useState(1);
+    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+    const showDialog = (title: string, message: string) => {
+        setDialogState({ open: true, title, message });
+    };
 
     useEffect(() => {
         const fetchUpi = async () => {
@@ -103,7 +131,7 @@ export default function DepositPage() {
 
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert("Copied to clipboard!");
+        showDialog("Copied", "Copied to clipboard!");
     };
     
     const gstAmount = amount * GST_RATE;
@@ -113,16 +141,16 @@ export default function DepositPage() {
 
     const handleSubmit = async () => {
         if (!user || !imageFile || amount < MINIMUM_DEPOSIT || !activeUpi) {
-            alert(`Minimum deposit amount is ₹${MINIMUM_DEPOSIT}. Please also provide a screenshot and ensure a payment method is active.`);
+            showDialog("Error", `Minimum deposit amount is ₹${MINIMUM_DEPOSIT}. Please also provide a screenshot and ensure a payment method is active.`);
             return;
         }
         setIsSubmitting(true);
         try {
             await createDepositRequest(user.uid, amount, gstAmount, imageFile, activeUpi.upiId);
-            alert("Deposit request submitted successfully! It will be verified shortly.");
+            showDialog("Success", "Deposit request submitted successfully! It will be verified shortly.");
             router.push('/wallet');
         } catch (e) {
-            alert(`Failed to submit deposit request: ${(e as Error).message}`);
+            showDialog("Error", `Failed to submit deposit request: ${(e as Error).message}`);
             setIsSubmitting(false); // Only set submitting to false on error
         }
     };
@@ -140,6 +168,12 @@ export default function DepositPage() {
     if (step === 2) {
         return (
             <div className="space-y-4">
+                 <InfoDialog 
+                    open={dialogState.open} 
+                    onClose={() => setDialogState({ ...dialogState, open: false })} 
+                    title={dialogState.title}
+                    message={dialogState.message} 
+                />
                  <Button onClick={() => setStep(1)} variant="ghost" className="pl-0">
                     <ArrowLeft className="mr-2 h-4 w-4" /> Change Amount
                 </Button>
@@ -215,6 +249,12 @@ export default function DepositPage() {
 
     return (
         <div className="space-y-4">
+             <InfoDialog 
+                open={dialogState.open} 
+                onClose={() => setDialogState({ ...dialogState, open: false })} 
+                title={dialogState.title}
+                message={dialogState.message} 
+            />
             <GstBonusCard />
             <Card>
                 <CardHeader>
@@ -257,3 +297,5 @@ export default function DepositPage() {
         </div>
     );
 }
+
+    

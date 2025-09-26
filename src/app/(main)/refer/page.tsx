@@ -11,6 +11,7 @@ import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 interface Referral {
     id: string;
@@ -22,11 +23,37 @@ interface Referral {
 }
 
 
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export default function ReferPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
 
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [loading, setLoading] = useState(true);
+    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+    const showDialog = (title: string, message: string) => {
+        setDialogState({ open: true, title, message });
+    };
 
     const referralCode = userProfile?.referralCode || "LOADING...";
     const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/landing?ref=${referralCode}` : '';
@@ -54,7 +81,7 @@ export default function ReferPage() {
         if (!user) return;
         const textToCopy = `${shareText} Download now: ${shareUrl}`;
         navigator.clipboard.writeText(textToCopy);
-        alert("Referral message copied!");
+        showDialog("Copied", "Referral message copied!");
     }
 
     const handleShare = () => {
@@ -72,6 +99,12 @@ export default function ReferPage() {
 
   return (
     <div className="space-y-6 text-center">
+         <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
         <Card className="bg-primary text-primary-foreground overflow-hidden relative p-4 h-[88px] flex items-center">
             <div className="flex items-center justify-between w-full">
                 <div className="flex-1 z-10">
@@ -153,3 +186,5 @@ export default function ReferPage() {
     </div>
   );
 }
+
+    

@@ -15,6 +15,29 @@ import { createBattle, acceptBattle } from "@/services/battle-service";
 import { collection, query, where, onSnapshot, Timestamp, or } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { motion, AnimatePresence } from "framer-motion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+
+
+function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogDescription className="pt-4">
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button onClick={onClose}>OK</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 const initialMockBattles: Battle[] = [
     { id: 'mock1', amount: 5000, gameType: 'classic', status: 'inprogress', creator: { id: 'c1', name: 'Thunder Bolt', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Thunder' }, opponent: { id: 'o1', name: 'Captain Ludo', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Captain' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
@@ -153,8 +176,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     
     const handleViewBattle = () => {
         if (battle.id.startsWith('mock')) {
-             alert("This is a sample battle for display purposes.");
-            return;
+             return;
         }
         router.push(`/game/${battle.id}`);
     }
@@ -212,6 +234,12 @@ function PlayPageContent() {
   const [isCreating, setIsCreating] = useState(false);
   const [mockBattles, setMockBattles] = useState<Battle[]>(() => [...initialMockBattles].sort(() => Math.random() - 0.5));
   const [mockOpenBattles, setMockOpenBattles] = useState<Battle[]>(() => [...initialMockOpenBattles].sort(() => Math.random() - 0.5));
+  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
+
+  const showDialog = (title: string, message: string) => {
+    setDialogState({ open: true, title, message });
+  };
+
 
   useEffect(() => {
     if (!user) return;
@@ -278,7 +306,7 @@ function PlayPageContent() {
 
     const newAmount = parseInt(amount);
      if (isNaN(newAmount)) {
-        alert("Please enter a valid amount.");
+        showDialog("Invalid Amount", "Please enter a valid amount.");
         return;
     }
     
@@ -288,18 +316,18 @@ function PlayPageContent() {
     } else if (newAmount > 50000 && newAmount <= 100000) {
         gameType = 'popular';
     } else {
-        alert("Amount must be between ₹50 and ₹100,000.");
+        showDialog("Invalid Amount", "Amount must be between ₹50 and ₹100,000.");
         return;
     }
 
     if (newAmount % 50 !== 0) {
-        alert("Battle amount must be in multiples of 50 (e.g., 50, 100, 150).");
+        showDialog("Invalid Amount", "Battle amount must be in multiples of 50 (e.g., 50, 100, 150).");
         return;
     }
     
     const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
     if (totalBalance < newAmount) {
-        alert("Insufficient balance. Please add money to your wallet.");
+        showDialog("Insufficient Balance", "Insufficient balance. Please add money to your wallet.");
         router.push('/wallet');
         return;
     }
@@ -309,7 +337,7 @@ function PlayPageContent() {
         const battleId = await createBattle(newAmount, gameType, user, userProfile);
         router.push(`/create/${battleId}`);
     } catch (e) {
-        alert(`Failed to create battle: ${(e as Error).message}`);
+        showDialog("Error", `Failed to create battle: ${(e as Error).message}`);
         setIsCreating(false);
     }
   };
@@ -318,7 +346,6 @@ function PlayPageContent() {
     if (!user || !userProfile) return;
 
     if (battleId.startsWith('mock-open-')) {
-        alert("This is a sample battle for display purposes.");
         return;
     }
     
@@ -327,7 +354,7 @@ function PlayPageContent() {
     
     const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
     if (battleToAccept.amount > 0 && totalBalance < battleToAccept.amount) {
-        alert("Insufficient balance to accept this battle.");
+        showDialog("Insufficient Balance", "Insufficient balance to accept this battle.");
         router.push('/wallet');
         return;
     }
@@ -336,7 +363,7 @@ function PlayPageContent() {
         await acceptBattle(battleId, user, userProfile);
         router.push(`/game/${battleId}`);
     } catch (e) {
-        alert(`Failed to accept battle: ${(e as Error).message}`);
+        showDialog("Error", `Failed to accept battle: ${(e as Error).message}`);
     }
   };
 
@@ -360,6 +387,12 @@ function PlayPageContent() {
 
   return (
     <div className="space-y-2">
+       <InfoDialog 
+            open={dialogState.open} 
+            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            title={dialogState.title}
+            message={dialogState.message} 
+        />
       <div className="flex justify-start items-center mb-4">
         <Button onClick={() => router.back()} variant="ghost" className="pl-0">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
@@ -462,3 +495,5 @@ export default function Play() {
       </Suspense>
   )
 }
+
+    
