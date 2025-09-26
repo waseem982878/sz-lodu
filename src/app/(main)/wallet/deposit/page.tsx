@@ -41,10 +41,15 @@ function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose:
 }
 
 
-function PaymentSummary({ amount, gstAmount }: { amount: number, gstAmount: number }) {
+function PaymentSummary({ amount }: { amount: number }) {
     if (amount < MINIMUM_DEPOSIT) return null;
-    const amountAfterGst = amount / (1 + GST_RATE);
-    const actualGst = amount - amountAfterGst;
+    
+    // As per Indian law, GST is inclusive in the price.
+    // So, Deposit Amount = Base Amount + 28% of Base Amount
+    // Deposit Amount = Base Amount * (1 + 0.28)
+    // Base Amount = Deposit Amount / 1.28
+    const baseAmount = amount / (1 + GST_RATE);
+    const gstAmount = amount - baseAmount;
 
     return (
         <Card>
@@ -58,15 +63,15 @@ function PaymentSummary({ amount, gstAmount }: { amount: number, gstAmount: numb
                 </div>
                  <div className="flex justify-between items-center text-red-500">
                     <span className="text-muted-foreground">GST @ 28%</span>
-                    <span className="font-semibold">- ₹{actualGst.toFixed(2)}</span>
+                    <span className="font-semibold">- ₹{gstAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Sub-Total</span>
-                    <span className="font-semibold">₹{amountAfterGst.toFixed(2)}</span>
+                    <span className="font-semibold">₹{baseAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-green-600">
                     <span className="font-semibold flex items-center gap-1"><Gift size={14}/> GST Bonus (from us)</span>
-                    <span className="font-semibold">+ ₹{actualGst.toFixed(2)}</span>
+                    <span className="font-semibold">+ ₹{gstAmount.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-dashed my-2"></div>
                 <div className="flex justify-between items-center font-bold text-lg text-primary">
@@ -145,7 +150,8 @@ export default function DepositPage() {
         showDialog("Copied", "Copied to clipboard!");
     };
     
-    const gstAmount = amount * GST_RATE;
+    const baseAmount = amount / (1 + GST_RATE);
+    const gstAmount = amount - baseAmount;
     const totalPayable = amount; 
     const upiUri = activeUpi ? `upi://pay?pa=${activeUpi.upiId}&pn=${encodeURIComponent(activeUpi.payeeName)}&am=${totalPayable.toFixed(2)}&cu=INR` : '';
 
@@ -298,7 +304,7 @@ export default function DepositPage() {
                 </CardContent>
             </Card>
 
-            <PaymentSummary amount={amount} gstAmount={gstAmount} />
+            <PaymentSummary amount={amount} />
 
             <Button 
                 className="w-full bg-primary text-primary-foreground text-lg py-6" 
