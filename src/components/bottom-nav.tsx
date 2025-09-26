@@ -19,20 +19,16 @@ export function BottomNav() {
 
     const handleSupportClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        window.open("https://wa.me/919351993756?text=Hello%2C%20I%20need%20support%20with%20SZ%20LUDO%20app.", "_blank", "noopener,noreferrer");
+        // This is now handled by the /support page itself.
+        // This function could be removed or repurposed if needed.
     }
 
     const NavLink = ({ href, label, icon: Icon }: { href: string, label: string, icon: React.ElementType }) => {
         const isActive = pathname.startsWith(href);
-        const isSupportButton = href === "/support";
-        const LinkComponent = isSupportButton ? 'a' : Link;
 
         return (
-             <LinkComponent 
-                href={isSupportButton ? "#" : href}
-                onClick={isSupportButton ? handleSupportClick : undefined}
-                target={isSupportButton ? "_blank" : undefined}
-                rel={isSupportButton ? "noopener noreferrer" : undefined}
+             <Link
+                href={href}
                 className="flex flex-col items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300 w-16"
                 aria-label={label}
             >
@@ -44,7 +40,7 @@ export function BottomNav() {
                 )}>
                     <Icon className={cn("transition-all", isActive ? "h-8 w-8" : "h-6 w-6")} />
                 </div>
-            </LinkComponent>
+            </Link>
         )
     }
 

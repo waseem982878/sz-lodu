@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/auth-context";
 const navItems = [
     { href: "/wallet", icon: Wallet, label: "Wallet & History" },
     { href: "/refer", icon: Gift, label: "Refer & Earn" },
+    { href: "/support", icon: Headset, label: "Support Center"},
     { href: "/terms", icon: FileText, label: "Term & Conditions" },
     { href: "/gst", icon: FileText, label: "GST Policy" },
     { href: "/privacy", icon: Shield, label: "Privacy Policy" },
@@ -77,7 +78,7 @@ export function Sidebar() {
                         <a href="#" onClick={handleSupportClick} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                            <div className="flex items-center gap-4">
                                 <Headset className="h-5 w-5" />
-                                <span>Support</span>
+                                <span>WhatsApp Support</span>
                             </div>
                             <ChevronRight className="h-5 w-5 text-gray-400" />
                         </a>
