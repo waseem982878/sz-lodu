@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut, Share2 } from "lucide-react";
+import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
@@ -96,7 +96,7 @@ export function Sidebar() {
                       <li>
                         <a href="#" onClick={handleSupportClick} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                            <div className="flex items-center gap-4">
-                                <Share2 className="h-5 w-5" />
+                                <MessageSquare className="h-5 w-5" />
                                 <span>WhatsApp Support</span>
                             </div>
                             <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -115,3 +115,5 @@ export function Sidebar() {
     </>
   )
 }
+
+    

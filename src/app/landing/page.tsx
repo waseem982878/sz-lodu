@@ -212,7 +212,7 @@ export default async function LandingPage() {
                  <div className="container mx-auto">
                     <div className="flex justify-center items-center gap-6 mb-6">
                         {socialLinks.whatsapp && (
-                            <a href={socialLinks.whatsapp} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary"><Instagram className="h-7 w-7" /></a>
+                            <a href={socialLinks.whatsapp} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary"><MessageSquare className="h-7 w-7" /></a>
                         )}
                         {socialLinks.telegram && (
                             <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary"><Send className="h-7 w-7" /></a>
@@ -239,3 +239,5 @@ export default async function LandingPage() {
         </div>
     );
 }
+
+    
