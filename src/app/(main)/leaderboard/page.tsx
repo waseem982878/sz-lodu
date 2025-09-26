@@ -18,6 +18,15 @@ const getRankIcon = (rank: number) => {
     return <span className="font-bold text-sm w-6 text-center">{rank}</span>;
 }
 
+const mockTopPlayers: UserProfile[] = [
+    { uid: '1', name: 'Rohan Sharma', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan', gamesPlayed: 150, gamesWon: 120, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 10, losingStreak: 0, biggestWin: 5000 },
+    { uid: '2', name: 'Priya Singh', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Priya', gamesPlayed: 140, gamesWon: 110, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 5, losingStreak: 0, biggestWin: 2500 },
+    { uid: '3', name: 'Amit Kumar', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Amit', gamesPlayed: 130, gamesWon: 95, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 2, losingStreak: 0, biggestWin: 1000 },
+    { uid: '4', name: 'Sneha Patel', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Sneha', gamesPlayed: 125, gamesWon: 90, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 0, losingStreak: 1, biggestWin: 1000 },
+    { uid: '5', name: 'Vikas Gupta', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Vikas', gamesPlayed: 110, gamesWon: 85, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 4, losingStreak: 0, biggestWin: 500 },
+];
+
+
 export default function LeaderboardPage() {
     const [topPlayers, setTopPlayers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -27,10 +36,15 @@ export default function LeaderboardPage() {
         const unsubscribe = onSnapshot(playersQuery, (snapshot) => {
             const players: UserProfile[] = [];
             snapshot.forEach(doc => players.push(doc.data() as UserProfile));
-            setTopPlayers(players);
+            if (players.length === 0) {
+                setTopPlayers(mockTopPlayers);
+            } else {
+                setTopPlayers(players);
+            }
             setLoading(false);
         }, (error) => {
             console.error("Error fetching leaderboard:", error);
+            setTopPlayers(mockTopPlayers); // Show mock data on error as well
             setLoading(false);
         });
         

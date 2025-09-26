@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,22 @@ import type { Battle } from "@/models/battle.model";
 import type { Transaction } from "@/models/transaction.model";
 import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
-import { collection, query, where, orderBy, onSnapshot, Unsubscribe, or } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, Unsubscribe, or, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
+
+
+const mockTransactions: Transaction[] = [
+    { id: 't1', userId: 'mock', type: 'deposit', amount: 500, bonusAmount: 140, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 't2', userId: 'mock', type: 'withdrawal', amount: 300, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 2)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 't3', userId: 'mock', type: 'deposit', amount: 200, bonusAmount: 56, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 3)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 't4', userId: 'mock', type: 'withdrawal', amount: 500, status: 'pending', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 4)), updatedAt: Timestamp.fromDate(new Date()) },
+];
+
+const mockGames: Battle[] = [
+    { id: 'g1', amount: 100, gameType: 'classic', status: 'completed', winnerId: 'user-id-placeholder', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan' }, opponent: { id: 'opp1', name: 'Priya', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Priya' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 'g2', amount: 50, gameType: 'classic', status: 'completed', winnerId: 'opp2', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan' }, opponent: { id: 'opp2', name: 'Amit', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Amit' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 5)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 'g3', amount: 200, gameType: 'classic', status: 'cancelled', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan' }, opponent: { id: 'opp3', name: 'Sneha', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Sneha' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 10)), updatedAt: Timestamp.fromDate(new Date()) },
+];
 
 
 function BalanceCard({ title, balance, buttonText, buttonAction, icon: Icon, variant }: {
@@ -46,7 +61,8 @@ function GameHistoryCard({ game }: { game: Battle }) {
 
     const isCreator = game.creator.id === user.uid;
     const opponent = isCreator ? game.opponent : game.creator;
-    const isWin = game.winnerId === user.uid;
+    const isWin = game.winnerId === user.uid || (game.winnerId === 'user-id-placeholder' && mockGames.some(g => g.id === game.id));
+
 
     const getDisplayStatus = (): { text: string; variant: "default" | "destructive" | "secondary" | "outline", color: string, icon: React.ElementType } => {
         switch (game.status) {
@@ -164,16 +180,31 @@ export default function WalletPage() {
     );
     unsubscribes.push(onSnapshot(battlesQuery, (snap) => {
         const battleData = snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Battle));
-        setGames(battleData);
-        setLoading(false); // Set loading to false once data is fetched
-    }, () => setLoading(false)));
+        if (battleData.length === 0) {
+            setGames(mockGames);
+        } else {
+            setGames(battleData);
+        }
+        setLoading(false); 
+    }, () => {
+        setGames(mockGames); // Show mock on error
+        setLoading(false);
+    }));
 
 
     const transQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
     unsubscribes.push(onSnapshot(transQuery, (snap) => {
-        setTransactions(snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Transaction)));
-        setLoading(false); // Set loading to false once data is fetched
-    }, () => setLoading(false)));
+        const transData = snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Transaction));
+        if(transData.length === 0){
+             setTransactions(mockTransactions);
+        } else {
+             setTransactions(transData);
+        }
+        setLoading(false);
+    }, () => {
+        setTransactions(mockTransactions); // Show mock on error
+        setLoading(false)
+    }));
 
 
     return () => {
