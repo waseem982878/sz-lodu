@@ -154,8 +154,8 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="headerBannerText">Header Banner Text</Label>
-            <Input id="headerBannerText" value={settings.headerBannerText || ''} onChange={handleAppSettingChange} />
+            <Label htmlFor="headerBannerText">Header Banner Text (One item per line for animation)</Label>
+            <Textarea id="headerBannerText" value={settings.headerBannerText || ''} onChange={handleAppSettingChange} placeholder="First line of text...&#10;Second line of text..." rows={4} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="homeNoticeText">Home Page Notice Text</Label>
@@ -257,4 +257,5 @@ export default function SettingsPage() {
   );
 }
 
+    
     
