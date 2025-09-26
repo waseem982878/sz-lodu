@@ -31,17 +31,18 @@ export const createDepositRequest = async (
 
   try {
     const filePath = `deposits/${userId}/${Date.now()}_${screenshotFile.name}`;
+    // Step 1: Upload the image and WAIT for the URL. This is the critical fix.
     const screenshotUrl = await uploadImage(screenshotFile, filePath);
 
+    // Step 2: Now that we have the URL, create the database record.
     const transactionsCollection = collection(db, 'transactions');
-    // The data object that will be saved to Firestore
     const newTransactionData = {
       userId,
       amount,
-      bonusAmount: gstBonusAmount, // Correctly using bonusAmount field
+      bonusAmount: gstBonusAmount,
       type: 'deposit' as const,
       status: 'pending' as const,
-      screenshotUrl,
+      screenshotUrl, // Now this is a valid URL string
       upiId: upiId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -54,7 +55,8 @@ export const createDepositRequest = async (
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
     console.error("Deposit Request Creation Failed:", error);
-    throw new Error(`Could not create deposit request. Please try again. Error: ${errorMessage}`);
+    // Provide a more user-friendly error message
+    throw new Error(`Could not submit your deposit request. Please check your internet connection and try again. Error: ${errorMessage}`);
   }
 };
 
