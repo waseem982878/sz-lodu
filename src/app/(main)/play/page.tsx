@@ -12,8 +12,32 @@ import type { Battle, GameType } from "@/models/battle.model";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { createBattle, acceptBattle } from "@/services/battle-service";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
+
+
+const mockOngoingBattles: Battle[] = [
+    { id: 'mock1', amount: 5000, gameType: 'classic', status: 'inprogress', creator: { id: 'c1', name: 'Thunder Bolt', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Thunder' }, opponent: { id: 'o1', name: 'Captain Ludo', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Captain' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock2', amount: 10000, gameType: 'classic', status: 'inprogress', creator: { id: 'c2', name: 'King Slayer', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=King' }, opponent: { id: 'o2', name: 'Ludo Legend', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Legend' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock3', amount: 2500, gameType: 'classic', status: 'inprogress', creator: { id: 'c3', name: 'Dice Master', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Dice' }, opponent: { id: 'o3', name: 'Rani', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rani' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock4', amount: 1000, gameType: 'popular', status: 'inprogress', creator: { id: 'c4', name: 'Raja Babu', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Raja' }, opponent: { id: 'o4', name: 'Smart Player', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Smart' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock5', amount: 50, gameType: 'classic', status: 'inprogress', creator: { id: 'c5', name: 'Ankit', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Ankit' }, opponent: { id: 'o5', name: 'Priya', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Priya' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock6', amount: 7500, gameType: 'classic', status: 'inprogress', creator: { id: 'c6', name: 'High Roller', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=High' }, opponent: { id: 'o6', name: 'Big Shot', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Big' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock7', amount: 300, gameType: 'popular', status: 'inprogress', creator: { id: 'c7', name: 'Vikram', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Vikram' }, opponent: { id: 'o7', name: 'Simran', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Simran' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock8', amount: 1500, gameType: 'classic', status: 'inprogress', creator: { id: 'c8', name: 'The Pro', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Pro' }, opponent: { id: 'o8', name: 'Challenger', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Challenger' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock9', amount: 200, gameType: 'classic', status: 'inprogress', creator: { id: 'c9', name: 'Player 1', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Player1' }, opponent: { id: 'o9', name: 'Player 2', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Player2' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock10', amount: 6000, gameType: 'popular', status: 'inprogress', creator: { id: 'c10', name: 'Winner', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Winner' }, opponent: { id: 'o10', name: 'Loser', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Loser' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock11', amount: 100, gameType: 'classic', status: 'inprogress', creator: { id: 'c11', name: 'John', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=John' }, opponent: { id: 'o11', name: 'Doe', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Doe' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock12', amount: 8000, gameType: 'classic', status: 'inprogress', creator: { id: 'c12', name: 'Expert', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Expert' }, opponent: { id: 'o12', name: 'Newbie', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Newbie' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock13', amount: 4000, gameType: 'popular', status: 'inprogress', creator: { id: 'c13', name: 'Alpha', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Alpha' }, opponent: { id: 'o13', name: 'Beta', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Beta' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock14', amount: 800, gameType: 'classic', status: 'inprogress', creator: { id: 'c14', name: 'Sultan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Sultan' }, opponent: { id: 'o14', name: 'Badshah', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Badshah' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock15', amount: 9500, gameType: 'classic', status: 'inprogress', creator: { id: 'c15', name: 'Titan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Titan' }, opponent: { id: 'o15', name: 'Hulk', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Hulk' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock16', amount: 750, gameType: 'popular', status: 'inprogress', creator: { id: 'c16', name: 'Aarav', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Aarav' }, opponent: { id: 'o16', name: 'Vihaan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Vihaan' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock17', amount: 1200, gameType: 'classic', status: 'inprogress', creator: { id: 'c17', name: 'Isha', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Isha' }, opponent: { id: 'o17', name: 'Aanya', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Aanya' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock18', amount: 3500, gameType: 'classic', status: 'inprogress', creator: { id: 'c18', name: 'Boss', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Boss' }, opponent: { id: 'o18', name: 'Chief', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Chief' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock19', amount: 250, gameType: 'popular', status: 'inprogress', creator: { id: 'c19', name: 'Test 1', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Test1' }, opponent: { id: 'o19', name: 'Test 2', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Test2' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+    { id: 'mock20', amount: 9000, gameType: 'classic', status: 'inprogress', creator: { id: 'c20', name: 'Last King', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=LastKing' }, opponent: { id: 'o20', name: 'Final Boss', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Final' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
+];
 
 
 function MyBattleCard({ battle }: { battle: Battle }) {
@@ -101,6 +125,11 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     if (!battle.opponent) return null; // Should not happen for ongoing battles
     
     const handleViewBattle = () => {
+        // Mock battles shouldn't be clickable to avoid confusion
+        if (battle.id.startsWith('mock')) {
+            alert("This is a sample battle for display purposes.");
+            return;
+        }
         router.push(`/game/${battle.id}`);
     }
 
@@ -185,9 +214,9 @@ function PlayPageContent() {
 
     const myBattles = allActiveBattles.filter(b => b.creator.id === user.uid || b.opponent?.id === user.uid);
     const openBattles = allActiveBattles.filter(b => b.status === 'open' && b.creator.id !== user.uid);
-    const ongoingBattles = allActiveBattles.filter(b => b.status === 'inprogress' && b.creator.id !== user.uid && b.opponent?.id !== user.uid);
+    const realOngoingBattles = allActiveBattles.filter(b => b.status === 'inprogress' && b.creator.id !== user.uid && b.opponent?.id !== user.uid);
     
-    return { myBattles, openBattles, ongoingBattles };
+    return { myBattles, openBattles, ongoingBattles: realOngoingBattles };
 
   }, [allActiveBattles, user]);
   
@@ -256,6 +285,7 @@ function PlayPageContent() {
   }
   
   const pageTitle = gameType === 'classic' ? 'Ludo Classic' : 'Popular Ludo';
+  const displayOngoingBattles = ongoingBattles.length > 0 ? ongoingBattles : mockOngoingBattles;
 
   return (
     <div className="space-y-2">
@@ -322,11 +352,14 @@ function PlayPageContent() {
       <SectionDivider title="All Ongoing Battles" icon={Users} />
 
       <div className="space-y-3">
-         {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : ongoingBattles.length > 0 ? (
-            ongoingBattles.map((battle) => (
+         {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div>
+         ) : displayOngoingBattles.length > 0 ? (
+            displayOngoingBattles.map((battle) => (
                 <OngoingBattleCard key={battle.id} battle={battle} />
             ))
          ) : (
+            // This case should ideally not be reached because of mock data
             <p className="text-center text-muted-foreground py-8">No other battles are in progress.</p>
         )}
       </div>
