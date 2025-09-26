@@ -19,7 +19,7 @@ export function BottomNav() {
 
     const handleSupportClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        window.open("https://wa.me/918955982878?text=Hello%2C%20I%20need%20support%20with%20SZ%20LUDO%20app.", "_blank", "noopener,noreferrer");
+        window.open("https://wa.me/919351993756?text=Hello%2C%20I%20need%20support%20with%20SZ%20LUDO%20app.", "_blank", "noopener,noreferrer");
     }
 
     const NavLink = ({ href, label, icon: Icon }: { href: string, label: string, icon: React.ElementType }) => {
