@@ -42,8 +42,8 @@ export const createDepositRequest = async (
       status: 'pending',
       screenshotUrl,
       upiId: upiId,
-      createdAt: serverTimestamp() as any,
-      updatedAt: serverTimestamp() as any,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       isRead: false,
     };
 
@@ -105,8 +105,8 @@ export const createWithdrawalRequest = async (
         type: 'withdrawal',
         status: 'pending',
         withdrawalDetails,
-        createdAt: serverTimestamp() as any,
-        updatedAt: serverTimestamp() as any,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         paymentSent: false,
         isRead: false,
     };

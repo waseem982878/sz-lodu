@@ -71,9 +71,15 @@ export default function DepositPage() {
     useEffect(() => {
         const fetchUpi = async () => {
             setLoadingUpi(true);
-            const upi = await getActiveUpi();
-            setActiveUpi(upi);
-            setLoadingUpi(false);
+            try {
+                const upi = await getActiveUpi();
+                setActiveUpi(upi);
+            } catch (error) {
+                console.error("Failed to fetch UPI details:", error);
+                setActiveUpi(null);
+            } finally {
+                setLoadingUpi(false);
+            }
         }
         fetchUpi();
     }, []);
@@ -102,7 +108,7 @@ export default function DepositPage() {
     
     const gstAmount = amount * GST_RATE;
     const totalPayable = amount; 
-    const totalReceivedInWallet = amount + gstAmount; 
+    const totalReceivedInWallet = amount; // The user receives the amount they deposit, bonus is handled separately.
     const upiUri = activeUpi ? `upi://pay?pa=${activeUpi.upiId}&pn=${encodeURIComponent(activeUpi.payeeName)}&am=${totalPayable.toFixed(2)}&cu=INR` : '';
 
     const handleSubmit = async () => {
@@ -117,13 +123,18 @@ export default function DepositPage() {
             router.push('/wallet');
         } catch (e) {
             alert(`Failed to submit deposit request: ${(e as Error).message}`);
-        } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false); // Only set submitting to false on error
         }
     };
 
     if (authLoading) {
         return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+    }
+    
+    const handleProceed = () => {
+        if (amount >= MINIMUM_DEPOSIT && !loadingUpi) {
+            setStep(2);
+        }
     }
 
     if (step === 2) {
@@ -233,11 +244,11 @@ export default function DepositPage() {
                 </CardContent>
             </Card>
 
-            <PaymentSummary amount={amount} gstAmount={gstAmount} totalReceivedInWallet={totalReceivedInWallet} />
+            <PaymentSummary amount={amount} gstAmount={gstAmount} totalReceivedInWallet={amount} />
 
             <Button 
                 className="w-full bg-primary text-primary-foreground text-lg py-6" 
-                onClick={() => setStep(2)}
+                onClick={handleProceed}
                 disabled={amount < MINIMUM_DEPOSIT || loadingUpi}
             >
                  {loadingUpi ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
