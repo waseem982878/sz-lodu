@@ -52,7 +52,7 @@ export function Header() {
     const totalBalance = (userProfile?.depositBalance ?? 0) + (userProfile?.winningsBalance ?? 0);
 
     return (
-        <header className="w-full">
+        <header className="w-full sticky top-0 z-40">
             <div className="bg-primary text-primary-foreground text-center text-xs sm:text-sm font-semibold overflow-hidden h-6 flex items-center justify-center">
                 <div className="relative h-full w-full">
                     {bannerLines.map((line, index) => (
