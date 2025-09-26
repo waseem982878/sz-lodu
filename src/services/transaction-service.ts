@@ -27,26 +27,13 @@ export const createDepositRequest = async (
     throw new Error("User ID, amount, screenshot file, and UPI ID are required.");
   }
 
-  if (amount <= 0) {
-    throw new Error("Deposit amount must be greater than zero.");
-  }
-
   try {
-    // Check if user exists
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-    
-    if (!userDoc.exists()) {
-      throw new Error("User profile not found.");
-    }
-    
     // Upload screenshot first
     const filePath = `deposits/${userId}/${Date.now()}_${screenshotFile.name}`;
     const screenshotUrl = await uploadImage(screenshotFile, filePath);
 
     // Create transaction document.
-    // The balance update will happen on the admin side after approval.
-    const newTransactionData: Omit<Transaction, 'id'> = {
+    const newTransactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
         amount,
         bonusAmount: gstBonusAmount || 0,
@@ -54,12 +41,14 @@ export const createDepositRequest = async (
         status: 'pending',
         screenshotUrl,
         upiId: upiId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
         isRead: false,
     };
     
-    const docRef = await addDoc(collection(db, "transactions"), newTransactionData);
+    const docRef = await addDoc(collection(db, "transactions"), {
+        ...newTransactionData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
 
     return docRef.id;
 

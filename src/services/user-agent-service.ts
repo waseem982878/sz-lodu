@@ -25,7 +25,7 @@ export const createUserProfile = async (user: User, name: string): Promise<void>
         name,
         email: user.email || null,
         phoneNumber: user.phoneNumber || null,
-        avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`, // This will be ignored mostly, but good as a fallback
+        avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`,
         referralCode: referralCode,
         depositBalance: 0,
         winningsBalance: 0,
@@ -99,3 +99,5 @@ export const submitKycDetails = async (userId: string, data: Partial<UserProfile
         updatedAt: serverTimestamp(),
     });
 };
+
+    
