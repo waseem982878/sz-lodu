@@ -4,9 +4,10 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { LifeBuoy, Mail, Send, ChevronRight } from "lucide-react";
+import { LifeBuoy, Send, MessageSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 const faqs = [
   {
@@ -23,15 +24,41 @@ const faqs = [
   },
   {
     question: "What happens if there is a dispute?",
-    answer: "If there is any dispute with the game result, please contact our support team immediately through the contact form on this page or via our support email. Provide the game ID and any relevant proof (like screenshots or screen recordings). Our team will investigate and provide a resolution."
+    answer: "If there is any dispute with the game result, please contact our support team immediately through WhatsApp or Telegram. Provide the game ID and any relevant proof (like screenshots or screen recordings). Our team will investigate and provide a resolution."
   },
   {
     question: "How do deposits and withdrawals work?",
     answer: "You can add money to your 'Deposit Wallet' using various payment methods. This balance can be used to join games. Winnings are credited to your 'Winnings Wallet', and you can withdraw this amount to your verified bank account. Please note that KYC is required for withdrawals."
   }
-]
+];
+
+type SocialMediaLinks = {
+    whatsapp: string;
+    telegram: string;
+};
 
 export default function SupportPage() {
+  const [socialLinks, setSocialLinks] = useState<Partial<SocialMediaLinks>>({});
+
+  useEffect(() => {
+    const fetchSocials = async () => {
+        const socialRef = doc(db, 'config', 'socialMedia');
+        const socialSnap = await getDoc(socialRef);
+        if (socialSnap.exists()) {
+            setSocialLinks(socialSnap.data() as SocialMediaLinks);
+        }
+    };
+    fetchSocials();
+  }, []);
+
+  const openLink = (url?: string) => {
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      alert("Contact link is not configured yet. Please check back later.");
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -63,32 +90,22 @@ export default function SupportPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
-            <Mail className="h-6 w-6" />
+            <MessageSquare className="h-6 w-6" />
             <span>Contact Us</span>
           </CardTitle>
            <p className="text-sm text-muted-foreground pt-2">
-            If you can't find the answer in the FAQ, feel free to send us a message.
+            If you can't find the answer in the FAQ, please reach out to us on WhatsApp or Telegram.
           </p>
         </CardHeader>
-        <CardContent>
-          <form className="space-y-4">
-            <div className="space-y-1">
-                <label htmlFor="name" className="text-sm font-medium">Your Name</label>
-                <Input id="name" placeholder="Enter your name" />
-            </div>
-             <div className="space-y-1">
-                <label htmlFor="email" className="text-sm font-medium">Your Email</label>
-                <Input id="email" type="email" placeholder="Enter your email" />
-            </div>
-             <div className="space-y-1">
-                <label htmlFor="message" className="text-sm font-medium">Message</label>
-                <Textarea id="message" placeholder="Describe your issue or question" rows={5} />
-            </div>
-            <Button className="w-full">
-              <Send className="mr-2 h-4 w-4" />
-              Send Message
+        <CardContent className="space-y-4">
+            <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={() => openLink(socialLinks.whatsapp)}>
+              <MessageSquare className="mr-2 h-5 w-5" />
+              Contact on WhatsApp
             </Button>
-          </form>
+             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => openLink(socialLinks.telegram)}>
+              <Send className="mr-2 h-5 w-5" />
+              Contact on Telegram
+            </Button>
         </CardContent>
       </Card>
 
