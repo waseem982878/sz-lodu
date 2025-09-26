@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Pencil, X, Save, Loader2, Mail, Phone, Calendar } from "lucide-react";
+import { Pencil, X, Save, Loader2, Mail, Phone, Calendar, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
@@ -79,29 +79,8 @@ export default function AdminProfilePage() {
                 {isEditing ? <X className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
              </Button>
           </div>
-          <div className="relative w-24 h-24 mx-auto">
-            <Image 
-                src={userProfile.avatarUrl} 
-                alt="User Avatar" 
-                width={96} height={96} 
-                className="rounded-full border-4 border-primary" 
-                priority
-            />
-             <input
-              type="file"
-              ref={avatarInputRef}
-              onChange={handleAvatarChange}
-              className="hidden"
-              accept="image/*"
-            />
-            <Button 
-                size="icon" 
-                className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={isSaving}
-            >
-                <Pencil className="h-4 w-4"/>
-            </Button>
+          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-4 border-primary bg-muted">
+            <CircleUserRound className="w-16 h-16 text-muted-foreground" />
           </div>
            {isEditing ? (
             <Input
@@ -133,4 +112,3 @@ export default function AdminProfilePage() {
     </div>
   );
 }
-

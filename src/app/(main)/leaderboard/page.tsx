@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { UserProfile } from "@/models/user.model";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Trophy, Award, Medal } from "lucide-react";
+import { Loader2, Trophy, Award, Medal, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import imagePaths from '@/lib/image-paths.json';
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
@@ -19,11 +19,11 @@ const getRankIcon = (rank: number) => {
 }
 
 const mockTopPlayers: UserProfile[] = [
-    { uid: '1', name: 'Rohan Sharma', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan', gamesPlayed: 150, gamesWon: 120, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 10, losingStreak: 0, biggestWin: 5000 },
-    { uid: '2', name: 'Priya Singh', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Priya', gamesPlayed: 140, gamesWon: 110, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 5, losingStreak: 0, biggestWin: 2500 },
-    { uid: '3', name: 'Amit Kumar', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Amit', gamesPlayed: 130, gamesWon: 95, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 2, losingStreak: 0, biggestWin: 1000 },
-    { uid: '4', name: 'Sneha Patel', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Sneha', gamesPlayed: 125, gamesWon: 90, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 0, losingStreak: 1, biggestWin: 1000 },
-    { uid: '5', name: 'Vikas Gupta', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Vikas', gamesPlayed: 110, gamesWon: 85, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 4, losingStreak: 0, biggestWin: 500 },
+    { uid: '1', name: 'Rohan Sharma', avatarUrl: '', gamesPlayed: 150, gamesWon: 120, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 10, losingStreak: 0, biggestWin: 5000 },
+    { uid: '2', name: 'Priya Singh', avatarUrl: '', gamesPlayed: 140, gamesWon: 110, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 5, losingStreak: 0, biggestWin: 2500 },
+    { uid: '3', name: 'Amit Kumar', avatarUrl: '', gamesPlayed: 130, gamesWon: 95, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 2, losingStreak: 0, biggestWin: 1000 },
+    { uid: '4', name: 'Sneha Patel', avatarUrl: '', gamesPlayed: 125, gamesWon: 90, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 0, losingStreak: 1, biggestWin: 1000 },
+    { uid: '5', name: 'Vikas Gupta', avatarUrl: '', gamesPlayed: 110, gamesWon: 85, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 4, losingStreak: 0, biggestWin: 500 },
 ];
 
 
@@ -99,13 +99,9 @@ export default function LeaderboardPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
-                                                    <Image
-                                                        src={player.avatarUrl}
-                                                        alt={player.name}
-                                                        width={40}
-                                                        height={40}
-                                                        className="rounded-full border"
-                                                    />
+                                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center border">
+                                                        <CircleUserRound className="w-6 h-6 text-muted-foreground" />
+                                                    </div>
                                                     <span className="font-medium">{player.name}</span>
                                                 </div>
                                             </TableCell>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -7,7 +8,7 @@ import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
 import type { Transaction } from "@/models/transaction.model";
 import type { Battle } from "@/models/battle.model";
-import { Loader2, ArrowLeft, Mail, Phone, Calendar, UserCheck, Wallet, Gamepad2, Trophy, Percent, Edit } from "lucide-react";
+import { Loader2, ArrowLeft, Mail, Phone, Calendar, UserCheck, Wallet, Gamepad2, Trophy, Percent, Edit, CircleUserRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -175,7 +176,9 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             
             <Card>
                 <CardHeader className="flex flex-col md:flex-row items-start gap-6">
-                    <Image src={user.avatarUrl} alt={user.name} width={100} height={100} className="rounded-full border-4 border-primary" />
+                    <div className="w-[100px] h-[100px] rounded-full border-4 border-primary bg-muted flex items-center justify-center">
+                        <CircleUserRound className="w-16 h-16 text-muted-foreground" />
+                    </div>
                     <div className="flex-1">
                         <CardTitle className="text-3xl text-primary">{user.name}</CardTitle>
                         <div className="space-y-1 mt-2 text-sm text-muted-foreground">

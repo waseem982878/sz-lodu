@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle, Edit } from "lucide-react";
+import { Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle, Edit, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -336,7 +336,9 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
         <CardContent className="p-4">
           <div className="flex justify-between items-center text-center mb-4">
               <div className="flex flex-col items-center gap-1">
-                  <Image src={userProfile.avatarUrl} alt="You" width={40} height={40} className="rounded-full ring-2 ring-primary" />
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary">
+                    <CircleUserRound className="w-6 h-6 text-primary" />
+                  </div>
                   <span className="font-semibold text-sm">You</span>
               </div>
               <div className="text-center">
@@ -345,7 +347,9 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
               </div>
               <div className={`flex flex-col items-center gap-1 transition-opacity duration-500 ${isOpponentJoined ? 'opacity-100' : 'opacity-50'}`}>
                     {isOpponentJoined && opponent ? (
-                        <Image src={opponent.avatarUrl} alt={opponent.name} width={40} height={40} className="rounded-full ring-2 ring-muted" />
+                        <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center ring-2 ring-muted">
+                           <CircleUserRound className="w-6 h-6 text-muted-foreground" />
+                        </div>
                     ) : (
                         <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                             <CircleHelp className="w-6 h-6 text-muted-foreground" />
@@ -377,4 +381,3 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
   );
 }
 
-    

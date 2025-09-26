@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PlusCircle, Download, History, IndianRupee, Swords, TrendingUp, TrendingDown, CircleDotDashed, ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Download, History, IndianRupee, Swords, TrendingUp, TrendingDown, CircleDotDashed, ArrowDownCircle, ArrowUpCircle, Loader2, CircleUserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -46,9 +46,9 @@ const mockTransactions: Transaction[] = [
 ];
 
 const mockGames: Battle[] = [
-    { id: 'g1', amount: 100, gameType: 'classic', status: 'completed', winnerId: 'user-id-placeholder', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan' }, opponent: { id: 'opp1', name: 'Priya', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Priya' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
-    { id: 'g2', amount: 50, gameType: 'classic', status: 'completed', winnerId: 'opp2', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan' }, opponent: { id: 'opp2', name: 'Amit', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Amit' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 5)), updatedAt: Timestamp.fromDate(new Date()) },
-    { id: 'g3', amount: 200, gameType: 'classic', status: 'cancelled', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rohan' }, opponent: { id: 'opp3', name: 'Sneha', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Sneha' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 10)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 'g1', amount: 100, gameType: 'classic', status: 'completed', winnerId: 'user-id-placeholder', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp1', name: 'Priya', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 'g2', amount: 50, gameType: 'classic', status: 'completed', winnerId: 'opp2', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp2', name: 'Amit', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 5)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 'g3', amount: 200, gameType: 'classic', status: 'cancelled', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp3', name: 'Sneha', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 10)), updatedAt: Timestamp.fromDate(new Date()) },
 ];
 
 
@@ -106,12 +106,9 @@ function GameHistoryCard({ game }: { game: Battle }) {
         <Card className="p-4 transition-all hover:shadow-md">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <Image 
-                        src={opponent?.avatarUrl || "https://picsum.photos/40/40"} 
-                        alt={opponent?.name || "Opponent"} 
-                        width={40} height={40} 
-                        className="rounded-full border" 
-                    />
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted border">
+                        <CircleUserRound className="h-6 w-6 text-muted-foreground" />
+                    </div>
                     <div>
                         <p className="font-bold text-sm">vs {opponent?.name || 'Waiting...'}</p>
                         <p className="text-xs text-muted-foreground">
@@ -353,4 +350,3 @@ export default function WalletPage() {
   );
 }
 
-    

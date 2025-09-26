@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Loader2 } from "lucide-react";
+import { Search, UserPlus, Loader2, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
@@ -108,7 +109,9 @@ export default function UsersPage() {
                         <TableRow key={user.uid} onClick={() => handleUserClick(user.uid)} className="cursor-pointer">
                         <TableCell>
                             <div className="flex items-center gap-3">
-                            <Image src={user.avatarUrl} alt={user.name} width={40} height={40} className="rounded-full" />
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted">
+                                <CircleUserRound className="w-6 h-6 text-muted-foreground" />
+                            </div>
                             <div>
                                 <span className="font-medium">{user.name}</span>
                                 <div className="text-gray-500 text-sm md:hidden">{user.phoneNumber}</div>

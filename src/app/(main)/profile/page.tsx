@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Gamepad2, Gift, Pencil, LogOut, Loader2, ShieldQuestion, UserCheck, TrendingUp, TrendingDown, Star, Wallet, ChevronRight, X, Save } from "lucide-react";
+import { CheckCircle2, Gamepad2, Gift, Pencil, LogOut, Loader2, ShieldQuestion, UserCheck, TrendingUp, TrendingDown, Star, Wallet, ChevronRight, X, Save, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -124,15 +124,8 @@ export default function ProfilePage() {
              </Button>
           </div>
           
-          <div className="relative w-24 h-24 mx-auto">
-            <Image 
-              src={userProfile.avatarUrl} 
-              alt="User Avatar" 
-              width={96} 
-              height={96} 
-              className="rounded-full border-4 border-primary object-cover" 
-              priority
-            />
+          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-4 border-primary bg-primary/10">
+             <CircleUserRound className="w-16 h-16 text-primary" />
           </div>
           
           {isEditing ? (

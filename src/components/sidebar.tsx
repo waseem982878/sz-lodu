@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut, MessageSquare } from "lucide-react";
+import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut, MessageSquare, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
@@ -74,7 +74,9 @@ export function Sidebar() {
           </div>
           <div className="p-4 flex flex-col h-[calc(100%-70px)]">
               <div className="flex items-center gap-4 mb-6">
-                   <Image src={userProfile?.avatarUrl || "https://picsum.photos/48/48"} alt="User Avatar" width={48} height={48} className="rounded-full" />
+                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-muted">
+                        <CircleUserRound className="w-8 h-8 text-muted-foreground" />
+                   </div>
                    <div>
                       <h3 className="font-bold text-lg">{userProfile?.name || "New Player"} 👋</h3>
                       <p className="text-sm text-muted-foreground">{user?.phoneNumber || user?.email}</p>
