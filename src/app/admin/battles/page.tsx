@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -88,7 +87,7 @@ export default function BattlesPage() {
                 <TableBody>
                   {battles.map((battle) => (
                     <TableRow key={battle.id}>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{battle.id}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground break-all max-w-xs">{battle.id}</TableCell>
                       <TableCell>₹{battle.amount}</TableCell>
                       <TableCell>{battle.creator.name}</TableCell>
                       <TableCell>{battle.opponent?.name || 'N/A'}</TableCell>

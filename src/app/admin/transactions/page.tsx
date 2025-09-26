@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X, Eye, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment, getDocs, getDoc } from "firebase/firestore";
+import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { Transaction } from "@/models/transaction.model";
 import type { UserProfile } from "@/models/user.model";
@@ -92,15 +91,6 @@ export default function TransactionsPage() {
                   const totalCredit = depositAmount + bonusAmount;
 
                   t.update(userRef, { depositBalance: increment(totalCredit) });
-                  
-                  if (transaction.upiId) {
-                       const upiQuery = query(collection(db, "payment_upis"), where("upiId", "==", transaction.upiId));
-                       const upiDocs = await getDocs(upiQuery);
-                       if(!upiDocs.empty) {
-                           const upiRef = upiDocs.docs[0].ref;
-                           t.update(upiRef, { currentReceived: increment(transaction.amount) });
-                       }
-                  }
               }
               t.update(transRef, { 
                   status: newStatus, 
@@ -125,7 +115,6 @@ export default function TransactionsPage() {
                 if (!userDoc.exists()) throw new Error("User not found");
                 
                 if (newStatus === 'rejected') {
-                    // Refund the amount to the user's winnings balance if rejected
                     t.update(userRef, { winningsBalance: increment(transaction.amount) });
                     t.update(transRef, { 
                         status: newStatus, 
@@ -133,12 +122,7 @@ export default function TransactionsPage() {
                         notes: "Admin rejected withdrawal.",
                         processedBy: { id: "admin", name: "Admin" }
                     });
-                } else { // Approved
-                     const userProfile = userDoc.data() as UserProfile;
-                     // We already deducted the amount when the user requested it.
-                     // Here we just confirm the transaction status.
-                    
-                    // Update transaction status
+                } else {
                     t.update(transRef, { 
                         status: newStatus, 
                         updatedAt: serverTimestamp(), 
@@ -185,7 +169,7 @@ export default function TransactionsPage() {
                 <TableBody>
                     {data.map(t => (
                         <TableRow key={t.id}>
-                            <TableCell className="font-mono text-xs truncate max-w-24 sm:max-w-xs">{t.userId}</TableCell>
+                            <TableCell className="font-mono text-xs break-all max-w-xs">{t.userId}</TableCell>
                             <TableCell>
                                 ₹{t.amount}
                                 {t.type === 'deposit' && t.bonusAmount ? <span className="text-green-600 text-xs ml-1 block sm:inline">(+₹{t.bonusAmount} bonus)</span> : ''}
@@ -198,7 +182,7 @@ export default function TransactionsPage() {
                             
                             <TableCell>
                                 {t.type === 'deposit' && t.screenshotUrl && (<ScreenshotModal imageUrl={t.screenshotUrl} />)}
-                                {t.type === 'withdrawal' && t.withdrawalDetails && (<span className="text-xs truncate block w-28">{t.withdrawalDetails.method}: {t.withdrawalDetails.address}</span>)}
+                                {t.type === 'withdrawal' && t.withdrawalDetails && (<span className="text-xs break-all block w-28">{t.withdrawalDetails.method}: {t.withdrawalDetails.address}</span>)}
                             </TableCell>
 
                             <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{t.processedBy?.name || 'N/A'}</TableCell>
@@ -260,5 +244,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-
-    

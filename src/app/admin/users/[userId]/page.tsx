@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, or } from "firebase/firestore";
 import { db } from "@/firebase/config";
@@ -9,7 +8,7 @@ import type { UserProfile } from "@/models/user.model";
 import type { Transaction } from "@/models/transaction.model";
 import type { Battle } from "@/models/battle.model";
 import { Loader2, ArrowLeft, Mail, Phone, Calendar, UserCheck, Wallet, Gamepad2, Trophy, Percent, Edit } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -126,22 +125,20 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     const [battles, setBattles] = useState<Battle[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchAllData = async () => {
+    const fetchAllData = useCallback(async () => {
+        if (!userId) return;
         setLoading(true);
         try {
-            // Fetch User Profile
             const userRef = doc(db, 'users', userId);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
                 setUser({ uid: userSnap.id, ...userSnap.data() } as UserProfile);
             }
 
-            // Fetch Transactions
             const transQuery = query(collection(db, 'transactions'), where('userId', '==', userId), orderBy('createdAt', 'desc'));
             const transSnap = await getDocs(transQuery);
             setTransactions(transSnap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
 
-            // Fetch Battles
             const battlesQuery = query(
                 collection(db, 'battles'),
                 or(where('creator.id', '==', userId), where('opponent.id', '==', userId)),
@@ -151,17 +148,16 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
             setBattles(battlesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Battle)));
 
         } catch (error) {
-            // Error handling can be improved here
+            console.error("Failed to fetch user data:", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId]);
 
 
     useEffect(() => {
-        if (!userId) return;
         fetchAllData();
-    }, [userId]);
+    }, [fetchAllData]);
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -171,8 +167,6 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
         return <div className="text-center py-10">User not found.</div>;
     }
 
-    const totalDeposit = transactions.filter(t => t.type === 'deposit' && t.status === 'completed').reduce((acc, t) => acc + t.amount, 0);
-    const totalWithdrawal = transactions.filter(t => t.type === 'withdrawal' && t.status === 'completed').reduce((acc, t) => acc + t.amount, 0);
     const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(0) : 0;
 
     return (
@@ -216,7 +210,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 <TabsContent value="transactions">
                     <Card>
                         <CardHeader><CardTitle className="text-primary">Transactions</CardTitle></CardHeader>
-                        <CardContent>
+                        <CardContent className="overflow-x-auto">
                              <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -243,7 +237,7 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
                 <TabsContent value="battles">
                      <Card>
                         <CardHeader><CardTitle className="text-primary">Battles</CardTitle></CardHeader>
-                        <CardContent>
+                        <CardContent className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -280,5 +274,3 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
         </div>
     )
 }
-
-    

@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -18,74 +17,48 @@ const initialStats = {
     pendingKYCs: { title: "Pending KYCs", value: "0", icon: ShieldQuestion, color: "text-red-500", note: "" },
 };
 
-const TOTAL_LISTENERS = 5; 
-
 export default function AdminDashboard() {
-  const [stats, setStats] = useState(() => {
-      const newStats = { ...initialStats };
-      newStats.totalRevenue.value = "N/A";
-      newStats.totalRevenue.note = "Calculation disabled for performance";
-      return newStats;
-  });
+  const [stats, setStats] = useState(initialStats);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const loadedListeners = useRef(0);
-
-  const onListenerLoaded = () => {
-    loadedListeners.current += 1;
-    if (loadedListeners.current >= TOTAL_LISTENERS) {
-      setLoading(false);
-    }
-  };
-  
-   const onListenerError = (type: string, err: Error) => {
-    console.error(`${type} listener error:`, err); 
-    setError(`Failed to load ${type} data.`); 
-    onListenerLoaded();
-  };
-
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    loadedListeners.current = 0;
-
+    
     const listeners = [
-      // Listener for Users
-      onSnapshot(collection(db, "users"), (snapshot) => {
-        setStats(prev => ({ ...prev, totalUsers: { ...prev.totalUsers, value: snapshot.size.toString() } }));
-        onListenerLoaded();
-      }, err => onListenerError('user', err)),
-
-      // Listener for Pending KYCs
-      onSnapshot(query(collection(db, "users"), where("kycStatus", "==", "Pending")), (snapshot) => {
-        setStats(prev => ({ ...prev, pendingKYCs: { ...prev.pendingKYCs, value: snapshot.size.toString() } }));
-        onListenerLoaded();
-      }, err => onListenerError('KYC', err)),
-
-      // Listener for Active Battles
-      onSnapshot(query(collection(db, "battles"), where('status', 'in', ['inprogress', 'result_pending', 'waiting_for_players_ready'])), (snapshot) => {
-        setStats(prev => ({...prev, activeBattles: {...prev.activeBattles, value: snapshot.size.toString()}}));
-        onListenerLoaded();
-      }, err => onListenerError('battle', err)),
-
-      // Listener for Pending Withdrawals
-      onSnapshot(query(collection(db, "transactions"), where('type', '==', 'withdrawal'), where('status', '==', 'pending')), (snapshot) => {
-        setStats(prev => ({...prev, pendingWithdrawals: {...prev.pendingWithdrawals, value: snapshot.size.toString()}}));
-        onListenerLoaded();
-      }, err => onListenerError('withdrawal', err)),
-
-      // Listener for Recent Transactions
-      onSnapshot(query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(5)), (snapshot) => {
-        const recentTransactionsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
-        setRecentTransactions(recentTransactionsData);
-        onListenerLoaded();
-      }, err => onListenerError('transaction', err)),
+      onSnapshot(collection(db, "users"), 
+        (snapshot) => setStats(prev => ({ ...prev, totalUsers: { ...prev.totalUsers, value: snapshot.size.toString() } })),
+        (err) => setError("Failed to load user data.")
+      ),
+      onSnapshot(query(collection(db, "users"), where("kycStatus", "==", "Pending")),
+        (snapshot) => setStats(prev => ({ ...prev, pendingKYCs: { ...prev.pendingKYCs, value: snapshot.size.toString() } })),
+        (err) => setError("Failed to load KYC data.")
+      ),
+      onSnapshot(query(collection(db, "battles"), where('status', 'in', ['inprogress', 'result_pending', 'waiting_for_players_ready'])),
+        (snapshot) => setStats(prev => ({...prev, activeBattles: {...prev.activeBattles, value: snapshot.size.toString()}})),
+        (err) => setError("Failed to load battle data.")
+      ),
+      onSnapshot(query(collection(db, "transactions"), where('type', '==', 'withdrawal'), where('status', '==', 'pending')),
+        (snapshot) => setStats(prev => ({...prev, pendingWithdrawals: {...prev.pendingWithdrawals, value: snapshot.size.toString()}})),
+        (err) => setError("Failed to load withdrawal data.")
+      ),
+      onSnapshot(query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(5)),
+        (snapshot) => {
+          const recentTransactionsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+          setRecentTransactions(recentTransactionsData);
+        },
+        (err) => setError("Failed to load recent transactions.")
+      ),
     ];
+    
+    // A simple timeout to handle the initial loading state
+    const timer = setTimeout(() => setLoading(false), 2500);
 
     return () => {
-        listeners.forEach(unsub => unsub());
+      listeners.forEach(unsub => unsub());
+      clearTimeout(timer);
     };
   }, []);
 
@@ -93,7 +66,7 @@ export default function AdminDashboard() {
     return <div className="flex justify-center items-center h-[80vh]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
   
-  if (error && recentTransactions.length === 0) { // Only show full-page error if nothing loads
+  if (error && recentTransactions.length === 0) {
     return (
         <div className="flex flex-col items-center justify-center h-[80vh] text-center">
             <h2 className="text-2xl font-bold text-destructive mb-4">Dashboard Error</h2>
@@ -116,7 +89,7 @@ export default function AdminDashboard() {
                     <stat.icon className={`h-5 w-5 ${stat.color}`} />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-gray-800">{stat.value}</div>
+                    <div className="text-2xl font-bold">{stat.value}</div>
                      <p className="text-xs text-gray-400">{stat.note || "Live data"}</p>
                 </CardContent>
             </Card>
@@ -167,5 +140,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-    

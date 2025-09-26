@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -67,6 +66,7 @@ export default function KycPage() {
   const [filter, setFilter] = useState("Pending");
 
   useEffect(() => {
+    setLoading(true);
     const q = query(collection(db, "users"), where("kycStatus", "==", filter));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const usersData: UserProfile[] = [];
@@ -86,7 +86,6 @@ export default function KycPage() {
       const reasonForRejection = status === 'Rejected' ? prompt("Reason for rejection (optional):") : null;
       
       if (status === 'Rejected' && reasonForRejection === null) {
-          // User cancelled the prompt
           return;
       }
       
@@ -105,8 +104,8 @@ export default function KycPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-6 text-primary">KYC Management</h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-primary">KYC Management</h1>
       <Card>
         <CardHeader>
           <CardTitle className="text-primary">KYC Submissions</CardTitle>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -38,8 +37,8 @@ export default function UsersPage() {
       if (!searchTerm) return allUsers;
       return allUsers.filter(u => 
         u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.phoneNumber?.includes(searchTerm)
+        (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (u.phoneNumber && u.phoneNumber.includes(searchTerm))
       );
   }, [allUsers, searchTerm]);
   
