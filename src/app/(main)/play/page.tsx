@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Trophy, Swords, Hourglass, PlusCircle, BrainCircuit, Loader2, ArrowLeft, Users } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, Suspense, useMemo } from "react";
 import type { Battle, GameType } from "@/models/battle.model";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { createBattle, acceptBattle } from "@/services/battle-service";
 import { collection, query, where, onSnapshot, Timestamp, or } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -77,34 +76,41 @@ function MyBattleCard({ battle }: { battle: Battle }) {
     const displayOpponent = opponent || { name: 'Waiting...', avatarUrl: "https://api.dicebear.com/8.x/initials/svg?seed=Waiting" };
 
     return (
-        <Card className="p-2 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg" data-aos="fade-up">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                <Image 
-                    src={displayOpponent.avatarUrl} 
-                    alt={displayOpponent.name} 
-                    width={32} 
-                    height={32} 
-                    className="rounded-full border-2 ring-2 ring-primary object-cover w-8 h-8" 
-                />
-                <div>
-                    <p className="font-bold text-sm">vs {displayOpponent.name}</p>
-                    <p className="text-xs text-muted-foreground">{battle.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+        <motion.div
+            layout
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
+        >
+            <Card className="p-2 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                    <Image 
+                        src={displayOpponent.avatarUrl} 
+                        alt={displayOpponent.name} 
+                        width={32} 
+                        height={32} 
+                        className="rounded-full border-2 ring-2 ring-primary object-cover w-8 h-8" 
+                    />
+                    <div>
+                        <p className="font-bold text-sm">vs {displayOpponent.name}</p>
+                        <p className="text-xs text-muted-foreground">{battle.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                    </div>
+                    </div>
+                    <div className="text-right">
+                        {isPractice ? (
+                             <Badge variant="secondary" className="text-blue-600">Practice</Badge>
+                        ) : (
+                            <p className="font-bold text-md text-primary">₹{battle.amount}</p>
+                        )}
+                        <Button size="sm" className="mt-1 bg-primary hover:bg-primary/80 text-primary-foreground rounded-full shadow h-7 px-3 text-xs" onClick={handleView}>
+                            {battle.status === 'open' ? 'Waiting' : 'View'}
+                            <Swords className="ml-1 h-3 w-3" />
+                        </Button>
+                    </div>
                 </div>
-                </div>
-                <div className="text-right">
-                    {isPractice ? (
-                         <Badge variant="secondary" className="text-blue-600">Practice</Badge>
-                    ) : (
-                        <p className="font-bold text-md text-primary">₹{battle.amount}</p>
-                    )}
-                    <Button size="sm" className="mt-1 bg-primary hover:bg-primary/80 text-primary-foreground rounded-full shadow h-7 px-3 text-xs" onClick={handleView}>
-                        {battle.status === 'open' ? 'Waiting' : 'View'}
-                        <Swords className="ml-1 h-3 w-3" />
-                    </Button>
-                </div>
-            </div>
-        </Card>
+            </Card>
+        </motion.div>
     );
 }
 
@@ -112,37 +118,43 @@ function MyBattleCard({ battle }: { battle: Battle }) {
 function OpenBattleCard({ battle, onPlay }: { battle: Battle, onPlay: (battleId: string) => void }) {
   const isPractice = battle.amount === 0;
   return (
-    <Card className="p-2 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600" data-aos="fade-up">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-green-500 object-cover w-8 h-8" />
-          <div>
-            <p className="text-xs text-muted-foreground">Challenger</p>
-            <p className="font-bold text-sm">{battle.creator.name}</p>
+    <motion.div
+        layout
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -50, transition: { duration: 0.3 } }}
+    >
+        <Card className="p-2 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-green-500 object-cover w-8 h-8" />
+              <div>
+                <p className="text-xs text-muted-foreground">Challenger</p>
+                <p className="font-bold text-sm">{battle.creator.name}</p>
+              </div>
+            </div>
+            <div className="text-right">
+                 {isPractice ? (
+                    <Badge variant="secondary" className="text-blue-600">Practice</Badge>
+                ) : (
+                    <p className="font-bold text-md text-green-500">₹{battle.amount}</p>
+                )}
+                <Button size="sm" className="mt-1 bg-green-500 hover:bg-green-600 text-white rounded-full shadow h-7 px-3 text-xs" onClick={() => onPlay(battle.id)}>
+                    Accept
+                    <Swords className="ml-1 h-3 w-3" />
+                </Button>
+            </div>
           </div>
-        </div>
-        <div className="text-right">
-             {isPractice ? (
-                <Badge variant="secondary" className="text-blue-600">Practice</Badge>
-            ) : (
-                <p className="font-bold text-md text-green-500">₹{battle.amount}</p>
-            )}
-            <Button size="sm" className="mt-1 bg-green-500 hover:bg-green-600 text-white rounded-full shadow h-7 px-3 text-xs" onClick={() => onPlay(battle.id)}>
-                Accept
-                <Swords className="ml-1 h-3 w-3" />
-            </Button>
-        </div>
-      </div>
-    </Card>
+        </Card>
+    </motion.div>
   );
 }
 
 function OngoingBattleCard({ battle }: { battle: Battle }) {
     const router = useRouter();
-    if (!battle.opponent) return null; // Should not happen for ongoing battles
+    if (!battle.opponent) return null;
     
     const handleViewBattle = () => {
-        // Mock battles shouldn't be clickable to avoid confusion
         if (battle.id.startsWith('mock')) {
             alert("This is a sample battle for display purposes.");
             return;
@@ -176,13 +188,11 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     )
 }
 
-function SectionDivider({ title, icon }: { title: string, icon: React.ElementType }) {
-    const Icon = icon;
+function SectionDivider({ title }: { title: string }) {
     return (
       <div className="relative flex py-5 items-center">
         <div className="flex-grow border-t border-muted-foreground/20"></div>
-        <span className="flex-shrink mx-4 text-muted-foreground flex items-center gap-2 text-sm">
-            <Icon className="h-4 w-4" />
+        <span className="flex-shrink mx-4 text-lg font-bold bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">
             {title}
         </span>
         <div className="flex-grow border-t border-muted-foreground/20"></div>
@@ -203,17 +213,9 @@ function PlayPageContent() {
   const [mockOpenBattles, setMockOpenBattles] = useState<Battle[]>(() => [...initialMockOpenBattles].sort(() => Math.random() - 0.5));
 
   useEffect(() => {
-    AOS.init({
-        duration: 500,
-        once: true,
-    });
-  }, []);
-
-  useEffect(() => {
     if (!user) return;
     setLoading(true);
     
-    // One listener to get all relevant battles
     const battlesQuery = query(
         collection(db, "battles"), 
         where('status', 'in', ['open', 'inprogress', 'waiting_for_players_ready', 'result_pending'])
@@ -231,13 +233,10 @@ function PlayPageContent() {
     return () => unsubscribe();
   }, [user]);
 
-  // Mock data circulation effect
    useEffect(() => {
     const interval = setInterval(() => {
       setMockBattles(currentBattles => {
         if (currentBattles.length <= 1) return currentBattles;
-        
-        // Take the first battle and move it to the end
         const newBattles = [...currentBattles];
         const shifted = newBattles.shift();
         if(shifted) {
@@ -245,7 +244,18 @@ function PlayPageContent() {
         }
         return newBattles;
       });
-    }, 4000); // Circulate every 4 seconds
+      
+      setMockOpenBattles(currentBattles => {
+          if (currentBattles.length <= 1) return currentBattles;
+          const newBattles = [...currentBattles];
+          const shifted = newBattles.pop();
+          if (shifted) {
+              newBattles.unshift(shifted);
+          }
+          return newBattles;
+      });
+
+    }, 4000);
 
     return () => clearInterval(interval);
   }, []);
@@ -306,13 +316,11 @@ function PlayPageContent() {
   const handleAcceptBattle = async (battleId: string) => {
     if (!user || !userProfile) return;
 
-    // Check both real and mock open battles
     const battleToAccept = openBattles.find(b => b.id === battleId) || mockOpenBattles.find(b => b.id === battleId);
     if (!battleToAccept) return;
     
-    // If it's a mock battle, just show an alert and don't proceed
     if (battleToAccept.id.startsWith('mock-open-')) {
-        alert("This is a sample battle. Create your own to play!");
+        alert("This is a sample battle for display purposes.");
         return;
     }
     
@@ -340,7 +348,6 @@ function PlayPageContent() {
       )
   }
   
-  const pageTitle = "Ludo Battles";
   const displayOngoingBattles = ongoingBattles.length > 0 ? ongoingBattles : mockBattles;
   const displayOpenBattles = openBattles.length > 0 ? openBattles : mockOpenBattles;
   
@@ -382,28 +389,30 @@ function PlayPageContent() {
       
       {myBattles.length > 0 && (
           <>
-            <SectionDivider title="My Battles" icon={Hourglass} />
+            <SectionDivider title="My Battles" />
             <div className="space-y-3">
-                {myBattles.map((battle) => (
-                    <MyBattleCard key={battle.id} battle={battle} />
-                ))}
+                 <AnimatePresence>
+                    {myBattles.map((battle) => (
+                        <MyBattleCard key={battle.id} battle={battle} />
+                    ))}
+                 </AnimatePresence>
             </div>
           </>
       )}
 
-      <SectionDivider title="Open Battles" icon={Trophy} />
+      <SectionDivider title="Open Battles" />
       
       <div className="space-y-3">
-        {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : displayOpenBattles.length > 0 ? (
-            displayOpenBattles.map((battle) => (
-                <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
-            ))
-        ) : (
-            <p className="text-center text-muted-foreground py-8">No open battles right now. Create one!</p>
+        {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : (
+            <AnimatePresence>
+                {displayOpenBattles.map((battle) => (
+                    <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
+                ))}
+            </AnimatePresence>
         )}
       </div>
 
-      <SectionDivider title="All Ongoing Battles" icon={Users} />
+      <SectionDivider title="All Ongoing Battles" />
 
       <div className="space-y-3">
          {loading ? (
@@ -437,3 +446,5 @@ export default function Play() {
       </Suspense>
   )
 }
+
+    
