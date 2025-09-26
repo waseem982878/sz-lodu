@@ -14,7 +14,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { createBattle, acceptBattle } from "@/services/battle-service";
 import { collection, query, where, onSnapshot, Timestamp, or } from "firebase/firestore";
 import { db } from "@/firebase/config";
-import 'aos/dist/aos.css';
 import { motion, AnimatePresence } from "framer-motion";
 
 const initialMockBattles: Battle[] = [
@@ -156,7 +155,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     
     const handleViewBattle = () => {
         if (battle.id.startsWith('mock')) {
-            alert("This is a sample battle for display purposes.");
+            // Do nothing for mock battles
             return;
         }
         router.push(`/game/${battle.id}`);
@@ -319,8 +318,8 @@ function PlayPageContent() {
     const battleToAccept = openBattles.find(b => b.id === battleId) || mockOpenBattles.find(b => b.id === battleId);
     if (!battleToAccept) return;
     
+    // If it's a mock battle, do nothing.
     if (battleToAccept.id.startsWith('mock-open-')) {
-        alert("This is a sample battle for display purposes.");
         return;
     }
     
@@ -405,8 +404,11 @@ function PlayPageContent() {
       <div className="space-y-3">
         {loading ? <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div> : (
             <AnimatePresence>
-                {displayOpenBattles.map((battle) => (
-                    <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
+                {openBattles.map((battle) => (
+                     <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
+                ))}
+                {openBattles.length === 0 && mockOpenBattles.map((battle) => (
+                     <OpenBattleCard key={battle.id} battle={battle} onPlay={handleAcceptBattle} />
                 ))}
             </AnimatePresence>
         )}
@@ -419,7 +421,19 @@ function PlayPageContent() {
             <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin"/></div>
          ) : (
             <AnimatePresence>
-                {displayOngoingBattles.map((battle) => (
+                 {ongoingBattles.map((battle) => (
+                    <motion.div
+                        key={battle.id}
+                        layout
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        variants={cardAnimationVariants}
+                    >
+                        <OngoingBattleCard battle={battle} />
+                    </motion.div>
+                ))}
+                {ongoingBattles.length === 0 && mockBattles.map((battle) => (
                     <motion.div
                         key={battle.id}
                         layout
