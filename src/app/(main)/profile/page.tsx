@@ -136,8 +136,9 @@ export default function ProfilePage() {
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `avatar_${timestamp}.${fileExtension}`;
+      const filePath = `avatars/${user.uid}/${fileName}`;
       
-      const avatarUrl = await uploadImage(file, `avatars/${user.uid}/${fileName}`);
+      const avatarUrl = await uploadImage(file, filePath);
       await updateUserProfile(user.uid, { avatarUrl });
       
       if (avatarInputRef.current) {
@@ -295,3 +296,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

@@ -1,6 +1,6 @@
 
 import { db } from '@/firebase/config';
-import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment, setDoc } from 'firebase/firestore';
 import { uploadImage } from './storage-service';
 import type { UserProfile } from '@/models/user.model';
 import type { PaymentUpi } from '@/models/payment-upi.model';
@@ -58,7 +58,6 @@ export const createDepositRequest = async (
         isRead: false,
     };
     
-    // Use setDoc instead of addDoc as we are within a transaction
     await setDoc(newTransactionRef, {
         ...newTransactionData,
         createdAt: serverTimestamp(),
@@ -71,7 +70,6 @@ export const createDepositRequest = async (
     console.error('Deposit request error:', error);
     
     if (error instanceof Error) {
-      // Firebase specific errors
       if (error.message.includes('not-found')) {
         throw new Error("Payment method not found. Please try again.");
       }
@@ -189,3 +187,5 @@ export const getActiveUpi = async (amount?: number): Promise<PaymentUpi | null> 
     return null;
   }
 };
+
+    
