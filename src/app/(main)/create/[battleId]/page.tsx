@@ -80,7 +80,7 @@ function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: 
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <Label htmlFor="room-code-edit">New Ludo King Room Code</Label>
-                        <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" />
+                        <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" maxLength={9} />
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
@@ -279,6 +279,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
                             onChange={(e) => setRoomCode(e.target.value)}
                             className="text-center tracking-widest"
                             disabled={isSubmittingCode}
+                            maxLength={9}
                         />
                         <Button onClick={() => handleCodeSubmit()} disabled={isSubmittingCode || !roomCode}>
                             {isSubmittingCode ? <Loader2 className="animate-spin" /> : "Set"}
@@ -381,3 +382,6 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
   );
 }
 
+
+
+    
