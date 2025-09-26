@@ -181,11 +181,10 @@ export default function HomePage() {
         <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2 mb-2">
             <TriangleAlert className="h-5 w-5 animate-pulse"/> Disclaimer
         </h3>
-        <p className="text-xs text-yellow-800 dark:text-yellow-200 animate-typewriter overflow-hidden whitespace-nowrap">
+        <p className="text-xs text-yellow-800 dark:text-yellow-200 animate-typewriter overflow-hidden">
             This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk.
         </p>
       </Card>
     </>
   );
 }
-

@@ -98,7 +98,7 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "animate-shine": "animate-shine 3s linear infinite",
         "clash": "clash 1.5s ease-in-out infinite",
-        "typewriter": "typewriter 4s steps(44) 1s 1 normal both",
+        "typewriter": "typewriter 2s ease-out 1s 1 normal both",
       },
     },
   },
