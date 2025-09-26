@@ -10,7 +10,7 @@ import type { Transaction } from '@/models/transaction.model';
  * Creates a new deposit request for an admin to review.
  * @param userId - The ID of the user making the deposit.
  * @param amount - The amount being deposited by the user.
- * @param bonusAmount - The GST bonus amount to be added.
+ * @param gstBonusAmount - The GST bonus amount to be added.
  * @param screenshotFile - The payment screenshot file.
  * @param upiId - The UPI ID string used for payment.
  * @returns The ID of the newly created transaction document.
@@ -18,7 +18,7 @@ import type { Transaction } from '@/models/transaction.model';
 export const createDepositRequest = async (
   userId: string,
   amount: number,
-  bonusAmount: number,
+  gstBonusAmount: number,
   screenshotFile: File,
   upiId: string
 ): Promise<string> => {
@@ -34,12 +34,13 @@ export const createDepositRequest = async (
     const screenshotUrl = await uploadImage(screenshotFile, filePath);
 
     const transactionsCollection = collection(db, 'transactions');
-    const newTransactionData: Partial<Transaction> = {
+    // The data object that will be saved to Firestore
+    const newTransactionData = {
       userId,
       amount,
-      bonusAmount, // Correctly pass the bonus amount
-      type: 'deposit',
-      status: 'pending',
+      bonusAmount: gstBonusAmount, // Correctly using bonusAmount field
+      type: 'deposit' as const,
+      status: 'pending' as const,
       screenshotUrl,
       upiId: upiId,
       createdAt: serverTimestamp(),
@@ -52,6 +53,7 @@ export const createDepositRequest = async (
     return docRef.id;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+    console.error("Deposit Request Creation Failed:", error);
     throw new Error(`Could not create deposit request. Please try again. Error: ${errorMessage}`);
   }
 };
@@ -99,19 +101,21 @@ export const createWithdrawalRequest = async (
 
     const newTransactionRef = doc(collection(db, "transactions"));
     
-    const transactionData: Partial<Transaction> = {
+    const transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
         amount,
         type: 'withdrawal',
         status: 'pending',
         withdrawalDetails,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
         paymentSent: false,
         isRead: false,
     };
     
-    transaction.set(newTransactionRef, transactionData);
+    transaction.set(newTransactionRef, {
+        ...transactionData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
 
     return newTransactionRef.id;
   });
