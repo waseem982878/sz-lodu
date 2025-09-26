@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowDown, Banknote, MessageSquare, ShieldCheck, Star, Swords, Trophy, UserPlus, Zap } from "lucide-react";
+import { ArrowDown, Banknote, Instagram, MessageSquare, Send, ShieldCheck, Star, Swords, Trophy, UserPlus, Youtube, Zap } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -22,6 +22,13 @@ type LandingPageContent = {
     feature4Title: string;
     feature4Description: string;
 }
+
+type SocialMediaLinks = {
+    whatsapp: string;
+    telegram: string;
+    instagram: string;
+    youtube: string;
+};
 
 const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
     <Card className="feature-card text-center p-6 shadow-lg border">
@@ -65,11 +72,20 @@ const TestimonialCard = ({ name, text, avatarSeed }: { name: string, text: strin
 export default async function LandingPage() {
     
     let content: Partial<LandingPageContent> = {};
+    let socialLinks: Partial<SocialMediaLinks> = {};
     try {
         const landingRef = doc(db, 'config', 'landingPage');
-        const landingSnap = await getDoc(landingRef);
+        const socialRef = doc(db, 'config', 'socialMedia');
+        const [landingSnap, socialSnap] = await Promise.all([
+            getDoc(landingRef),
+            getDoc(socialRef),
+        ]);
+
         if (landingSnap.exists()) {
             content = landingSnap.data() as LandingPageContent;
+        }
+        if (socialSnap.exists()) {
+            socialLinks = socialSnap.data() as SocialMediaLinks;
         }
     } catch (error) {
         console.error("Could not fetch landing page content, using defaults.", error);
@@ -194,6 +210,20 @@ export default async function LandingPage() {
 
             <footer className="bg-muted/40 py-8 px-4 text-center mt-16">
                  <div className="container mx-auto">
+                    <div className="flex justify-center items-center gap-6 mb-6">
+                        {socialLinks.whatsapp && (
+                            <a href={socialLinks.whatsapp} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary"><Instagram className="h-7 w-7" /></a>
+                        )}
+                        {socialLinks.telegram && (
+                            <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary"><Send className="h-7 w-7" /></a>
+                        )}
+                        {socialLinks.instagram && (
+                            <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary"><Instagram className="h-7 w-7" /></a>
+                        )}
+                        {socialLinks.youtube && (
+                            <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary"><Youtube className="h-7 w-7" /></a>
+                        )}
+                    </div>
                     <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center mb-4">
                         <Link href="/terms" className="text-muted-foreground hover:text-primary">Terms & Conditions</Link>
                         <Link href="/privacy" className="text-muted-foreground hover:text-primary">Privacy Policy</Link>

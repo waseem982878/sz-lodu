@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Youtube, Send, Instagram, Share2 } from "lucide-react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
@@ -31,11 +31,19 @@ type LandingPageContent = {
     feature3Description: string;
     feature4Title: string;
     feature4Description: string;
-}
+};
+
+type SocialMediaLinks = {
+    whatsapp: string;
+    telegram: string;
+    instagram: string;
+    youtube: string;
+};
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Partial<AppSettings>>({});
   const [landingContent, setLandingContent] = useState<Partial<LandingPageContent>>({});
+  const [socialLinks, setSocialLinks] = useState<Partial<SocialMediaLinks>>({});
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -43,10 +51,12 @@ export default function SettingsPage() {
     const fetchSettings = async () => {
       const settingsRef = doc(db, 'config', 'appSettings');
       const landingRef = doc(db, 'config', 'landingPage');
+      const socialRef = doc(db, 'config', 'socialMedia');
 
-      const [settingsSnap, landingSnap] = await Promise.all([
+      const [settingsSnap, landingSnap, socialSnap] = await Promise.all([
           getDoc(settingsRef),
-          getDoc(landingRef)
+          getDoc(landingRef),
+          getDoc(socialRef)
       ]);
       
       if (settingsSnap.exists()) {
@@ -54,6 +64,9 @@ export default function SettingsPage() {
       }
       if (landingSnap.exists()) {
         setLandingContent(landingSnap.data() as LandingPageContent);
+      }
+      if (socialSnap.exists()) {
+        setSocialLinks(socialSnap.data() as SocialMediaLinks);
       }
       setLoading(false);
     };
@@ -65,10 +78,12 @@ export default function SettingsPage() {
     try {
       const settingsRef = doc(db, 'config', 'appSettings');
       const landingRef = doc(db, 'config', 'landingPage');
+      const socialRef = doc(db, 'config', 'socialMedia');
       
       await Promise.all([
         setDoc(settingsRef, settings, { merge: true }),
-        setDoc(landingRef, landingContent, { merge: true })
+        setDoc(landingRef, landingContent, { merge: true }),
+        setDoc(socialRef, socialLinks, { merge: true })
       ]);
 
       alert("Settings saved successfully!");
@@ -87,6 +102,11 @@ export default function SettingsPage() {
    const handleLandingContentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setLandingContent(prev => ({ ...prev, [id]: value }));
+  };
+  
+   const handleSocialLinkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setSocialLinks(prev => ({ ...prev, [id]: value }));
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,6 +161,31 @@ export default function SettingsPage() {
             <Label htmlFor="homeNoticeText">Home Page Notice Text</Label>
             <Textarea id="homeNoticeText" value={settings.homeNoticeText || ''} onChange={handleAppSettingChange} />
           </div>
+        </CardContent>
+      </Card>
+      
+       <Card>
+        <CardHeader>
+          <CardTitle className="text-primary">Social Media Links</CardTitle>
+          <CardDescription>Enter the full URLs for your social media channels.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp" className="flex items-center gap-2"><Share2 className="w-4 h-4" /> WhatsApp Group/Channel Link</Label>
+              <Input id="whatsapp" value={socialLinks.whatsapp || ''} onChange={handleSocialLinkChange} placeholder="https://chat.whatsapp.com/..."/>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="telegram" className="flex items-center gap-2"><Send className="w-4 h-4" /> Telegram Channel Link</Label>
+              <Input id="telegram" value={socialLinks.telegram || ''} onChange={handleSocialLinkChange} placeholder="https://t.me/..."/>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagram" className="flex items-center gap-2"><Instagram className="w-4 h-4" /> Instagram Profile Link</Label>
+              <Input id="instagram" value={socialLinks.instagram || ''} onChange={handleSocialLinkChange} placeholder="https://instagram.com/..."/>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="youtube" className="flex items-center gap-2"><Youtube className="w-4 h-4" /> YouTube Channel Link</Label>
+              <Input id="youtube" value={socialLinks.youtube || ''} onChange={handleSocialLinkChange} placeholder="https://youtube.com/..."/>
+            </div>
         </CardContent>
       </Card>
       
@@ -211,5 +256,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

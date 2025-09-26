@@ -3,12 +3,15 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut } from "lucide-react";
+import { X, Wallet, Gift, FileText, Shield, FileQuestion, Headset, ChevronRight, LogOut, Share2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/config";
 
 // Sidebar now contains links not present in the bottom navigation for a cleaner UX.
 const navItems = [
@@ -25,6 +28,18 @@ export function Sidebar() {
   const { isSidebarOpen, closeSidebar } = useSidebar();
   const { user, userProfile, logout } = useAuth();
   const router = useRouter();
+  const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
+
+  useEffect(() => {
+      const fetchSocials = async () => {
+          const socialRef = doc(db, 'config', 'socialMedia');
+          const socialSnap = await getDoc(socialRef);
+          if (socialSnap.exists()) {
+              setWhatsappLink(socialSnap.data().whatsapp || null);
+          }
+      };
+      fetchSocials();
+  }, []);
 
   const handleLogout = async () => {
       closeSidebar();
@@ -34,7 +49,11 @@ export function Sidebar() {
   
   const handleSupportClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        window.open("https://wa.me/919351993756?text=Hello%2C%20I%20need%20support%20with%20SZ%20LUDO%20app.", "_blank", "noopener,noreferrer");
+        if (whatsappLink) {
+            window.open(whatsappLink, "_blank", "noopener,noreferrer");
+        } else {
+            alert("Support contact is not configured yet.");
+        }
         closeSidebar();
   }
 
@@ -77,7 +96,7 @@ export function Sidebar() {
                       <li>
                         <a href="#" onClick={handleSupportClick} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                            <div className="flex items-center gap-4">
-                                <Headset className="h-5 w-5" />
+                                <Share2 className="h-5 w-5" />
                                 <span>WhatsApp Support</span>
                             </div>
                             <ChevronRight className="h-5 w-5 text-gray-400" />
