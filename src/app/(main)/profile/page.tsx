@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -176,8 +177,8 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-        <div className="space-y-4">
-           <Link href="/wallet" className="no-underline group">
+        <div className="grid grid-cols-2 gap-4">
+           <Link href="/wallet" className="no-underline group col-span-2">
                 <Card className="bg-gradient-to-br from-red-500 to-primary text-primary-foreground p-4 flex justify-between items-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-[88px] relative overflow-hidden">
                     <div className="space-y-1">
                         <p className="font-bold text-lg">My Wallet</p>
@@ -190,7 +191,7 @@ export default function ProfilePage() {
                    <Wallet className="absolute h-24 w-24 -right-4 -bottom-4 text-white/10" />
               </Card>
             </Link>
-             <Link href="/refer" className="no-underline group">
+             <Link href="/refer" className="no-underline group col-span-2">
                 <Card className="bg-gradient-to-br from-green-500 to-green-600 text-primary-foreground p-4 flex justify-between items-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-[88px] relative overflow-hidden">
                      <div className="space-y-1">
                         <p className="font-bold text-lg">Refer & Earn</p>
