@@ -1,6 +1,6 @@
 
 import { db } from '@/firebase/config';
-import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment, setDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment } from 'firebase/firestore';
 import { uploadImage } from './storage-service';
 import type { UserProfile } from '@/models/user.model';
 import type { PaymentUpi } from '@/models/payment-upi.model';
@@ -46,8 +46,6 @@ export const createDepositRequest = async (
 
     // Create transaction document.
     // The balance update will happen on the admin side after approval.
-    const newTransactionRef = doc(collection(db, "transactions"));
-    
     const newTransactionData: Omit<Transaction, 'id'> = {
         userId,
         amount,
@@ -61,9 +59,9 @@ export const createDepositRequest = async (
         isRead: false,
     };
     
-    await setDoc(newTransactionRef, newTransactionData);
+    const docRef = await addDoc(collection(db, "transactions"), newTransactionData);
 
-    return newTransactionRef.id;
+    return docRef.id;
 
   } catch (error) {
     console.error('Deposit request error:', error);
