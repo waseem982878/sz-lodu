@@ -1,44 +1,26 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // Helper function to check for auth and image type
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-    
-    function isImage() {
-    	return request.resource.contentType.matches('image/.*');
-    }
-    
-    function isSizeOk() {
-    	return request.resource.size < 5 * 1024 * 1024; // Max 5MB
+    // Allow users to read and write to their own avatar folder
+    match /avatars/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can only upload their own avatar, and it must be an image < 5MB
-    match /avatars/{userId} {
-      allow write: if isOwner(userId) && isImage() && isSizeOk();
-      allow read; // Avatars are public
-    }
-    
-    // Users can only upload their own KYC documents, which must be images < 5MB
-    match /kyc/{userId}/{document} {
-    	allow write: if isOwner(userId) && isImage() && isSizeOk();
-      allow read: if isOwner(userId); // Only the user can read their own KYC docs
-    }
-    
-    // Users can only upload screenshots for battles they are part of
-    match /results/{battleId}/{userId} {
-    	allow write: if isOwner(userId) && isImage() && isSizeOk();
-      allow read; // Result screenshots can be public for admin verification
+    // Allow users to write to their own results folder
+    match /results/{battleId}/{userId}/{allPaths=**} {
+        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null; // Admins or other users might need to see results
     }
 
-    // Deposits screenshots can be uploaded by the user who owns the transaction
-     match /deposits/{userId}/{fileName} {
-    	allow write: if isOwner(userId) && isImage() && isSizeOk();
-      allow read; // Allow admins to read for verification
+    // Allow users to write to their own KYC folder
+    match /kyc/{userId}/{allPaths=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // Allow users to write to their own deposit folder
+    match /deposits/{userId}/{allPaths=**} {
+        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null; // Allow admins to read
+    }
   }
 }
