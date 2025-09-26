@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { IndianRupee, FileText, CheckCircle2, ArrowLeft, Upload, Loader2, TriangleAlert, Gift, PartyPopper } from "lucide-react";
+import { IndianRupee, FileText, CheckCircle2, ArrowLeft, Upload, Loader2, TriangleAlert, Gift, Copy } from "lucide-react";
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
@@ -12,11 +12,49 @@ import QRCode from "qrcode.react";
 import type { PaymentUpi } from '@/models/payment-upi.model';
 import { useAuth } from '@/contexts/auth-context';
 import { getActiveUpi, createDepositRequest } from '@/services/transaction-service';
-
+import { cn } from '@/lib/utils';
 
 const shortcutAmounts = [100, 200, 500, 1000, 2000, 5000];
 const MINIMUM_DEPOSIT = 100;
-const GST_RATE = 0.18; // 18%
+const GST_RATE = 0.28; // 28% GST as per government norms
+
+function PaymentSummary({ amount, gstAmount, totalReceivedInWallet }: { amount: number, gstAmount: number, totalReceivedInWallet: number }) {
+    if (amount < MINIMUM_DEPOSIT) return null;
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg text-primary">Payment Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Deposit Amount</span>
+                    <span className="font-semibold">₹{amount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-green-600">
+                    <span className="font-semibold flex items-center gap-1"><Gift size={14}/> GST Bonus (from us)</span>
+                    <span className="font-semibold">+ ₹{gstAmount.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-dashed my-2"></div>
+                <div className="flex justify-between items-center font-bold text-lg text-primary">
+                    <span>Total You Get</span>
+                    <span>₹{totalReceivedInWallet.toFixed(2)}</span>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function GstBonusCard() {
+    return (
+        <Card className="bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-700">
+            <CardContent className="p-3 text-center">
+                <p className="text-sm font-semibold text-green-700 dark:text-green-300">
+                    As per government rules, 28% GST applies on deposits. But don't worry, we pay it for you! You get 100% of what you deposit.
+                </p>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function DepositPage() {
     const router = useRouter();
@@ -28,7 +66,7 @@ export default function DepositPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeUpi, setActiveUpi] = useState<PaymentUpi | null>(null);
     const [loadingUpi, setLoadingUpi] = useState(true);
-    const [step, setStep] = useState(1); // Step 1: Enter amount, Step 2: Make payment
+    const [step, setStep] = useState(1);
 
     useEffect(() => {
         const fetchUpi = async () => {
@@ -39,7 +77,7 @@ export default function DepositPage() {
         }
         fetchUpi();
     }, []);
-
+    
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const file = event.target.files[0];
@@ -55,11 +93,16 @@ export default function DepositPage() {
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = parseInt(e.target.value, 10);
         setAmount(isNaN(value) ? 0 : value);
-    }
+    };
+
+    const handleCopy = (text: string) => {
+        navigator.clipboard.writeText(text);
+        alert("Copied to clipboard!");
+    };
     
     const gstAmount = amount * GST_RATE;
     const totalPayable = amount; 
-    const totalReceivedInWallet = amount; 
+    const totalReceivedInWallet = amount + gstAmount; 
     const upiUri = activeUpi ? `upi://pay?pa=${activeUpi.upiId}&pn=${encodeURIComponent(activeUpi.payeeName)}&am=${totalPayable.toFixed(2)}&cu=INR` : '';
 
     const handleSubmit = async () => {
@@ -91,19 +134,23 @@ export default function DepositPage() {
                 </Button>
                 <Card className="shadow-lg border-primary/20">
                     <CardHeader className="text-center">
-                        <CardTitle className='text-2xl text-primary'>Scan &amp; Pay</CardTitle>
-                        <CardDescription>Scan the QR code to pay <span className="font-bold text-primary">₹{totalPayable.toFixed(2)}</span>.</CardDescription>
+                        <CardTitle className='text-2xl text-primary'>Step 1: Make Payment</CardTitle>
+                        <CardDescription>Pay <span className="font-bold text-primary">₹{totalPayable.toFixed(2)}</span> to the UPI ID below.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 space-y-4 text-center">
                         <div className="flex justify-center p-4 bg-white rounded-lg max-w-xs mx-auto">
                              {loadingUpi ? <Loader2 className="h-20 w-20 animate-spin text-primary" /> : (
-                                activeUpi && amount >= MINIMUM_DEPOSIT ? <QRCode value={upiUri} size={256} fgColor="#B91C1C" /> : <p className="text-red-500 p-8 text-center">{amount >= MINIMUM_DEPOSIT ? "No active payment method available. Please contact support." : `Minimum deposit is ₹${MINIMUM_DEPOSIT}.`}</p>
+                                activeUpi && amount >= MINIMUM_DEPOSIT ? <QRCode value={upiUri} size={256} /> : <p className="text-red-500 p-8 text-center">{amount >= MINIMUM_DEPOSIT ? "No active payment method available. Please contact support." : `Minimum deposit is ₹${MINIMUM_DEPOSIT}.`}</p>
                             )}
                         </div>
                         {activeUpi && (
-                             <div className="text-center">
+                             <div className="text-center space-y-2">
                                 <p className="text-muted-foreground text-sm">Payable to:</p>
                                 <p className="font-bold text-lg">{activeUpi.payeeName}</p>
+                                <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
+                                    <p className="font-mono text-primary flex-shrink-1 overflow-x-auto whitespace-nowrap">{activeUpi.upiId}</p>
+                                    <Button size="icon" variant="ghost" onClick={() => handleCopy(activeUpi.upiId)}><Copy className="w-4 h-4"/></Button>
+                                </div>
                             </div>
                         )}
                          <div className="border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg flex items-start gap-3 text-left">
@@ -157,10 +204,11 @@ export default function DepositPage() {
 
     return (
         <div className="space-y-4">
+            <GstBonusCard />
             <Card>
                 <CardHeader>
                     <CardTitle className='text-center text-primary'>Choose Deposit Amount</CardTitle>
-                    <CardDescription className='text-center'>Minimum deposit is ₹{MINIMUM_DEPOSIT}. We'll pay your GST for you!</CardDescription>
+                    <CardDescription className='text-center'>Minimum deposit is ₹{MINIMUM_DEPOSIT}.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
                     <Input 
@@ -171,54 +219,21 @@ export default function DepositPage() {
                         className="text-center text-lg font-bold mb-4"
                     />
                     <div className="grid grid-cols-3 gap-3">
-                        {shortcutAmounts.map((shortcut) => {
-                            const bonus = shortcut * GST_RATE;
-                            return (
-                                <Button 
-                                    key={shortcut}
-                                    variant={amount === shortcut ? "default" : "outline"}
-                                    className="w-full h-auto py-2 flex flex-col"
-                                    onClick={() => setAmount(shortcut)}
-                                >
-                                    <span className="text-lg font-bold">₹{shortcut}</span>
-                                    <span className="text-xs text-green-600 font-semibold">+ ₹{bonus.toFixed(0)} GST Bonus</span>
-                                </Button>
-                            )
-                        })}
+                        {shortcutAmounts.map((shortcut) => (
+                            <Button 
+                                key={shortcut}
+                                variant={amount === shortcut ? "default" : "outline"}
+                                className={cn("w-full h-auto py-3 flex flex-col", amount === shortcut && "ring-2 ring-primary")}
+                                onClick={() => setAmount(shortcut)}
+                            >
+                                <span className="text-lg font-bold">₹{shortcut}</span>
+                            </Button>
+                        ))}
                     </div>
                 </CardContent>
             </Card>
 
-             {amount >= MINIMUM_DEPOSIT && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg text-primary">Payment Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-2 text-sm">
-                        <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">Your Deposit</span>
-                            <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-red-500">
-                            <span className="text-muted-foreground">GST (18%)</span>
-                            <span className="font-semibold">- ₹{gstAmount.toFixed(2)}</span>
-                        </div>
-                         <div className="flex justify-between items-center text-green-600">
-                            <span className="font-semibold flex items-center gap-1"><Gift size={14}/> GST Bonus (from us)</span>
-                            <span className="font-semibold">+ ₹{gstAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="border-t border-dashed my-2"></div>
-                        <div className="flex justify-between items-center font-bold text-base">
-                            <span>You Pay</span>
-                            <span>₹{totalPayable.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center font-bold text-lg text-primary">
-                            <span>You Receive in Wallet</span>
-                            <span>₹{totalReceivedInWallet.toFixed(2)}</span>
-                        </div>
-                    </CardContent>
-                </Card>
-             )}
+            <PaymentSummary amount={amount} gstAmount={gstAmount} totalReceivedInWallet={totalReceivedInWallet} />
 
             <Button 
                 className="w-full bg-primary text-primary-foreground text-lg py-6" 

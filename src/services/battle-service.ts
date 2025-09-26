@@ -1,5 +1,4 @@
 
-
 import { db } from '@/firebase/config';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit, writeBatch, Transaction as FirestoreTransaction } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
@@ -172,19 +171,21 @@ export const cancelBattle = async (battleId: string, userId: string) => {
             const cancellerRef = doc(db, 'users', userId);
             const otherPlayerRef = doc(db, 'users', otherPlayerId);
             
-            // Refund canceller minus penalty
+            // Refund canceller's original amount and deduct penalty from winnings
             transaction.update(cancellerRef, {
                 winningsBalance: increment(amount - CANCELLATION_FEE),
                 penaltyTotal: increment(CANCELLATION_FEE)
             });
-            // Refund other player plus penalty
+
+            // Refund other player and give them the penalty amount
             transaction.update(otherPlayerRef, {
                 winningsBalance: increment(amount + CANCELLATION_FEE)
             });
             
-        } else if (!isPractice) { // No opponent yet
+        } else if (!isPractice) { // No opponent yet, creator is cancelling
             if (userId !== creator.id) throw new Error("Only the creator can cancel an open battle.");
             const creatorRef = doc(db, 'users', creator.id);
+            // Refund the full amount back to the creator's winnings balance
             transaction.update(creatorRef, { winningsBalance: increment(amount) });
         }
 
@@ -283,11 +284,13 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
     const winnerRef = doc(db, 'users', winnerId);
     const loserRef = doc(db, 'users', loserId);
 
-    const [winnerDoc, loserDoc, settingsSnap] = await Promise.all([
+    // Read documents outside the main transaction logic if they don't need to be transactional reads
+    const [winnerDoc, loserDoc] = await Promise.all([
         transaction.get(winnerRef),
-        transaction.get(loserRef),
-        getDoc(doc(db, 'config', 'appSettings')) // Reading settings, can be outside transaction if needed
+        transaction.get(loserRef)
     ]);
+    const settingsSnap = await getDoc(doc(db, 'config', 'appSettings'));
+
 
     if (!winnerDoc.exists()) throw new Error("Winner profile not found");
     if (!loserDoc.exists()) throw new Error("Loser profile not found");
@@ -334,7 +337,7 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
     transaction.update(winnerRef, winnerUpdate);
     transaction.update(loserRef, loserUpdate);
 
-    // 4. Handle Referral Bonus
+    // 4. Handle Referral Bonus - run these checks after the main transaction logic for clarity
     if (!isPractice) {
         // These are not awaited to prevent transaction issues. They will run in the background.
         _awardReferralBonus(transaction, winnerId, winnerProfile.gamesPlayed);

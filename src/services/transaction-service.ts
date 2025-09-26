@@ -1,3 +1,4 @@
+
 import { db } from '@/firebase/config';
 import { collection, addDoc, serverTimestamp, runTransaction, doc, query, where, getDocs, orderBy, limit, increment, getDoc } from 'firebase/firestore';
 import { uploadImage } from './storage-service';
@@ -19,7 +20,7 @@ export const createDepositRequest = async (
   amount: number,
   bonusAmount: number,
   screenshotFile: File,
-  upiId: string // Changed from upiDocId to upiId string
+  upiId: string
 ): Promise<string> => {
   if (!db) {
     throw new Error("Database not available. Cannot create deposit request.");
@@ -36,14 +37,14 @@ export const createDepositRequest = async (
     const newTransactionData: Partial<Transaction> = {
       userId,
       amount,
-      bonusAmount,
+      bonusAmount, // Correctly pass the bonus amount
       type: 'deposit',
       status: 'pending',
       screenshotUrl,
-      upiId: upiId, // Store the UPI ID string directly
+      upiId: upiId,
       createdAt: serverTimestamp() as any,
       updatedAt: serverTimestamp() as any,
-      isRead: false, // For notification system
+      isRead: false,
     };
 
     const docRef = await addDoc(transactionsCollection, newTransactionData);
@@ -137,11 +138,13 @@ export const getActiveUpi = async (): Promise<PaymentUpi | null> => {
         upis.push({ id: doc.id, ...doc.data() } as PaymentUpi);
     });
 
+    // Find the first UPI that is not over its limit
     for (const upi of upis) {
         if (upi.currentReceived < upi.dailyLimit) {
             return upi; 
         }
     }
 
+    // If all active UPIs are over their limit, return null
     return null; 
 };
