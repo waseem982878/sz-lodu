@@ -33,7 +33,8 @@ export function BottomNav() {
                 onClick={isSupportButton ? handleSupportClick : undefined}
                 target={isSupportButton ? "_blank" : undefined}
                 rel={isSupportButton ? "noopener noreferrer" : undefined}
-                className="flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-primary transition-all duration-300 w-16"
+                className="flex flex-col items-center justify-center text-muted-foreground hover:text-primary transition-all duration-300 w-16"
+                aria-label={label}
             >
                 <div className={cn(
                     "flex items-center justify-center rounded-full transition-all duration-300 ease-in-out",
@@ -43,10 +44,6 @@ export function BottomNav() {
                 )}>
                     <Icon className={cn("transition-all", isActive ? "h-8 w-8" : "h-6 w-6")} />
                 </div>
-                <span className={cn(
-                    "text-xs font-medium transition-opacity duration-300",
-                    isActive ? "opacity-100 text-primary" : "opacity-0 -translate-y-4"
-                )}>{label}</span>
             </LinkComponent>
         )
     }
