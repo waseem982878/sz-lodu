@@ -18,6 +18,7 @@ type AppSettings = {
   referralBonus: number;
   headerBannerText: string;
   homeNoticeText: string;
+  disclaimerText: string;
 };
 
 type LandingPageContent = {
@@ -162,6 +163,10 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label htmlFor="homeNoticeText">Home Page Notice Text</Label>
             <Textarea id="homeNoticeText" value={settings.homeNoticeText || ''} onChange={handleAppSettingChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="disclaimerText">Home Page Disclaimer Text</Label>
+            <Textarea id="disclaimerText" value={settings.disclaimerText || ''} onChange={handleAppSettingChange} rows={5} />
           </div>
         </CardContent>
       </Card>

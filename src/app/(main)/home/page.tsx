@@ -113,10 +113,9 @@ function KycNoticeBanner() {
 export default function HomePage() {
   const { userProfile, loading: authLoading } = useAuth();
   const [notice, setNotice] = useState<string | null>(null);
+  const [disclaimerText, setDisclaimerText] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const disclaimerText = "This game is intended for users aged 18 and above only. It involves an element of financial risk and may be addictive. Please play responsibly and at your own risk. Treat gaming as a source of entertainment, not income. Ensure you are playing from a jurisdiction where skill-based gaming for real money is permitted. Set your limits and take regular breaks.";
-  
   const sentence = {
       hidden: { opacity: 1 },
       visible: {
@@ -139,7 +138,9 @@ export default function HomePage() {
     const settingsRef = doc(db, 'config', 'appSettings');
     const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
       if (docSnap.exists()) {
-        setNotice(docSnap.data().homeNoticeText || null);
+        const data = docSnap.data();
+        setNotice(data.homeNoticeText || null);
+        setDisclaimerText(data.disclaimerText || null);
       }
       setLoading(false);
     }, () => setLoading(false));
@@ -197,24 +198,28 @@ export default function HomePage() {
       <div className="relative flex py-5 items-center">
         <div className="flex-grow border-t border-muted-foreground/20"></div>
       </div>
-
-      <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4 overflow-hidden">
-        <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2 mb-2">
-            <TriangleAlert className="h-5 w-5 animate-pulse"/> Disclaimer
-        </h3>
-        <motion.p
-            className="text-xs text-yellow-800 dark:text-yellow-200"
-            variants={sentence}
-            initial="hidden"
-            animate="visible"
-        >
-            {disclaimerText.split("").map((char, index) => (
-                <motion.span key={char + "-" + index} variants={letter}>
-                    {char}
-                </motion.span>
-            ))}
-        </motion.p>
-      </Card>
+      
+      {disclaimerText && (
+        <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4 overflow-hidden">
+          <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2 mb-2">
+              <TriangleAlert className="h-5 w-5 animate-pulse"/> Disclaimer
+          </h3>
+          <motion.p
+              className="text-xs text-yellow-800 dark:text-yellow-200"
+              variants={sentence}
+              initial="hidden"
+              animate="visible"
+          >
+              {disclaimerText.split("").map((char, index) => (
+                  <motion.span key={char + "-" + index} variants={letter}>
+                      {char}
+                  </motion.span>
+              ))}
+          </motion.p>
+        </Card>
+      )}
     </>
   );
 }
+
+    
