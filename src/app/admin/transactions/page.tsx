@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X, Eye, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment, getDocs } from "firebase/firestore";
+import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment, getDocs, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { Transaction } from "@/models/transaction.model";
-import type { Agent } from "@/models/agent.model";
+import type { UserProfile } from "@/models/user.model";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -38,43 +38,39 @@ export default function TransactionsPage() {
   const [deposits, setDeposits] = useState<Transaction[]>([]);
   const [withdrawals, setWithdrawals] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
 
-  
   useEffect(() => {
-    // Mock agent for now as there is no login
-     setCurrentAgent({
-            id: 'mock-agent-id',
-            name: 'Mock Agent',
-            email: 'agent@example.com',
-            floatBalance: 100000,
-            usedAmount: 0,
-            remainingBalance: 100000,
-            isActive: true,
-        });
-
-
     setLoading(true);
     
     const depositQuery = query(collection(db, "transactions"), where("type", "==", "deposit"), orderBy("createdAt", "desc"));
     const withdrawalQuery = query(collection(db, "transactions"), where("type", "==", "withdrawal"), orderBy("createdAt", "desc"));
     
+    let activeListeners = 2;
+    const onListenerDone = () => {
+        activeListeners--;
+        if (activeListeners === 0) {
+            setLoading(false);
+        }
+    };
+
     const unsubDeposits = onSnapshot(depositQuery, (snap) => {
         const depositData: Transaction[] = [];
         snap.forEach(doc => depositData.push({ id: doc.id, ...doc.data() } as Transaction));
         setDeposits(depositData);
-        setLoading(false);
+        onListenerDone();
     }, (err) => {
-        setLoading(false);
+        console.error("Error fetching deposits:", err);
+        onListenerDone();
     });
 
     const unsubWithdrawals = onSnapshot(withdrawalQuery, (snap) => {
         const withdrawalData: Transaction[] = [];
         snap.forEach(doc => withdrawalData.push({ id: doc.id, ...doc.data() } as Transaction));
         setWithdrawals(withdrawalData);
-        setLoading(false);
+        onListenerDone();
     }, (err) => {
-        setLoading(false);
+        console.error("Error fetching withdrawals:", err);
+        onListenerDone();
     });
 
     return () => {
@@ -84,7 +80,7 @@ export default function TransactionsPage() {
   }, []);
   
   const handleDeposit = async (transaction: Transaction, newStatus: 'completed' | 'rejected') => {
-      if(transaction.status !== 'pending' || !currentAgent) return;
+      if(transaction.status !== 'pending') return;
       const transRef = doc(db, 'transactions', transaction.id);
       const userRef = doc(db, 'users', transaction.userId);
 
@@ -109,7 +105,7 @@ export default function TransactionsPage() {
               t.update(transRef, { 
                   status: newStatus, 
                   updatedAt: serverTimestamp(),
-                  processedBy: { id: currentAgent.id, name: currentAgent.name }
+                  processedBy: { id: "admin", name: "Admin" }
               });
           });
           alert(`Deposit has been ${newStatus}.`);
@@ -119,13 +115,14 @@ export default function TransactionsPage() {
   }
   
   const handleWithdrawal = async (transaction: Transaction, newStatus: 'completed' | 'rejected') => {
-       if(transaction.status !== 'pending' || !currentAgent) return;
+       if(transaction.status !== 'pending') return;
        const transRef = doc(db, 'transactions', transaction.id);
        const userRef = doc(db, 'users', transaction.userId);
        
        try {
            await runTransaction(db, async (t) => {
-                const agentRef = doc(db, 'agents', currentAgent.id);
+                const userDoc = await t.get(userRef);
+                if (!userDoc.exists()) throw new Error("User not found");
                 
                 if (newStatus === 'rejected') {
                     // Refund the amount to the user's winnings balance if rejected
@@ -134,26 +131,19 @@ export default function TransactionsPage() {
                         status: newStatus, 
                         updatedAt: serverTimestamp(), 
                         notes: "Admin rejected withdrawal.",
-                        processedBy: { id: currentAgent.id, name: currentAgent.name }
+                        processedBy: { id: "admin", name: "Admin" }
                     });
                 } else { // Approved
-                    const agentDoc = await t.get(agentRef);
-                    if (!agentDoc.exists()) throw new Error("Agent not found");
-                    const agentData = agentDoc.data() as Agent;
-                    // Check if agent has enough float balance (if not infinite)
-                    if (agentData.floatBalance !== Infinity && (agentData.floatBalance - agentData.usedAmount) < transaction.amount) {
-                        throw new Error("Agent has insufficient float balance to approve this withdrawal.");
-                    }
-                    
-                    // Increment the agent's used amount
-                    t.update(agentRef, { usedAmount: increment(transaction.amount) });
+                     const userProfile = userDoc.data() as UserProfile;
+                     // We already deducted the amount when the user requested it.
+                     // Here we just confirm the transaction status.
                     
                     // Update transaction status
                     t.update(transRef, { 
                         status: newStatus, 
                         updatedAt: serverTimestamp(), 
                         notes: "Admin approved withdrawal. Awaiting payment confirmation.",
-                        processedBy: { id: currentAgent.id, name: currentAgent.name }
+                        processedBy: { id: "admin", name: "Admin" }
                     });
                 }
            });
@@ -169,7 +159,7 @@ export default function TransactionsPage() {
         const transRef = doc(db, 'transactions', transactionId);
         await updateDoc(transRef, {
             paymentSent: true,
-            notes: "Payment confirmed by agent."
+            notes: "Payment confirmed by admin."
         });
         alert("Payment marked as sent.");
       }
@@ -177,7 +167,6 @@ export default function TransactionsPage() {
 
   const renderTable = (type: 'deposit' | 'withdrawal', data: Transaction[]) => {
     if (loading) return <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-    if (!currentAgent) return <div className="text-center py-10 text-red-500">Your agent profile is not set up. Please contact the super admin.</div>
     
     return (
         <div className="overflow-x-auto">
@@ -199,9 +188,9 @@ export default function TransactionsPage() {
                             <TableCell className="font-mono text-xs truncate max-w-24 sm:max-w-xs">{t.userId}</TableCell>
                             <TableCell>
                                 ₹{t.amount}
-                                {t.type === 'deposit' && t.bonusAmount && <span className="text-green-600 text-xs ml-1 block sm:inline">(+₹{t.bonusAmount} bonus)</span>}
+                                {t.type === 'deposit' && t.bonusAmount ? <span className="text-green-600 text-xs ml-1 block sm:inline">(+₹{t.bonusAmount} bonus)</span> : ''}
                             </TableCell>
-                            <TableCell className="text-xs hidden sm:table-cell whitespace-nowrap">{new Date((t.createdAt as any)?.seconds * 1000).toLocaleString()}</TableCell>
+                            <TableCell className="text-xs hidden sm:table-cell whitespace-nowrap">{t.createdAt?.toDate ? t.createdAt.toDate().toLocaleString() : 'N/A'}</TableCell>
                             <TableCell>
                                 <Badge variant={t.status === 'completed' ? 'default' : t.status === 'pending' ? 'secondary' : 'destructive'}>{t.status}</Badge>
                                 {t.status === 'completed' && t.paymentSent && type === 'withdrawal' && <Badge className="ml-1 bg-blue-500 hidden sm:inline-flex">Paid</Badge>}
@@ -271,3 +260,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+    
