@@ -8,11 +8,12 @@ import type { Transaction } from '@/models/transaction.model';
 
 /**
  * Creates a new deposit request for an admin to review.
+ * This function is now transaction-safe.
  * @param userId - The ID of the user making the deposit.
  * @param amount - The amount being deposited by the user.
  * @param gstBonusAmount - The GST bonus amount to be added.
  * @param screenshotFile - The payment screenshot file.
- * @param upiId - The UPI ID string (from payment_upis collection).
+ * @param upiId - The DOCUMENT ID of the payment_upis document.
  * @returns The ID of the newly created transaction document.
  */
 export const createDepositRequest = async (
@@ -20,47 +21,58 @@ export const createDepositRequest = async (
   amount: number,
   gstBonusAmount: number,
   screenshotFile: File,
-  upiId: string
+  upiId: string // This should be the document ID from payment_upis
 ): Promise<string> => {
-  // Validation
   if (!userId || amount <= 0 || !screenshotFile || !upiId) {
-    throw new Error("User ID, amount, screenshot file, and UPI ID are required.");
+    throw new Error("User ID, amount, screenshot file, and UPI document ID are required.");
+  }
+  if (!screenshotFile.type.startsWith('image/')) {
+    throw new Error("Please upload an image file.");
   }
 
-  try {
-    // Upload screenshot first
-    const filePath = `deposits/${userId}/${Date.now()}_${screenshotFile.name}`;
-    const screenshotUrl = await uploadImage(screenshotFile, filePath);
+  const upiRef = doc(db, 'payment_upis', upiId);
 
-    // Create transaction document.
-    const newTransactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'> = {
+  return await runTransaction(db, async (transaction) => {
+    const upiDoc = await transaction.get(upiRef);
+    if (!upiDoc.exists()) {
+      throw new Error("Selected UPI payment method not found.");
+    }
+    const upiData = upiDoc.data() as PaymentUpi;
+    if (!upiData.isActive) {
+      throw new Error("Selected UPI payment method is currently not active.");
+    }
+    if (upiData.currentReceived + amount > upiData.dailyLimit) {
+      throw new Error("This UPI ID has reached its daily limit. Please try another method or contact support.");
+    }
+
+    const timestamp = Date.now();
+    const filePath = `deposits/${userId}/${timestamp}_${screenshotFile.name}`;
+    const screenshotUrl = await uploadImage(screenshotFile, filePath);
+    
+    // Now that image is uploaded, proceed with the transaction
+    transaction.update(upiRef, {
+      currentReceived: increment(amount)
+    });
+
+    const newTransactionRef = doc(collection(db, "transactions"));
+    
+    const transactionData = {
         userId,
         amount,
         bonusAmount: gstBonusAmount || 0,
-        type: 'deposit',
-        status: 'pending',
+        type: 'deposit' as const,
+        status: 'pending' as const,
         screenshotUrl,
-        upiId: upiId,
+        upiId: upiData.upiId, // Store the actual UPI string for reference
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         isRead: false,
     };
     
-    const docRef = await addDoc(collection(db, "transactions"), {
-        ...newTransactionData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-    });
+    transaction.set(newTransactionRef, transactionData);
 
-    return docRef.id;
-
-  } catch (error) {
-    console.error('Deposit request error:', error);
-    
-    if (error instanceof Error) {
-      throw new Error(`Deposit request failed: ${error.message}`);
-    }
-    
-    throw new Error("Could not create deposit request. Please try again.");
-  }
+    return newTransactionRef.id;
+  });
 };
 
 

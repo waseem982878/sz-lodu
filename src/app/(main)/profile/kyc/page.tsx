@@ -71,20 +71,20 @@ export default function KycPage() {
     router.push('/landing');
     return null;
   }
-
-  const handlePanFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setFile: React.Dispatch<React.SetStateAction<File | null>>, setPreview: React.Dispatch<React.SetStateAction<string | null>>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setPanFile(file);
-      setPanPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleAadhaarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setAadhaarFile(file);
-      setAadhaarPreview(URL.createObjectURL(file));
+       if (file.size > 5 * 1024 * 1024) {
+          showDialog("Error", "File size should not exceed 5MB.");
+          return;
+      }
+      if (!file.type.startsWith('image/')) {
+          showDialog("Error", "Please upload a valid image file.");
+          return;
+      }
+      setFile(file);
+      setPreview(URL.createObjectURL(file));
     }
   };
 
@@ -103,10 +103,10 @@ export default function KycPage() {
     
     setIsSubmitting(true);
     
-    let panCardUrl = userProfile.panCardUrl;
-    let aadhaarCardUrl = userProfile.aadhaarCardUrl;
-    
     try {
+        let panCardUrl = userProfile.panCardUrl;
+        let aadhaarCardUrl = userProfile.aadhaarCardUrl;
+    
         if (panFile) {
             const fileName = `pan_${Date.now()}`;
             panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/${fileName}`);
@@ -191,7 +191,7 @@ export default function KycPage() {
             <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label>Aadhaar Card Photo</Label>
-                    <input type="file" ref={aadhaarInputRef} className="hidden" accept="image/*" onChange={handleAadhaarFileChange} disabled={isPendingOrVerified} />
+                    <input type="file" ref={aadhaarInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, setAadhaarFile, setAadhaarPreview)} disabled={isPendingOrVerified} />
                     <Card 
                         className="border-dashed h-40 flex items-center justify-center cursor-pointer hover:border-primary"
                         onClick={() => !isPendingOrVerified && aadhaarInputRef.current?.click()}
@@ -204,7 +204,7 @@ export default function KycPage() {
                 </div>
                  <div className="space-y-2">
                     <Label>PAN Card Photo</Label>
-                     <input type="file" ref={panInputRef} className="hidden" accept="image/*" onChange={handlePanFileChange} disabled={isPendingOrVerified} />
+                     <input type="file" ref={panInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, setPanFile, setPanPreview)} disabled={isPendingOrVerified} />
                     <Card 
                         className="border-dashed h-40 flex items-center justify-center cursor-pointer hover:border-primary"
                         onClick={() => !isPendingOrVerified && panInputRef.current?.click()}

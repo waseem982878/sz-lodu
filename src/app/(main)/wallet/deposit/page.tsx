@@ -44,10 +44,6 @@ function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose:
 function PaymentSummary({ amount }: { amount: number }) {
     if (amount < MINIMUM_DEPOSIT) return null;
     
-    // As per Indian law, GST is inclusive in the price.
-    // So, Deposit Amount = Base Amount + 28% of Base Amount
-    // Deposit Amount = Base Amount * (1 + 0.28)
-    // Base Amount = Deposit Amount / 1.28
     const baseAmount = amount / (1 + GST_RATE);
     const gstAmount = amount - baseAmount;
 
@@ -131,6 +127,14 @@ export default function DepositPage() {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const file = event.target.files[0];
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                showDialog("Error", "File size should be less than 5MB.");
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                showDialog("Error", "Please upload an image file.");
+                return;
+            }
             setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -162,12 +166,12 @@ export default function DepositPage() {
         }
         setIsSubmitting(true);
         try {
-            await createDepositRequest(user.uid, amount, gstAmount, imageFile, activeUpi.upiId);
+            await createDepositRequest(user.uid, amount, gstAmount, imageFile, activeUpi.id);
             showDialog("Success", "Deposit request submitted successfully! It will be verified shortly.");
             router.push('/wallet');
         } catch (e) {
             showDialog("Error", `Failed to submit deposit request: ${(e as Error).message}`);
-            setIsSubmitting(false); // Only set submitting to false on error
+            setIsSubmitting(false);
         }
     };
 
@@ -176,8 +180,10 @@ export default function DepositPage() {
     }
     
     const handleProceed = () => {
-        if (amount >= MINIMUM_DEPOSIT && !loadingUpi) {
+        if (amount >= MINIMUM_DEPOSIT && !loadingUpi && activeUpi) {
             setStep(2);
+        } else if (!activeUpi) {
+            showDialog("Error", "No payment method is currently active. Please contact support.");
         }
     }
 
@@ -317,3 +323,5 @@ export default function DepositPage() {
         </div>
     );
 }
+
+    

@@ -158,6 +158,14 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
+          if (file.size > 5 * 1024 * 1024) {
+              showDialog("Error", "File size should be less than 5MB.");
+              return;
+          }
+          if (!file.type.startsWith('image/')) {
+              showDialog("Error", "Please select an image file.");
+              return;
+          }
           setImage(file);
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -177,8 +185,9 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
                 setIsSubmitting(false);
                 return;
             }
-            const fileName = `result_${Date.now()}`;
-            const imageUrl = await uploadImage(image, `results/${battle.id}/${user.uid}/${fileName}`);
+            const timestamp = Date.now();
+            const uniqueFileName = `result_${timestamp}_${image.name}`;
+            const imageUrl = await uploadImage(image, `results/${battle.id}/${user.uid}/${uniqueFileName}`);
             onResultSubmitted(status, imageUrl);
         } else if (status === 'lost') {
             onResultSubmitted(status);
@@ -551,8 +560,5 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     </div>
   );
 }
-
-
-
 
     
