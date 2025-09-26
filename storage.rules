@@ -2,16 +2,45 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // This rule covers avatars, results, kyc, and deposits.
-    // It allows an authenticated user to write to a path that contains their own UID.
-    match /{folder}/{userId}/{fileName} {
-      // Allow public read for avatars for UI display.
-      // Allow authenticated reads for results (for admin/opponent verification).
-      allow read: if (folder == 'avatars' || folder == 'results') && request.auth != null;
-      
-      // Allow write only if the user is authenticated and the path's userId matches their own UID.
-      // This single rule secures uploads for all features.
-      allow write: if request.auth != null && request.auth.uid == userId;
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // Check for the custom admin claim on the user's token.
+      // This claim must be set via the Firebase Admin SDK.
+      return request.auth.token.admin == true;
+    }
+    
+    // Rules for user avatars
+    match /avatars/{userId} {
+      // Anyone can read avatars, but only the owner can write.
+      allow read;
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Rules for KYC documents
+    match /kyc/{userId}/{fileName} {
+      // User can write to their own KYC folder.
+      // User and Admin can read from the folder.
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Rules for deposit screenshots
+    match /deposits/{userId}/{fileName} {
+      // User can write to their own deposits folder.
+      // User and Admin can read.
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Rules for game result screenshots
+    match /results/{battleId}/{userId}/{fileName} {
+        // Only an authenticated user who is part of the battle can upload.
+        // Admins can read all results for verification.
+        allow read: if isAuthenticated() && (request.resource.metadata.uid == request.auth.uid || isAdmin());
+        allow write: if isAuthenticated() && request.auth.uid == userId;
     }
   }
 }
