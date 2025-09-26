@@ -15,9 +15,24 @@ export const uploadImage = async (file: File, path: string): Promise<string> => 
     if (!file || !path) {
         throw new Error("A file and a destination path must be provided.");
     }
-    const storageRef = ref(storage, path);
-    // uploadBytes is simpler for smaller files like screenshots.
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        throw new Error("Please upload an image file.");
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        throw new Error("Image size should be less than 5MB.");
+    }
+
+    try {
+        const storageRef = ref(storage, path);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        return downloadURL;
+    } catch (error) {
+        console.error('Upload error:', error);
+        throw new Error("Failed to upload image. Please try again.");
+    }
 };

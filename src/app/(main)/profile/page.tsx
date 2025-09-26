@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Gamepad2, Gift, Pencil, LogOut, Loader2, ShieldQuestion, UserCheck, TrendingUp, TrendingDown, Star, Wallet, ChevronRight, X, Save } from "lucide-react";
+import { CheckCircle2, Gamepad2, Gift, Pencil, LogOut, Loader2, ShieldQuestion, UserCheck, TrendingUp, TrendingDown, Star, Wallet, ChevronRight, X, Save, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
@@ -70,8 +70,9 @@ export default function ProfilePage() {
   const { user, userProfile, loading: authLoading, logout } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState(userProfile?.name || "");
+  const [displayName, setDisplayName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
@@ -79,42 +80,6 @@ export default function ProfilePage() {
         setDisplayName(userProfile.name);
     }
   }, [userProfile]);
-
-  const handleEditToggle = () => {
-    if(isEditing && userProfile) {
-       setDisplayName(userProfile.name); // Reset changes if cancelled
-    }
-    setIsEditing(!isEditing);
-  };
-
-  const handleSaveProfile = async () => {
-    if (!user || !displayName.trim()) return;
-    setIsSaving(true);
-    try {
-        await updateUserProfile(user.uid, { name: displayName.trim() });
-        setIsEditing(false);
-    } catch (e) {
-        alert("Failed to save profile.");
-    } finally {
-        setIsSaving(false);
-    }
-  };
-  
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && user) {
-        const file = e.target.files[0];
-        setIsSaving(true);
-        try {
-            const avatarUrl = await uploadImage(file, `avatars/${user.uid}`);
-            await updateUserProfile(user.uid, { avatarUrl });
-        } catch (e) {
-            alert("Failed to update avatar.");
-        } finally {
-            setIsSaving(false);
-        }
-    }
-  }
-
 
   if (authLoading || !userProfile || !user) {
     return (
@@ -124,6 +89,69 @@ export default function ProfilePage() {
     )
   }
 
+  const handleEditToggle = () => {
+    if(isEditing) {
+       setDisplayName(userProfile.name);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user || !displayName.trim()) return;
+
+    if (displayName.trim() === userProfile.name) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+        await updateUserProfile(user.uid, { name: displayName.trim() });
+        setIsEditing(false);
+    } catch (e) {
+        alert("Could not save profile. Please try again.");
+    } finally {
+        setIsSaving(false);
+    }
+  };
+  
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !user) return;
+
+    const file = e.target.files[0];
+    
+    if (!file.type.startsWith('image/')) {
+      alert("Please select an image file (JPEG, PNG, etc.)");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+
+    setAvatarUploading(true);
+    
+    try {
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `avatar_${timestamp}.${fileExtension}`;
+      
+      const avatarUrl = await uploadImage(file, `avatars/${user.uid}/${fileName}`);
+      await updateUserProfile(user.uid, { avatarUrl });
+      
+      if (avatarInputRef.current) {
+        avatarInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      console.error('Avatar upload error:', error);
+      alert(error.message || "Failed to upload avatar. Please try again.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+
   const winRate = userProfile.gamesPlayed > 0 ? Math.round((userProfile.gamesWon / userProfile.gamesPlayed) * 100) : 0;
 
 
@@ -132,48 +160,77 @@ export default function ProfilePage() {
       <Card>
         <CardHeader className="text-center relative">
           <div className="absolute top-4 right-4">
-             <Button variant="ghost" size="icon" onClick={handleEditToggle}>
+             <Button variant="ghost" size="icon" onClick={handleEditToggle} disabled={avatarUploading}>
                 {isEditing ? <X className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
              </Button>
           </div>
+          
           <div className="relative w-24 h-24 mx-auto">
-            <Image 
-                src={userProfile.avatarUrl} 
-                alt="User Avatar" 
-                width={96} height={96} 
-                className="rounded-full border-4 border-primary" 
-                priority
-            />
-             <input
+            <div className="relative w-full h-full">
+              {avatarUploading ? (
+                <div className="w-full h-full rounded-full border-4 border-primary flex items-center justify-center bg-muted">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <Image 
+                  src={userProfile.avatarUrl || '/default-avatar.png'} 
+                  alt="User Avatar" 
+                  width={96} 
+                  height={96} 
+                  className="rounded-full border-4 border-primary object-cover" 
+                  priority
+                  onError={(e) => {
+                    e.currentTarget.src = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(userProfile.name)}`;
+                  }}
+                />
+              )}
+            </div>
+            
+            <input
               type="file"
               ref={avatarInputRef}
               onChange={handleAvatarChange}
               className="hidden"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={avatarUploading}
             />
+            
             <Button 
-                size="icon" 
-                className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
-                onClick={() => avatarInputRef.current?.click()}
-                disabled={isSaving}
+              size="icon" 
+              className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
             >
-                <Pencil className="h-4 w-4"/>
+              {avatarUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
             </Button>
           </div>
-           {isEditing ? (
-            <Input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="text-center text-2xl font-semibold mt-4"
-              disabled={isSaving}
-            />
+          
+          {isEditing ? (
+            <div className="mt-4">
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="text-center text-2xl font-semibold"
+                disabled={isSaving}
+                maxLength={50}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {displayName.length}/50 characters
+              </p>
+            </div>
           ) : (
             <CardTitle className="mt-4">{displayName}</CardTitle>
           )}
+          
           <CardDescription>{user.phoneNumber || user.email}</CardDescription>
         </CardHeader>
+        
         <CardContent className="px-4 pb-4">
-           <KycSection kycStatus={userProfile.kycStatus} />
+          <KycSection kycStatus={userProfile.kycStatus} />
         </CardContent>
       </Card>
       
