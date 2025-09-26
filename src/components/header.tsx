@@ -48,7 +48,7 @@ export function Header() {
 
     return (
         <header className="w-full">
-            <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-semibold overflow-hidden h-[36px] relative">
+            <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-semibold overflow-hidden h-[36px] relative flex items-center justify-center">
                  <div className="w-full h-full flex items-center justify-center">
                     {bannerLines.map((line, index) => (
                         <span
@@ -86,5 +86,3 @@ export function Header() {
         </header>
     );
 }
-
-    
