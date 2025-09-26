@@ -420,3 +420,271 @@
 [error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
 [debug] [2025-09-25T23:16:54.788Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
 [debug] [2025-09-25T23:16:54.789Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-25T23:35:14.924Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.924Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.925Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:14.927Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:14.927Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:14.950Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.950Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.950Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:14.951Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:14.951Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:14.954Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.955Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.955Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:14.956Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:14.956Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:14.959Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.960Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:14.960Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:14.960Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:14.961Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-25T23:35:15.042Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.043Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.043Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:15.043Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:15.043Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.048Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.048Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.049Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:15.050Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:15.050Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.052Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.052Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.052Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:15.053Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:15.053Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.054Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.055Z] Checked if tokens are valid: false, expires at: 1758843599133
+[debug] [2025-09-25T23:35:15.055Z] > refreshing access token with scopes: []
+[debug] [2025-09-25T23:35:15.055Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-25T23:35:15.055Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.103Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.104Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.142Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-25T23:35:15.143Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:15.146Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.146Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.158Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-25T23:35:15.158Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:15.184Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.184Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.200Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-25T23:35:15.201Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:15.205Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.207Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.226Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-25T23:35:15.226Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:15.230Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.230Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.243Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-25T23:35:15.243Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:15.246Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.246Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.257Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-25T23:35:15.257Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:15.264Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.264Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.280Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-25T23:35:15.280Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:15.307Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-25T23:35:15.307Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-25T23:35:15.326Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-25T23:35:15.327Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-25T23:35:16.188Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-25T23:35:16.189Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-25T23:35:16.263Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-25T23:35:16.263Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-25T23:35:16.279Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-25T23:35:16.279Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-25T23:35:16.325Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-25T23:35:16.325Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-25T23:35:16.341Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-25T23:35:16.343Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-25T23:35:16.380Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-25T23:35:16.382Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-25T23:35:16.577Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-25T23:35:16.579Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[debug] [2025-09-25T23:35:16.645Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-25T23:35:16.655Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-25T23:35:16.682Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-25T23:35:16.685Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-25T23:35:16.790Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-25T23:35:16.796Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-25T23:35:16.810Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-25T23:35:16.810Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:13:39.395Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.396Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.396Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.399Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.399Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.431Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.431Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.431Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.433Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.433Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.438Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.438Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.439Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.439Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.440Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.443Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.443Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.443Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.443Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.444Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:13:39.626Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.626Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.626Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.627Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.627Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.628Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.628Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.628Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.629Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.629Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.630Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.630Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.631Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.631Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.631Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.634Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.634Z] Checked if tokens are valid: false, expires at: 1758846914312
+[debug] [2025-09-26T05:13:39.634Z] > refreshing access token with scopes: []
+[debug] [2025-09-26T05:13:39.635Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-09-26T05:13:39.635Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.675Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.675Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.726Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-26T05:13:39.726Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:39.787Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.789Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.806Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-26T05:13:39.806Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:39.831Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.833Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.845Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-26T05:13:39.846Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:39.848Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.848Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.861Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-26T05:13:39.861Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:39.883Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.883Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.898Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-26T05:13:39.898Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:39.912Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.912Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.928Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-26T05:13:39.929Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:39.935Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.935Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.954Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-26T05:13:39.954Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:39.968Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-09-26T05:13:39.969Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-09-26T05:13:39.981Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-26T05:13:39.981Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:13:40.961Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-26T05:13:40.963Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-26T05:13:40.963Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-26T05:13:40.964Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-26T05:13:40.996Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-26T05:13:40.996Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-26T05:13:41.005Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-26T05:13:41.005Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-26T05:13:41.063Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-26T05:13:41.064Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-26T05:13:41.070Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-26T05:13:41.071Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-26T05:13:41.258Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-26T05:13:41.258Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:13:41.300Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-26T05:13:41.301Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[debug] [2025-09-26T05:13:41.356Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-26T05:13:41.359Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:13:44.966Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-26T05:13:44.968Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:24:00.222Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.226Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.229Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.229Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.230Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.230Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.233Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.233Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.239Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-26T05:24:00.240Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:24:00.288Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-26T05:24:00.289Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:24:00.300Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-26T05:24:00.300Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:24:00.306Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-26T05:24:00.306Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:24:00.420Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.421Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.421Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.421Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.422Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.423Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.423Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.423Z] Checked if tokens are valid: true, expires at: 1758867218969
+[debug] [2025-09-26T05:24:00.423Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-26T05:24:00.423Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:24:00.427Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-26T05:24:00.427Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:24:00.429Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-26T05:24:00.429Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:24:00.432Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-26T05:24:00.432Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-26T05:24:01.428Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-26T05:24:01.428Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-26T05:24:01.441Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-26T05:24:01.442Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-26T05:24:01.448Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-26T05:24:01.448Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-26T05:24:01.493Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-26T05:24:01.493Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-26T05:24:01.518Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-26T05:24:01.519Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-26T05:24:01.541Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-26T05:24:01.541Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-26T05:24:01.719Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-26T05:24:01.719Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[debug] [2025-09-26T05:24:01.970Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-26T05:24:01.970Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:24:01.986Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-26T05:24:01.987Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:24:02.015Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-26T05:24:02.016Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-26T05:24:02.042Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-26T05:24:02.043Z] > authorizing via signed-in user (waseem982878@gmail.com)
