@@ -32,6 +32,12 @@ export const createDepositRequest = async (
 
   const upiRef = doc(db, 'payment_upis', upiId);
 
+  // Upload image first, outside the transaction
+  const timestamp = Date.now();
+  const filePath = `deposits/${userId}/${timestamp}_${screenshotFile.name}`;
+  const screenshotUrl = await uploadImage(screenshotFile, filePath);
+
+  // Now, run the database updates in a transaction
   return await runTransaction(db, async (transaction) => {
     const upiDoc = await transaction.get(upiRef);
     if (!upiDoc.exists()) {
@@ -45,31 +51,30 @@ export const createDepositRequest = async (
       throw new Error("This UPI ID has reached its daily limit. Please try another method or contact support.");
     }
 
-    const timestamp = Date.now();
-    const filePath = `deposits/${userId}/${timestamp}_${screenshotFile.name}`;
-    const screenshotUrl = await uploadImage(screenshotFile, filePath);
-    
-    // Now that image is uploaded, proceed with the transaction
+    // Update the UPI provider's received amount
     transaction.update(upiRef, {
       currentReceived: increment(amount)
     });
 
+    // Create the transaction record
     const newTransactionRef = doc(collection(db, "transactions"));
     
-    const transactionData = {
+    const transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
         amount,
         bonusAmount: gstBonusAmount || 0,
-        type: 'deposit' as const,
-        status: 'pending' as const,
+        type: 'deposit',
+        status: 'pending',
         screenshotUrl,
         upiId: upiData.upiId, // Store the actual UPI string for reference
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
         isRead: false,
     };
     
-    transaction.set(newTransactionRef, transactionData);
+    transaction.set(newTransactionRef, {
+        ...transactionData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
 
     return newTransactionRef.id;
   });
@@ -175,5 +180,3 @@ export const getActiveUpi = async (amount?: number): Promise<PaymentUpi | null> 
     return null;
   }
 };
-
-    

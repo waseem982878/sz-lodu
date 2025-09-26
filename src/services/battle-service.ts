@@ -370,5 +370,3 @@ async function _awardReferralBonus(transaction: FirestoreTransaction, referredUs
         transaction.update(referralRef, { status: 'completed' });
     }
 }
-
-    
