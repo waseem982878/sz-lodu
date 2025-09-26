@@ -70,42 +70,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const publicRoutes = ['/landing', '/terms', '/privacy', '/refund', '/gst'];
     const authRoutes = ['/login', '/signup/profile'];
-    const adminRoute = pathname.startsWith('/admin');
 
     // 1. User is NOT logged in
     if (!user) {
         const isPublicRoute = publicRoutes.some(p => pathname.startsWith(p));
         const isAuthRoute = authRoutes.some(p => pathname.startsWith(p));
-        if (!isPublicRoute && !isAuthRoute && pathname !== '/') { // Allow root page during transition
+        // If the user is not on a public or auth route, and not on the root page (which handles its own redirect), force them to the landing page.
+        if (!isPublicRoute && !isAuthRoute && pathname !== '/') {
             router.replace('/landing');
         }
         return;
     }
 
     // 2. User IS logged in
-    if (isAdmin) {
-        // Admin user logic
-        if (!adminRoute) {
+    // If a logged-in user is on a public page (like landing) or an auth page (like login), redirect them to their appropriate dashboard.
+    const onPublicOrAuthRoute = publicRoutes.some(p => pathname.startsWith(p)) || authRoutes.some(p => pathname.startsWith(p)) || pathname === '/';
+    if (onPublicOrAuthRoute) {
+        if (isAdmin) {
             router.replace('/admin/dashboard');
+        } else if (userProfile) {
+            router.replace('/home');
+        } else {
+            // This case handles the moment after signup but before profile creation is complete.
+            router.replace('/signup/profile');
         }
-    } else {
-        // Regular user logic
-        if (adminRoute) {
-            router.replace('/home'); // Non-admin on admin route
-        } else if (!userProfile && pathname !== '/signup/profile') {
-            router.replace('/signup/profile'); // Profile doesn't exist, force creation
-        } else if (userProfile && (authRoutes.some(p => pathname.startsWith(p)) || pathname === '/landing' || pathname === '/')) {
-             router.replace('/home'); // Profile exists, but user is on a public/auth page or root
-        }
+        return;
     }
+
+    // 3. User is logged in and on a private route. Check for role mismatches.
+    const isAdminRoute = pathname.startsWith('/admin');
+    
+    if (isAdmin && !isAdminRoute) {
+       // An admin is on a user page. This is now ALLOWED. No forced redirect.
+    } else if (!isAdmin && isAdminRoute) {
+        // A non-admin is trying to access an admin route. Redirect them to the user home.
+        router.replace('/home');
+    } else if (user && !userProfile && pathname !== '/signup/profile') {
+        // A user is logged in, but has no profile, and is not on the profile creation page. Force them there.
+        router.replace('/signup/profile');
+    }
+
   }, [user, userProfile, isAdmin, loading, pathname, router]);
 
   const logout = async () => {
     if (user) {
-       // Only update lastSeen if there is a user and they are not an admin
-       if (!isAdmin) {
-          await updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(err => console.log("Failed to update lastSeen on logout"));
-       }
+       // Only update lastSeen if there is a user.
+       await updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(err => console.log("Failed to update lastSeen on logout"));
     }
     await signOut(auth);
     router.replace('/landing');
