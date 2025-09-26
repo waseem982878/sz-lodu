@@ -41,26 +41,37 @@ function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose:
 }
 
 
-function PaymentSummary({ amount, gstAmount, totalReceivedInWallet }: { amount: number, gstAmount: number, totalReceivedInWallet: number }) {
+function PaymentSummary({ amount, gstAmount }: { amount: number, gstAmount: number }) {
     if (amount < MINIMUM_DEPOSIT) return null;
+    const amountAfterGst = amount / (1 + GST_RATE);
+    const actualGst = amount - amountAfterGst;
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="text-lg text-primary">Payment Summary</CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-2 text-sm">
-                <div className="flex justify-between items-center">
+                 <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Deposit Amount</span>
                     <span className="font-semibold">₹{amount.toFixed(2)}</span>
                 </div>
+                 <div className="flex justify-between items-center text-red-500">
+                    <span className="text-muted-foreground">GST @ 28%</span>
+                    <span className="font-semibold">- ₹{actualGst.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Sub-Total</span>
+                    <span className="font-semibold">₹{amountAfterGst.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between items-center text-green-600">
                     <span className="font-semibold flex items-center gap-1"><Gift size={14}/> GST Bonus (from us)</span>
-                    <span className="font-semibold">+ ₹{gstAmount.toFixed(2)}</span>
+                    <span className="font-semibold">+ ₹{actualGst.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-dashed my-2"></div>
                 <div className="flex justify-between items-center font-bold text-lg text-primary">
                     <span>Total You Get</span>
-                    <span>₹{totalReceivedInWallet.toFixed(2)}</span>
+                    <span>₹{amount.toFixed(2)}</span>
                 </div>
             </CardContent>
         </Card>
@@ -136,7 +147,6 @@ export default function DepositPage() {
     
     const gstAmount = amount * GST_RATE;
     const totalPayable = amount; 
-    const totalReceivedInWallet = amount; // The user receives the amount they deposit, bonus is handled separately.
     const upiUri = activeUpi ? `upi://pay?pa=${activeUpi.upiId}&pn=${encodeURIComponent(activeUpi.payeeName)}&am=${totalPayable.toFixed(2)}&cu=INR` : '';
 
     const handleSubmit = async () => {
@@ -288,7 +298,7 @@ export default function DepositPage() {
                 </CardContent>
             </Card>
 
-            <PaymentSummary amount={amount} gstAmount={gstAmount} totalReceivedInWallet={amount} />
+            <PaymentSummary amount={amount} gstAmount={gstAmount} />
 
             <Button 
                 className="w-full bg-primary text-primary-foreground text-lg py-6" 
@@ -301,5 +311,3 @@ export default function DepositPage() {
         </div>
     );
 }
-
-    
