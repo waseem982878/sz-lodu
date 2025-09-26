@@ -17,7 +17,7 @@ import { db } from "@/firebase/config";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-const mockOngoingBattles: Battle[] = [
+const initialMockBattles: Battle[] = [
     { id: 'mock1', amount: 5000, gameType: 'classic', status: 'inprogress', creator: { id: 'c1', name: 'Thunder Bolt', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Thunder' }, opponent: { id: 'o1', name: 'Captain Ludo', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Captain' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
     { id: 'mock2', amount: 10000, gameType: 'classic', status: 'inprogress', creator: { id: 'c2', name: 'King Slayer', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=King' }, opponent: { id: 'o2', name: 'Ludo Legend', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Legend' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
     { id: 'mock3', amount: 2500, gameType: 'classic', status: 'inprogress', creator: { id: 'c3', name: 'Dice Master', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Dice' }, opponent: { id: 'o3', name: 'Rani', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Rani' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
@@ -61,9 +61,9 @@ function MyBattleCard({ battle }: { battle: Battle }) {
     const displayOpponent = opponent || { name: 'Waiting...', avatarUrl: "https://picsum.photos/32/32" };
 
     return (
-        <Card className="p-3 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg" data-aos="fade-up">
+        <Card className="p-2 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg" data-aos="fade-up">
             <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                 <Image 
                     src={displayOpponent.avatarUrl} 
                     alt={displayOpponent.name} 
@@ -96,9 +96,9 @@ function MyBattleCard({ battle }: { battle: Battle }) {
 function OpenBattleCard({ battle, onPlay }: { battle: Battle, onPlay: (battleId: string) => void }) {
   const isPractice = battle.amount === 0;
   return (
-    <Card className="p-3 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600" data-aos="fade-up">
+    <Card className="p-2 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600" data-aos="fade-up">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border object-cover w-8 h-8" />
           <div>
             <p className="text-xs text-muted-foreground">Challenger</p>
@@ -135,7 +135,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     }
 
     return (
-        <Card className="p-3 bg-gradient-to-tr from-secondary to-card shadow-lg relative overflow-hidden border cursor-pointer" onClick={handleViewBattle} data-aos="fade-up">
+        <Card className="p-2 bg-gradient-to-tr from-secondary to-card shadow-lg relative overflow-hidden border border-blue-500 cursor-pointer" onClick={handleViewBattle} data-aos="fade-up">
             <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
                 LIVE
             </div>
@@ -186,12 +186,15 @@ function PlayPageContent() {
   const [allActiveBattles, setAllActiveBattles] = useState<Battle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [mockBattles, setMockBattles] = useState<Battle[]>([]);
 
   useEffect(() => {
     AOS.init({
         duration: 500,
         once: true,
     });
+    // Shuffle the mock battles on initial load
+    setMockBattles([...initialMockBattles].sort(() => Math.random() - 0.5));
   }, []);
 
   useEffect(() => {
@@ -293,7 +296,7 @@ function PlayPageContent() {
   }
   
   const pageTitle = gameType === 'classic' ? 'Ludo Classic' : 'Popular Ludo';
-  const displayOngoingBattles = ongoingBattles.length > 0 ? ongoingBattles : mockOngoingBattles;
+  const displayOngoingBattles = ongoingBattles.length > 0 ? ongoingBattles : mockBattles;
 
   return (
     <div className="space-y-2">
