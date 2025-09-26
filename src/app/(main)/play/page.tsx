@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Trophy, Swords, Hourglass, PlusCircle, BrainCircuit, Loader2, ArrowLeft, Users } from "lucide-react";
+import { Trophy, Swords, Hourglass, PlusCircle, BrainCircuit, Loader2, ArrowLeft, Users, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, Suspense, useMemo } from "react";
@@ -72,7 +72,7 @@ function MyBattleCard({ battle }: { battle: Battle }) {
     };
     
     const opponent = isCreator ? battle.opponent : battle.creator;
-    const displayOpponent = opponent || { name: 'Waiting...', avatarUrl: "https://api.dicebear.com/8.x/initials/svg?seed=Waiting" };
+    const displayOpponentName = opponent ? opponent.name : 'Waiting...';
 
     return (
         <motion.div
@@ -84,15 +84,11 @@ function MyBattleCard({ battle }: { battle: Battle }) {
             <Card className="p-2 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                    <Image 
-                        src={displayOpponent.avatarUrl} 
-                        alt={displayOpponent.name} 
-                        width={32} 
-                        height={32} 
-                        className="rounded-full border-2 ring-2 ring-primary object-cover w-8 h-8" 
-                    />
+                    <div className="w-8 h-8 rounded-full border-2 ring-2 ring-primary bg-primary/10 flex items-center justify-center">
+                        <CircleUserRound className="w-5 h-5 text-primary" />
+                    </div>
                     <div>
-                        <p className="font-bold text-sm">vs {displayOpponent.name}</p>
+                        <p className="font-bold text-sm">vs {displayOpponentName}</p>
                         <p className="text-xs text-muted-foreground">{battle.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                     </div>
                     </div>
@@ -126,7 +122,9 @@ function OpenBattleCard({ battle, onPlay }: { battle: Battle, onPlay: (battleId:
         <Card className="p-2 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-green-500 object-cover w-8 h-8" />
+                <div className="w-8 h-8 rounded-full border-2 ring-2 ring-green-500 bg-green-500/10 flex items-center justify-center">
+                    <CircleUserRound className="w-5 h-5 text-green-500" />
+                </div>
               <div>
                 <p className="text-xs text-muted-foreground">Challenger</p>
                 <p className="font-bold text-sm">{battle.creator.name}</p>
@@ -155,7 +153,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     
     const handleViewBattle = () => {
         if (battle.id.startsWith('mock')) {
-            // Do nothing for mock battles
+             alert("This is a sample battle for display purposes.");
             return;
         }
         router.push(`/game/${battle.id}`);
@@ -168,7 +166,9 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
             </div>
             <div className="flex justify-between items-center text-center">
                 <div className="flex flex-col items-center gap-1 w-1/3">
-                    <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-blue-500 object-cover w-8 h-8" />
+                    <div className="w-8 h-8 rounded-full border-2 ring-2 ring-blue-500 bg-blue-500/10 flex items-center justify-center">
+                        <CircleUserRound className="w-5 h-5 text-blue-500" />
+                    </div>
                     <span className="font-semibold text-xs truncate w-full">{battle.creator.name}</span>
                 </div>
                 
@@ -179,7 +179,9 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
                 </div>
 
                  <div className="flex flex-col items-center gap-1 w-1/3">
-                    <Image src={battle.opponent.avatarUrl} alt={battle.opponent.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-red-500 object-cover w-8 h-8" />
+                    <div className="w-8 h-8 rounded-full border-2 ring-2 ring-red-500 bg-red-500/10 flex items-center justify-center">
+                        <CircleUserRound className="w-5 h-5 text-red-500" />
+                    </div>
                     <span className="font-semibold text-xs truncate w-full">{battle.opponent.name}</span>
                 </div>
             </div>
@@ -315,13 +317,13 @@ function PlayPageContent() {
   const handleAcceptBattle = async (battleId: string) => {
     if (!user || !userProfile) return;
 
-    const battleToAccept = openBattles.find(b => b.id === battleId) || mockOpenBattles.find(b => b.id === battleId);
-    if (!battleToAccept) return;
-    
-    // If it's a mock battle, do nothing.
-    if (battleToAccept.id.startsWith('mock-open-')) {
+    if (battleId.startsWith('mock-open-')) {
+        alert("This is a sample battle for display purposes.");
         return;
     }
+    
+    const battleToAccept = openBattles.find(b => b.id === battleId);
+    if (!battleToAccept) return;
     
     const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
     if (battleToAccept.amount > 0 && totalBalance < battleToAccept.amount) {
@@ -460,5 +462,3 @@ export default function Play() {
       </Suspense>
   )
 }
-
-    

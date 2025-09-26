@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { UserProfile } from "@/models/user.model";
 import Link from "next/link";
-import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
 import { updateUserProfile } from "@/services/user-agent-service";
 
@@ -222,5 +221,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
