@@ -1,10 +1,9 @@
-
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, Swords, Banknote, ShieldCheck, Settings, LogOut, IndianRupee, X, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, Swords, Banknote, ShieldCheck, Settings, LogOut, IndianRupee, X, UserCog, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminSidebar } from "@/contexts/admin-sidebar-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -92,7 +91,13 @@ export function AdminSidebar() {
           ))}
         </ul>
       </nav>
-      <div className="mt-auto">
+      <div className="mt-auto space-y-2">
+        <Link href="/home" passHref>
+          <Button variant="secondary" className="w-full">
+            <Home className="mr-2 h-4 w-4" />
+            View User App
+          </Button>
+        </Link>
         <Button variant="outline" className="w-full" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           Log Out
