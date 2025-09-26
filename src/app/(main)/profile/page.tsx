@@ -4,15 +4,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Gamepad2, Gift, Pencil, LogOut, Loader2, ShieldQuestion, UserCheck, TrendingUp, TrendingDown, Star, Wallet, ChevronRight, X, Save, Image as ImageIcon } from "lucide-react";
+import { CheckCircle2, Gamepad2, Gift, Pencil, LogOut, Loader2, ShieldQuestion, UserCheck, TrendingUp, TrendingDown, Star, Wallet, ChevronRight, X, Save } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import type { UserProfile } from "@/models/user.model";
 import Link from "next/link";
 import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
-import { uploadImage } from "@/services/storage-service";
 import { updateUserProfile } from "@/services/user-agent-service";
 
 
@@ -72,8 +71,6 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     if (userProfile) {
@@ -114,44 +111,6 @@ export default function ProfilePage() {
         setIsSaving(false);
     }
   };
-  
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0] || !user) return;
-
-    const file = e.target.files[0];
-    
-    if (!file.type.startsWith('image/')) {
-      alert("Please select an image file (JPEG, PNG, etc.)");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image size should be less than 5MB");
-      return;
-    }
-
-    setAvatarUploading(true);
-    
-    try {
-      const timestamp = Date.now();
-      const fileExtension = file.name.split('.').pop();
-      const fileName = `avatar_${timestamp}.${fileExtension}`;
-      const filePath = `avatars/${user.uid}/${fileName}`;
-      
-      const avatarUrl = await uploadImage(file, filePath);
-      await updateUserProfile(user.uid, { avatarUrl });
-      
-      if (avatarInputRef.current) {
-        avatarInputRef.current.value = '';
-      }
-    } catch (error: any) {
-      console.error('Avatar upload error:', error);
-      alert(error.message || "Failed to upload avatar. Please try again.");
-    } finally {
-      setAvatarUploading(false);
-    }
-  };
-
 
   const winRate = userProfile.gamesPlayed > 0 ? Math.round((userProfile.gamesWon / userProfile.gamesPlayed) * 100) : 0;
 
@@ -161,53 +120,20 @@ export default function ProfilePage() {
       <Card>
         <CardHeader className="text-center relative">
           <div className="absolute top-4 right-4">
-             <Button variant="ghost" size="icon" onClick={handleEditToggle} disabled={avatarUploading}>
+             <Button variant="ghost" size="icon" onClick={handleEditToggle}>
                 {isEditing ? <X className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
              </Button>
           </div>
           
           <div className="relative w-24 h-24 mx-auto">
-            <div className="relative w-full h-full">
-              {avatarUploading ? (
-                <div className="w-full h-full rounded-full border-4 border-primary flex items-center justify-center bg-muted">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : (
-                <Image 
-                  src={userProfile.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(userProfile.name)}`} 
-                  alt="User Avatar" 
-                  width={96} 
-                  height={96} 
-                  className="rounded-full border-4 border-primary object-cover" 
-                  priority
-                  onError={(e) => {
-                    e.currentTarget.src = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(userProfile.name)}`;
-                  }}
-                />
-              )}
-            </div>
-            
-            <input
-              type="file"
-              ref={avatarInputRef}
-              onChange={handleAvatarChange}
-              className="hidden"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              disabled={avatarUploading}
+            <Image 
+              src={userProfile.avatarUrl} 
+              alt="User Avatar" 
+              width={96} 
+              height={96} 
+              className="rounded-full border-4 border-primary object-cover" 
+              priority
             />
-            
-            <Button 
-              size="icon" 
-              className="absolute bottom-0 right-0 h-8 w-8 rounded-full"
-              onClick={() => avatarInputRef.current?.click()}
-              disabled={avatarUploading}
-            >
-              {avatarUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ImageIcon className="h-4 w-4" />
-              )}
-            </Button>
           </div>
           
           {isEditing ? (
@@ -296,3 +222,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

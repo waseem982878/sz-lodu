@@ -59,7 +59,7 @@ function MyBattleCard({ battle }: { battle: Battle }) {
     };
     
     const opponent = isCreator ? battle.opponent : battle.creator;
-    const displayOpponent = opponent || { name: 'Waiting...', avatarUrl: "https://picsum.photos/32/32" };
+    const displayOpponent = opponent || { name: 'Waiting...', avatarUrl: "https://api.dicebear.com/8.x/initials/svg?seed=Waiting" };
 
     return (
         <Card className="p-2 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg" data-aos="fade-up">
@@ -70,7 +70,7 @@ function MyBattleCard({ battle }: { battle: Battle }) {
                     alt={displayOpponent.name} 
                     width={32} 
                     height={32} 
-                    className="rounded-full border object-cover w-8 h-8" 
+                    className="rounded-full border-2 ring-2 ring-primary object-cover w-8 h-8" 
                 />
                 <div>
                     <p className="font-bold text-sm">vs {displayOpponent.name}</p>
@@ -100,7 +100,7 @@ function OpenBattleCard({ battle, onPlay }: { battle: Battle, onPlay: (battleId:
     <Card className="p-2 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600" data-aos="fade-up">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border object-cover w-8 h-8" />
+          <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-green-500 object-cover w-8 h-8" />
           <div>
             <p className="text-xs text-muted-foreground">Challenger</p>
             <p className="font-bold text-sm">{battle.creator.name}</p>
@@ -142,7 +142,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
             </div>
             <div className="flex justify-between items-center text-center">
                 <div className="flex flex-col items-center gap-1 w-1/3">
-                    <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 border-blue-400 object-cover w-8 h-8" />
+                    <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-blue-500 object-cover w-8 h-8" />
                     <span className="font-semibold text-xs truncate w-full">{battle.creator.name}</span>
                 </div>
                 
@@ -153,7 +153,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
                 </div>
 
                  <div className="flex flex-col items-center gap-1 w-1/3">
-                    <Image src={battle.opponent.avatarUrl} alt={battle.opponent.name} width={32} height={32} className="rounded-full border-2 border-red-400 object-cover w-8 h-8" />
+                    <Image src={battle.opponent.avatarUrl} alt={battle.opponent.name} width={32} height={32} className="rounded-full border-2 ring-2 ring-red-500 object-cover w-8 h-8" />
                     <span className="font-semibold text-xs truncate w-full">{battle.opponent.name}</span>
                 </div>
             </div>
@@ -187,7 +187,7 @@ function PlayPageContent() {
   const [allActiveBattles, setAllActiveBattles] = useState<Battle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const [mockBattles, setMockBattles] = useState<Battle[]>([...initialMockBattles].sort(() => Math.random() - 0.5));
+  const [mockBattles, setMockBattles] = useState<Battle[]>(() => [...initialMockBattles].sort(() => Math.random() - 0.5));
 
   useEffect(() => {
     AOS.init({
@@ -419,3 +419,5 @@ export default function Play() {
       </Suspense>
   )
 }
+
+    
