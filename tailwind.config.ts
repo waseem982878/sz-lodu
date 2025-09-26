@@ -77,11 +77,19 @@ const config = {
           "from": { backgroundPosition: "200% 0" },
           "to": { backgroundPosition: "-200% 0" },
         },
+        "clash": {
+          '0%, 100%': { transform: 'rotate(0) scale(1)' },
+          '20%': { transform: 'rotate(-5deg) scale(1.1)' },
+          '40%': { transform: 'rotate(5deg) scale(1.1)' },
+          '60%': { transform: 'rotate(-2deg) scale(1.05)' },
+          '80%': { transform: 'rotate(2deg) scale(1.05)' },
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "animate-shine": "animate-shine 3s linear infinite",
+        "clash": "clash 1.5s ease-in-out infinite",
       },
     },
   },
@@ -89,5 +97,3 @@ const config = {
 } satisfies Config
 
 export default config
-
-    

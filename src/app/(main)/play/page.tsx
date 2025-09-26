@@ -148,7 +148,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
                 <div className="text-center px-1">
                     <p className="text-xs text-muted-foreground">Prize</p>
                     <p className="font-bold text-lg text-green-500">₹{battle.amount}</p>
-                    <p className="text-orange-400 font-bold text-md -my-0.5 animate-pulse">VS</p>
+                    <p className="text-orange-400 font-bold text-md -my-0.5 animate-clash">VS</p>
                 </div>
 
                  <div className="flex flex-col items-center gap-1 w-1/3">
