@@ -3,24 +3,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, User, MessageCircle, Trophy, Swords, Shield } from "lucide-react";
+import { LayoutDashboard, Users, Banknote, ShieldCheck, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/auth-context";
 
-const userNavItems = [
-    { href: "/leaderboard", label: "Leaders", icon: Trophy },
-    { href: "/wallet", label: "Wallet", icon: Wallet },
-    { href: "/home", label: "Play", icon: Swords },
-    { href: "/profile", label: "Profile", icon: User },
-    { href: "/support", label: "Support", icon: MessageCircle },
+const navItems = [
+    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/users", label: "Users", icon: Users },
+    { href: "/admin/transactions", label: "Transactions", icon: Banknote },
+    { href: "/admin/kyc", label: "KYC", icon: ShieldCheck },
+    { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-const adminNavItem = { href: "/admin/dashboard", label: "Admin", icon: Shield };
-
-
-export function BottomNav() {
+export function AdminBottomNav() {
     const pathname = usePathname();
-    const { isAdmin } = useAuth();
 
     const NavLink = ({ href, label, icon: Icon }: { href: string, label: string, icon: React.ElementType }) => {
         const isActive = pathname.startsWith(href);
@@ -43,22 +38,10 @@ export function BottomNav() {
         )
     }
 
-    const itemsToDisplay = [...userNavItems];
-    if (isAdmin) {
-        // Replace support with admin link for admins
-        const supportIndex = itemsToDisplay.findIndex(item => item.label === 'Support');
-        if (supportIndex !== -1) {
-            itemsToDisplay[supportIndex] = adminNavItem;
-        } else {
-            itemsToDisplay.push(adminNavItem);
-        }
-    }
-
-
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-background/80 backdrop-blur-md shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.1)]">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-background/80 backdrop-blur-md shadow-[0_-4px_12px_-5px_rgba(0,0,0,0.1)] lg:hidden">
             <div className="container mx-auto max-w-lg h-full flex items-center justify-around">
-                {itemsToDisplay.map(item => <NavLink key={item.href} {...item}/>)}
+                {navItems.map(item => <NavLink key={item.href} {...item}/>)}
             </div>
         </nav>
     );

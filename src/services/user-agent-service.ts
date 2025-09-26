@@ -17,8 +17,8 @@ export const createUserProfile = async (user: User, name: string): Promise<void>
     const userRef = doc(db, "users", user.uid);
     const referralCode = `SZLUDO${user.uid.substring(0, 6).toUpperCase()}`;
 
-    // IMPORTANT: Set your admin email here to grant initial admin access
-    const ADMIN_EMAIL = "ludokingbattles@gmail.com";
+    // List of admin emails
+    const ADMIN_EMAILS = ["ludokingbattles@gmail.com", "waseem982878@gmail.com"];
 
     const profileData: UserProfile = {
         uid: user.uid,
@@ -38,7 +38,7 @@ export const createUserProfile = async (user: User, name: string): Promise<void>
         penaltyTotal: 0,
         createdAt: serverTimestamp(),
         lastSeen: serverTimestamp(),
-        isAdmin: user.email === ADMIN_EMAIL, // Set admin flag based on email
+        isAdmin: user.email ? ADMIN_EMAILS.includes(user.email) : false, // Set admin flag based on email list
     };
 
     // Use setDoc with merge:true to either create the document or merge into it
