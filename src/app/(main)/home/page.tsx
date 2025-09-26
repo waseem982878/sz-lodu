@@ -182,7 +182,7 @@ export default function HomePage() {
             <TriangleAlert className="h-5 w-5 animate-pulse"/> Disclaimer
         </h3>
         <p className="text-xs text-yellow-800 dark:text-yellow-200 animate-typewriter overflow-hidden">
-            This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk.
+            This game is intended for users aged 18 and above only. It involves an element of financial risk and may be addictive. Please play responsibly and at your own risk. Treat gaming as a source of entertainment, not income. Ensure you are playing from a jurisdiction where skill-based gaming for real money is permitted. Set your limits and take regular breaks.
         </p>
       </Card>
     </>
