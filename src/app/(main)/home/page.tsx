@@ -96,7 +96,7 @@ function KycNoticeBanner() {
                 <div className="flex items-start gap-3">
                     <ShieldAlert className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-1 flex-shrink-0" />
                     <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                        <span className="font-bold">KYC not verified.</span> Complete it now for fast and easy withdrawals.
+                        <span className="font-bold">Your KYC is not verified.</span> Complete it now for fast and easy withdrawals.
                     </p>
                 </div>
                 <Button asChild size="sm" className="flex-shrink-0">
@@ -177,14 +177,15 @@ export default function HomePage() {
         <div className="flex-grow border-t border-muted-foreground/20"></div>
       </div>
 
-      <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4">
+      <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4 overflow-hidden">
         <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2 mb-2">
-            <TriangleAlert className="h-5 w-5"/> Disclaimer
+            <TriangleAlert className="h-5 w-5 animate-pulse"/> Disclaimer
         </h3>
-        <p className="text-xs text-yellow-800 dark:text-yellow-200">
-            This game is intended purely for entertainment purposes but involves an element of financial risk. Participation in real-money gaming may lead to monetary loss and can be habit-forming if not played responsibly. We strongly advise all players to approach the game with caution, set personal limits, and ensure that they are playing within their financial capacity. Remember, gaming should always remain a source of fun and recreation, not a financial burden. By choosing to play, you acknowledge and accept that you are playing at your own risk, and the developers of this game shall not be held responsible for any losses or consequences arising from your participation. Please play wisely, stay in control, and if you ever feel that gaming is affecting your financial stability or personal life, we encourage you to seek help and take a break.
+        <p className="text-xs text-yellow-800 dark:text-yellow-200 animate-typewriter overflow-hidden whitespace-nowrap">
+            This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk.
         </p>
       </Card>
     </>
   );
 }
+
