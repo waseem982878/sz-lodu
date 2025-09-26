@@ -12,7 +12,7 @@ import type { Battle } from "@/models/battle.model";
 import type { Transaction } from "@/models/transaction.model";
 import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
-import { collection, query, where, orderBy, onSnapshot, Unsubscribe } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, Unsubscribe, or } from "firebase/firestore";
 import { db } from "@/firebase/config";
 
 
@@ -151,40 +151,30 @@ export default function WalletPage() {
     }
 
     setLoading(true);
+    const unsubscribes: Unsubscribe[] = [];
 
-    const createdQuery = query(collection(db, 'battles'), where('creator.id', '==', user.uid), orderBy('createdAt', 'desc'));
-    const joinedQuery = query(collection(db, 'battles'), where('opponent.id', '==', user.uid), orderBy('createdAt', 'desc'));
+    // Corrected query for battles
+    const battlesQuery = query(
+      collection(db, 'battles'),
+      or(
+        where('creator.id', '==', user.uid),
+        where('opponent.id', '==', user.uid)
+      ),
+      orderBy('createdAt', 'desc')
+    );
+    unsubscribes.push(onSnapshot(battlesQuery, (snap) => {
+        const battleData = snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Battle));
+        setGames(battleData);
+        setLoading(false); // Set loading to false once data is fetched
+    }, () => setLoading(false)));
+
+
     const transQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-
-    let createdBattles: Battle[] = [];
-    let joinedBattles: Battle[] = [];
-    let unsubscribes: Unsubscribe[] = [];
-
-    const combineBattles = () => {
-        const allMyBattles = [...createdBattles, ...joinedBattles];
-        const uniqueBattles = Array.from(new Map(allMyBattles.map(b => [b.id, b])).values())
-                                    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-        setGames(uniqueBattles);
-    };
-
-    unsubscribes.push(onSnapshot(createdQuery, (snap) => {
-        createdBattles = snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Battle));
-        combineBattles();
-        setLoading(false);
-    }, () => setLoading(false)));
-
-    unsubscribes.push(onSnapshot(joinedQuery, (snap) => {
-        joinedBattles = snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Battle));
-        combineBattles();
-        setLoading(false);
-    }, () => setLoading(false)));
-
-    const unsubTrans = onSnapshot(transQuery, (snap) => {
+    unsubscribes.push(onSnapshot(transQuery, (snap) => {
         setTransactions(snap.docs.map(doc => ({id: doc.id, ...doc.data()} as Transaction)));
-        setLoading(false);
-    }, () => setLoading(false));
+        setLoading(false); // Set loading to false once data is fetched
+    }, () => setLoading(false)));
 
-    unsubscribes.push(unsubTrans);
 
     return () => {
         unsubscribes.forEach(unsub => unsub());
