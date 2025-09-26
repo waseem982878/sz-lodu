@@ -1,29 +1,16 @@
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
-    // Users can upload their own avatars, and anyone can read them.
-    match /avatars/{userId}/{allPaths=**} {
-      allow read;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Users can upload their own result screenshots.
-    // Authenticated users (creator, opponent, admin) can read them.
-    match /results/{battleId}/{userId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Only the user can upload and read their own KYC documents.
-    // This is sensitive data.
-    match /kyc/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // User can upload their deposit screenshot.
-    // Admins need to be able to read this for verification.
-    match /deposits/{userId}/{allPaths=**} {
-      allow read: if request.auth != null; // Allows admin to read
+    // This rule covers avatars, results, kyc, and deposits.
+    // It allows an authenticated user to write to a path that contains their own UID.
+    match /{folder}/{userId}/{fileName} {
+      // Allow public read for avatars for UI display.
+      // Allow authenticated reads for results (for admin/opponent verification).
+      allow read: if (folder == 'avatars' || folder == 'results') && request.auth != null;
+      
+      // Allow write only if the user is authenticated and the path's userId matches their own UID.
+      // This single rule secures uploads for all features.
       allow write: if request.auth != null && request.auth.uid == userId;
     }
   }

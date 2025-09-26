@@ -174,7 +174,7 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <Image 
-                  src={userProfile.avatarUrl || '/default-avatar.png'} 
+                  src={userProfile.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(userProfile.name)}`} 
                   alt="User Avatar" 
                   width={96} 
                   height={96} 
@@ -296,5 +296,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

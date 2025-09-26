@@ -64,6 +64,16 @@ export default function KycPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    
+    if (!panFile && !userProfile.panCardUrl) {
+      alert("Please upload your PAN card photo.");
+      return;
+    }
+    if (!aadhaarFile && !userProfile.aadhaarCardUrl) {
+      alert("Please upload your Aadhaar card photo.");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     let panCardUrl = userProfile.panCardUrl;
@@ -71,16 +81,12 @@ export default function KycPage() {
     
     try {
         if (panFile) {
-            panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/pan_card`);
+            const fileName = `pan_${Date.now()}`;
+            panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/${fileName}`);
         }
         if (aadhaarFile) {
-            aadhaarCardUrl = await uploadImage(aadhaarFile, `kyc/${user.uid}/aadhaar_card`);
-        }
-        
-        if (!panCardUrl || !aadhaarCardUrl) {
-            alert("Please upload both Aadhaar and PAN card images.");
-            setIsSubmitting(false);
-            return;
+            const fileName = `aadhaar_${Date.now()}`;
+            aadhaarCardUrl = await uploadImage(aadhaarFile, `kyc/${user.uid}/${fileName}`);
         }
 
         await submitKycDetails(user.uid, {
@@ -96,8 +102,8 @@ export default function KycPage() {
         alert("KYC details submitted successfully! Our team will review them shortly.");
         router.push('/profile');
 
-    } catch (error) {
-        alert("Failed to submit KYC details.");
+    } catch (error: any) {
+        alert(`Failed to submit KYC details: ${error.message}`);
     } finally {
         setIsSubmitting(false);
     }

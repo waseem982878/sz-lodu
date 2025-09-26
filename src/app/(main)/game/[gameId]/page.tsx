@@ -139,13 +139,14 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
                 setIsSubmitting(false);
                 return;
             }
-            const imageUrl = await uploadImage(image, `results/${battle.id}/${user.uid}`);
+            const fileName = `result_${Date.now()}`;
+            const imageUrl = await uploadImage(image, `results/${battle.id}/${user.uid}/${fileName}`);
             onResultSubmitted(status, imageUrl);
         } else if (status === 'lost') {
             onResultSubmitted(status);
         }
-    } catch (error) {
-        alert("Failed to submit result.");
+    } catch (error: any) {
+        alert(`Failed to submit result: ${error.message}`);
         setIsSubmitting(false);
     }
   }
