@@ -14,7 +14,13 @@ import { cn } from "@/lib/utils";
 export function Header() {
     const { openSidebar } = useSidebar();
     const { userProfile } = useAuth();
-    const [bannerLines, setBannerLines] = useState<string[]>(["Play Ludo & Win Real Cash on SZ LUDO 😍"]);
+    const [bannerLines, setBannerLines] = useState<string[]>([
+        "🎉 Welcome to SZ LUDO! Play & Win Big! 🎉",
+        "Instant Withdrawals - Get Your Winnings in Minutes! ⚡",
+        "Refer a Friend & Earn ₹25 Bonus Cash! 🎁",
+        "Daily Leaderboard Prizes! Climb to the Top! 🏆",
+        "24/7 Customer Support Available on WhatsApp & Telegram! 💬",
+    ]);
     const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
