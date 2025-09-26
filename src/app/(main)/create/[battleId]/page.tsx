@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ function RulesDialog() {
                     <strong>Disputes:</strong> If there is any issue, contact support immediately. Any attempt at fraud will result in a permanent ban.
                 </li>
                  <li>
-                    <strong>Cancellation:</strong> If you cancel a challenge after an opponent has joined, a penalty fee will be deducted from your wallet.
+                    <strong>Cancellation:</strong> You can cancel a battle after an opponent has joined, but a small penalty fee will be deducted from your wallet for doing so.
                 </li>
             </ul>
         </div>
@@ -330,3 +331,5 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     </div>
   );
 }
+
+    
