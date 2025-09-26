@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { getBattle, setRoomCode as setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
 import { Label } from "@/components/ui/label";
+import LudoLaunchButton from "@/components/LudoLaunchButton";
 
 
 function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
@@ -254,7 +255,10 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
 
    const renderGameControl = () => {
         if (battle.status === 'inprogress' || battle.status === 'result_pending' || battle.status === 'completed') {
-            router.replace(`/game/${battleId}`);
+            if(battle.roomCode){
+                return <LudoLaunchButton roomCode={battle.roomCode} />;
+            }
+             router.replace(`/game/${battleId}`);
             return <p className="text-center text-muted-foreground">Redirecting to game...</p>;
         }
 
@@ -381,6 +385,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     </div>
   );
 }
+
 
 
 
