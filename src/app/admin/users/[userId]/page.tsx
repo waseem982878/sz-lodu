@@ -280,3 +280,5 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
         </div>
     )
 }
+
+    

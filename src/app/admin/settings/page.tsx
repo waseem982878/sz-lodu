@@ -111,7 +111,9 @@ export default function SettingsPage() {
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setSettings(prev => ({ ...prev, [id]: Number(value) }));
+    // Allow setting to 0, but prevent negative numbers.
+    const numValue = Math.max(0, Number(value));
+    setSettings(prev => ({ ...prev, [id]: numValue }));
   };
 
   if (loading) {
@@ -135,15 +137,15 @@ export default function SettingsPage() {
         <CardContent className="grid md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="commissionRate">Commission Rate (%)</Label>
-            <Input id="commissionRate" type="number" value={settings.commissionRate || 5} onChange={handleNumberChange} />
+            <Input id="commissionRate" type="number" value={settings.commissionRate ?? 5} onChange={handleNumberChange} min="0"/>
           </div>
           <div className="space-y-2">
             <Label htmlFor="minWithdrawal">Minimum Withdrawal (₹)</Label>
-            <Input id="minWithdrawal" type="number" value={settings.minWithdrawal || 300} onChange={handleNumberChange} />
+            <Input id="minWithdrawal" type="number" value={settings.minWithdrawal ?? 300} onChange={handleNumberChange} min="0"/>
           </div>
           <div className="space-y-2">
             <Label htmlFor="referralBonus">Referral Bonus (₹)</Label>
-            <Input id="referralBonus" type="number" value={settings.referralBonus || 25} onChange={handleNumberChange} />
+            <Input id="referralBonus" type="number" value={settings.referralBonus ?? 25} onChange={handleNumberChange} min="0"/>
           </div>
         </CardContent>
       </Card>
@@ -257,5 +259,4 @@ export default function SettingsPage() {
   );
 }
 
-    
     
