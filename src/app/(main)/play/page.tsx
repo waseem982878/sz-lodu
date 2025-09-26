@@ -12,7 +12,7 @@ import type { Battle, GameType } from "@/models/battle.model";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/auth-context";
 import { createBattle, acceptBattle } from "@/services/battle-service";
-import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot, Timestamp, or } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -192,9 +192,6 @@ function SectionDivider({ title, icon }: { title: string, icon: React.ElementTyp
 
 function PlayPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const gameParam = searchParams.get('game');
-  const gameType: GameType = gameParam === 'popular' ? 'popular' : 'classic';
 
   const { user, userProfile, loading: authLoading } = useAuth();
 
@@ -219,7 +216,6 @@ function PlayPageContent() {
     // One listener to get all relevant battles
     const battlesQuery = query(
         collection(db, "battles"), 
-        where('gameType', '==', gameType),
         where('status', 'in', ['open', 'inprogress', 'waiting_for_players_ready', 'result_pending'])
     );
 
@@ -233,7 +229,7 @@ function PlayPageContent() {
     });
 
     return () => unsubscribe();
-  }, [user, gameType]);
+  }, [user]);
 
   // Mock data circulation effect
    useEffect(() => {
@@ -266,25 +262,32 @@ function PlayPageContent() {
 
   }, [allActiveBattles, user]);
   
-  const handleCreateBattle = async (isPractice = false) => {
+  const handleCreateBattle = async () => {
     if (!user || !userProfile || isCreating) return;
 
-    const newAmount = isPractice ? 0 : parseInt(amount);
-     if (isNaN(newAmount) && !isPractice) {
+    const newAmount = parseInt(amount);
+     if (isNaN(newAmount)) {
         alert("Please enter a valid amount.");
         return;
     }
-    if (!isPractice && newAmount < 50) {
-        alert("Minimum battle amount is ₹50.");
+    
+    let gameType: GameType;
+    if (newAmount >= 50 && newAmount <= 50000) {
+        gameType = 'classic';
+    } else if (newAmount > 50000 && newAmount <= 100000) {
+        gameType = 'popular';
+    } else {
+        alert("Amount must be between ₹50 and ₹100,000.");
         return;
     }
-    if (!isPractice && newAmount % 50 !== 0) {
+
+    if (newAmount % 50 !== 0) {
         alert("Battle amount must be in multiples of 50 (e.g., 50, 100, 150).");
         return;
     }
     
     const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
-    if (!isPractice && totalBalance < newAmount) {
+    if (totalBalance < newAmount) {
         alert("Insufficient balance. Please add money to your wallet.");
         router.push('/wallet');
         return;
@@ -337,7 +340,7 @@ function PlayPageContent() {
       )
   }
   
-  const pageTitle = gameType === 'classic' ? 'Ludo Classic' : 'Popular Ludo';
+  const pageTitle = "Ludo Battles";
   const displayOngoingBattles = ongoingBattles.length > 0 ? ongoingBattles : mockBattles;
   const displayOpenBattles = openBattles.length > 0 ? openBattles : mockOpenBattles;
   
@@ -356,11 +359,11 @@ function PlayPageContent() {
       </div>
 
        <Card className="p-4">
-        <p className="text-center font-semibold mb-2 text-muted-foreground">Create Challenge for <span className="text-primary">{pageTitle}</span></p>
+        <p className="text-center font-semibold mb-2 text-muted-foreground">Create a New Challenge</p>
         <div className="flex gap-2">
           <Input 
               type="number" 
-              placeholder="Enter Amount (min ₹50)" 
+              placeholder="Enter Amount (₹50 - ₹100,000)" 
               className="bg-background border-2 focus:ring-primary focus:border-primary text-lg" 
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -368,22 +371,13 @@ function PlayPageContent() {
           />
           <Button 
               className="bg-primary hover:bg-primary/80 text-primary-foreground font-bold text-lg"
-              onClick={() => handleCreateBattle(false)}
+              onClick={() => handleCreateBattle()}
               disabled={!amount || isCreating}
           >
               {isCreating ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5"/>}
               Create
           </Button>
         </div>
-         <Button 
-            variant="outline"
-            className="w-full mt-2 border-blue-500 text-blue-500 hover:bg-blue-500/10 hover:text-blue-600"
-            onClick={() => handleCreateBattle(true)}
-            disabled={isCreating}
-          >
-              {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4"/>}
-              Create a Practice Match (Free)
-          </Button>
       </Card>
       
       {myBattles.length > 0 && (
@@ -443,5 +437,3 @@ export default function Play() {
       </Suspense>
   )
 }
-
-    

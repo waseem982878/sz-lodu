@@ -16,13 +16,14 @@ import { db } from "@/firebase/config";
 
 type GameCardProps = {
   title: string;
+  description: string;
   imageUrl: string;
   href: string;
   priority?: boolean;
   titleClassName?: string;
 };
 
-function GameCard({ title, imageUrl, href, priority = false, titleClassName }: GameCardProps) {
+function GameCard({ title, description, imageUrl, href, priority = false, titleClassName }: GameCardProps) {
   return (
     <Link href={href} className="no-underline group">
       <Card className="overflow-hidden bg-card border-primary/20 border-2 rounded-xl shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-1">
@@ -36,6 +37,7 @@ function GameCard({ title, imageUrl, href, priority = false, titleClassName }: G
         />
         <div className="p-2 text-center">
           <h2 className={cn("text-lg font-bold text-primary tracking-wider", titleClassName)}>{title}</h2>
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
         </div>
       </Card>
     </Link>
@@ -133,14 +135,16 @@ export default function HomePage() {
       <div className="grid grid-cols-2 gap-4">
           <GameCard 
             title="LUDO CLASSIC"
+            description="Bets: ₹50 - ₹50,000"
             imageUrl={imagePaths.ludoClassicIcon.path}
-            href="/play?game=classic"
+            href="/play"
             priority={true}
           />
           <GameCard 
-            title="POPULAR LUDO"
+            title="LUDO POPULAR"
+            description="Bets: ₹50,001 - ₹100,000"
             imageUrl={imagePaths.ludoClassicIcon.path}
-            href="/play?game=popular"
+            href="/play"
             titleClassName="text-base"
           />
       </div>
@@ -160,5 +164,3 @@ export default function HomePage() {
     </>
   );
 }
-
-    
