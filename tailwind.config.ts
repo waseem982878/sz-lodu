@@ -84,25 +84,16 @@ const config = {
           '60%': { transform: 'rotate(-2deg) scale(1.05)' },
           '80%': { transform: 'rotate(2deg) scale(1.05)' },
         },
-        "typewriter": {
-          "from": {
-            width: "0",
-          },
-          "to": {
-            width: "100%",
-          },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "animate-shine": "animate-shine 3s linear infinite",
         "clash": "clash 1.5s ease-in-out infinite",
-        "typewriter": "typewriter 4s steps(44) 1s 1 normal both",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config
 
 export default config

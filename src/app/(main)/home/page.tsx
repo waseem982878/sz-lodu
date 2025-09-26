@@ -13,6 +13,7 @@ import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/config";
+import { motion } from "framer-motion";
 
 type GameCardProps = {
   title: string;
@@ -114,6 +115,26 @@ export default function HomePage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const disclaimerText = "This game is intended for users aged 18 and above only. It involves an element of financial risk and may be addictive. Please play responsibly and at your own risk. Treat gaming as a source of entertainment, not income. Ensure you are playing from a jurisdiction where skill-based gaming for real money is permitted. Set your limits and take regular breaks.";
+  
+  const sentence = {
+      hidden: { opacity: 1 },
+      visible: {
+          opacity: 1,
+          transition: {
+              delay: 0.5,
+              staggerChildren: 0.02,
+          },
+      },
+  };
+  const letter = {
+      hidden: { opacity: 0, y: 50 },
+      visible: {
+          opacity: 1,
+          y: 0,
+      },
+  };
+
   useEffect(() => {
     const settingsRef = doc(db, 'config', 'appSettings');
     const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
@@ -181,9 +202,18 @@ export default function HomePage() {
         <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2 mb-2">
             <TriangleAlert className="h-5 w-5 animate-pulse"/> Disclaimer
         </h3>
-        <p className="text-xs text-yellow-800 dark:text-yellow-200 animate-typewriter overflow-hidden whitespace-nowrap">
-            This game is intended for users aged 18 and above only. It involves an element of financial risk and may be addictive. Please play responsibly and at your own risk. Treat gaming as a source of entertainment, not income. Ensure you are playing from a jurisdiction where skill-based gaming for real money is permitted. Set your limits and take regular breaks.
-        </p>
+        <motion.p
+            className="text-xs text-yellow-800 dark:text-yellow-200"
+            variants={sentence}
+            initial="hidden"
+            animate="visible"
+        >
+            {disclaimerText.split("").map((char, index) => (
+                <motion.span key={char + "-" + index} variants={letter}>
+                    {char}
+                </motion.span>
+            ))}
+        </motion.p>
       </Card>
     </>
   );
