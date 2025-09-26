@@ -1,6 +1,6 @@
 
 import { db } from '@/firebase/config';
-import { collection, addDoc, serverTimestamp, runTransaction, doc, query, where, getDocs, orderBy, limit, increment, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment } from 'firebase/firestore';
 import { uploadImage } from './storage-service';
 import type { UserProfile } from '@/models/user.model';
 import type { PaymentUpi } from '@/models/payment-upi.model';
@@ -12,7 +12,7 @@ import type { Transaction } from '@/models/transaction.model';
  * @param amount - The amount being deposited by the user.
  * @param gstBonusAmount - The GST bonus amount to be added.
  * @param screenshotFile - The payment screenshot file.
- * @param upiId - The UPI ID string used for payment.
+ * @param upiId - The UPI ID string (from payment_upis collection).
  * @returns The ID of the newly created transaction document.
  */
 export const createDepositRequest = async (
@@ -22,41 +22,70 @@ export const createDepositRequest = async (
   screenshotFile: File,
   upiId: string
 ): Promise<string> => {
-  if (!db) {
-    throw new Error("Database not available. Cannot create deposit request.");
-  }
+  // Validation
   if (!userId || amount <= 0 || !screenshotFile || !upiId) {
     throw new Error("User ID, amount, screenshot file, and UPI ID are required.");
   }
 
+  if (amount <= 0) {
+    throw new Error("Deposit amount must be greater than zero.");
+  }
+
   try {
+    // Check if user exists
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      throw new Error("User profile not found.");
+    }
+    
+    // Upload screenshot first
     const filePath = `deposits/${userId}/${Date.now()}_${screenshotFile.name}`;
-    // Step 1: Upload the image and WAIT for the URL. This is the critical fix.
     const screenshotUrl = await uploadImage(screenshotFile, filePath);
 
-    // Step 2: Now that we have the URL, create the database record.
-    const transactionsCollection = collection(db, 'transactions');
-    const newTransactionData = {
-      userId,
-      amount,
-      bonusAmount: gstBonusAmount,
-      type: 'deposit' as const,
-      status: 'pending' as const,
-      screenshotUrl, // Now this is a valid URL string
-      upiId: upiId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      isRead: false,
+    // Create transaction with additional safety checks
+    const newTransactionRef = doc(collection(db, "transactions"));
+    
+    const newTransactionData: Omit<Transaction, 'id'|'createdAt'|'updatedAt'> = {
+        userId,
+        amount,
+        bonusAmount: gstBonusAmount || 0,
+        type: 'deposit',
+        status: 'pending',
+        screenshotUrl,
+        upiId: upiId,
+        isRead: false,
     };
+    
+    // Use setDoc instead of addDoc as we are within a transaction
+    await setDoc(newTransactionRef, {
+        ...newTransactionData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
 
-    const docRef = await addDoc(transactionsCollection, newTransactionData);
+    return newTransactionRef.id;
 
-    return docRef.id;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    console.error("Deposit Request Creation Failed:", error);
-    // Provide a more user-friendly error message
-    throw new Error(`Could not submit your deposit request. Please check your internet connection and try again. Error: ${errorMessage}`);
+    console.error('Deposit request error:', error);
+    
+    if (error instanceof Error) {
+      // Firebase specific errors
+      if (error.message.includes('not-found')) {
+        throw new Error("Payment method not found. Please try again.");
+      }
+      if (error.message.includes('permission-denied')) {
+        throw new Error("You don't have permission to perform this action.");
+      }
+      if (error.message.includes('failed-precondition')) {
+        throw new Error("System busy. Please try again in a moment.");
+      }
+      
+      throw new Error(`Deposit request failed: ${error.message}`);
+    }
+    
+    throw new Error("Could not create deposit request. Please try again.");
   }
 };
 
@@ -128,29 +157,35 @@ export const createWithdrawalRequest = async (
  * Finds an active UPI that is under its daily limit.
  * @returns An active UPI object or null if none are available.
  */
-export const getActiveUpi = async (): Promise<PaymentUpi | null> => {
-    if (!db) {
-        console.error("Database not available. Cannot get active UPI.");
-        return null;
-    }
+export const getActiveUpi = async (amount?: number): Promise<PaymentUpi | null> => {
+  try {
     const q = query(
-        collection(db, 'payment_upis'),
-        where('isActive', '==', true)
+      collection(db, 'payment_upis'),
+      where('isActive', '==', true)
     );
 
     const querySnapshot = await getDocs(q);
     const upis: PaymentUpi[] = [];
+    
     querySnapshot.forEach(doc => {
-        upis.push({ id: doc.id, ...doc.data() } as PaymentUpi);
+      upis.push({ id: doc.id, ...doc.data() } as PaymentUpi);
     });
 
-    // Find the first UPI that is not over its limit
-    for (const upi of upis) {
-        if (upi.currentReceived < upi.dailyLimit) {
-            return upi; 
-        }
+    // Filter UPIs that can accept the requested amount
+    const availableUpis = amount 
+      ? upis.filter(upi => (upi.currentReceived + amount) <= upi.dailyLimit)
+      : upis.filter(upi => upi.currentReceived < upi.dailyLimit);
+
+    // Return the UPI with most capacity remaining
+    if (availableUpis.length > 0) {
+      return availableUpis.sort((a, b) => 
+        (b.dailyLimit - b.currentReceived) - (a.dailyLimit - a.currentReceived)
+      )[0];
     }
 
-    // If all active UPIs are over their limit, return null
-    return null; 
+    return null;
+  } catch (error) {
+    console.error('Error fetching active UPI:', error);
+    return null;
+  }
 };
