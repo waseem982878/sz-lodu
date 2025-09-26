@@ -135,7 +135,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     }
 
     return (
-        <Card className="p-2 bg-gradient-to-tr from-secondary to-card shadow-lg relative overflow-hidden border border-blue-500 cursor-pointer" onClick={handleViewBattle} data-aos="fade-up">
+        <Card className="p-2 bg-card border-l-4 border-blue-500 shadow-md cursor-pointer" onClick={handleViewBattle} data-aos="fade-up">
             <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
                 LIVE
             </div>
@@ -148,7 +148,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
                 <div className="text-center px-1">
                     <p className="text-xs text-muted-foreground">Prize</p>
                     <p className="font-bold text-lg text-green-500">₹{battle.amount}</p>
-                    <p className="text-orange-400 font-bold text-md -my-0.5">VS</p>
+                    <p className="text-orange-400 font-bold text-md -my-0.5 animate-pulse">VS</p>
                 </div>
 
                  <div className="flex flex-col items-center gap-1 w-1/3">
@@ -386,5 +386,3 @@ export default function Play() {
       </Suspense>
   )
 }
-
-    
