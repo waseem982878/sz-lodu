@@ -14,7 +14,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { createBattle, acceptBattle } from "@/services/battle-service";
 import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
-
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 const mockOngoingBattles: Battle[] = [
     { id: 'mock1', amount: 5000, gameType: 'classic', status: 'inprogress', creator: { id: 'c1', name: 'Thunder Bolt', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Thunder' }, opponent: { id: 'o1', name: 'Captain Ludo', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=Captain' }, createdAt: Timestamp.now(), updatedAt: Timestamp.now() },
@@ -60,15 +61,15 @@ function MyBattleCard({ battle }: { battle: Battle }) {
     const displayOpponent = opponent || { name: 'Waiting...', avatarUrl: "https://picsum.photos/32/32" };
 
     return (
-        <Card className="p-2 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg">
+        <Card className="p-3 bg-card border-l-4 border-primary shadow-md transition-all hover:shadow-lg" data-aos="fade-up">
             <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                 <Image 
                     src={displayOpponent.avatarUrl} 
                     alt={displayOpponent.name} 
                     width={32} 
                     height={32} 
-                    className="rounded-full border" 
+                    className="rounded-full border object-cover w-8 h-8" 
                 />
                 <div>
                     <p className="font-bold text-sm">vs {displayOpponent.name}</p>
@@ -95,10 +96,10 @@ function MyBattleCard({ battle }: { battle: Battle }) {
 function OpenBattleCard({ battle, onPlay }: { battle: Battle, onPlay: (battleId: string) => void }) {
   const isPractice = battle.amount === 0;
   return (
-    <Card className="p-2 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600">
+    <Card className="p-3 bg-card border-l-4 border-green-500 shadow-md transition-all hover:shadow-lg hover:border-green-600" data-aos="fade-up">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border" />
+        <div className="flex items-center gap-3">
+          <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border object-cover w-8 h-8" />
           <div>
             <p className="text-xs text-muted-foreground">Challenger</p>
             <p className="font-bold text-sm">{battle.creator.name}</p>
@@ -134,13 +135,13 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
     }
 
     return (
-        <Card className="p-2 bg-gradient-to-tr from-secondary to-card shadow-lg relative overflow-hidden border cursor-pointer" onClick={handleViewBattle}>
-            <div className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+        <Card className="p-3 bg-gradient-to-tr from-secondary to-card shadow-lg relative overflow-hidden border cursor-pointer" onClick={handleViewBattle} data-aos="fade-up">
+            <div className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
                 LIVE
             </div>
             <div className="flex justify-between items-center text-center">
                 <div className="flex flex-col items-center gap-1 w-1/3">
-                    <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 border-blue-400" />
+                    <Image src={battle.creator.avatarUrl} alt={battle.creator.name} width={32} height={32} className="rounded-full border-2 border-blue-400 object-cover w-8 h-8" />
                     <span className="font-semibold text-xs truncate w-full">{battle.creator.name}</span>
                 </div>
                 
@@ -151,7 +152,7 @@ function OngoingBattleCard({ battle }: { battle: Battle }) {
                 </div>
 
                  <div className="flex flex-col items-center gap-1 w-1/3">
-                    <Image src={battle.opponent.avatarUrl} alt={battle.opponent.name} width={32} height={32} className="rounded-full border-2 border-red-400" />
+                    <Image src={battle.opponent.avatarUrl} alt={battle.opponent.name} width={32} height={32} className="rounded-full border-2 border-red-400 object-cover w-8 h-8" />
                     <span className="font-semibold text-xs truncate w-full">{battle.opponent.name}</span>
                 </div>
             </div>
@@ -185,6 +186,13 @@ function PlayPageContent() {
   const [allActiveBattles, setAllActiveBattles] = useState<Battle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    AOS.init({
+        duration: 500,
+        once: true,
+    });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
