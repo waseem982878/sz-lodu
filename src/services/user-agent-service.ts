@@ -108,4 +108,3 @@ export const submitKycDetails = async (userId: string, data: Partial<UserProfile
         updatedAt: serverTimestamp(),
     });
 };
-
