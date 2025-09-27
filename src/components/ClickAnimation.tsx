@@ -33,7 +33,7 @@ export default function ClickAnimation() {
             y: e.clientY,
             size: Math.random() * 15 + 5, // individual bubble size
             duration: Math.random() * 1 + 0.5, // animation duration
-            delay: Math.random() * 0.2, // animation delay
+            delay: Math.random() * 0.2, // animation delay,
         });
     }
 
