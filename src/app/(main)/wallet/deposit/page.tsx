@@ -136,11 +136,7 @@ export default function DepositPage() {
                 return;
             }
             setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            setImagePreview(URL.createObjectURL(file));
         }
     };
 
@@ -171,6 +167,7 @@ export default function DepositPage() {
             router.push('/wallet');
         } catch (e) {
             showDialog("Error", `Failed to submit deposit request: ${(e as Error).message}`);
+        } finally {
             setIsSubmitting(false);
         }
     };
@@ -180,11 +177,20 @@ export default function DepositPage() {
     }
     
     const handleProceed = () => {
-        if (amount >= MINIMUM_DEPOSIT && !loadingUpi && activeUpi) {
-            setStep(2);
-        } else if (!activeUpi) {
-            showDialog("Error", "No payment method is currently active. Please contact support.");
+        if (amount < MINIMUM_DEPOSIT) {
+            showDialog("Error", `Minimum deposit is ₹${MINIMUM_DEPOSIT}.`);
+            return;
         }
+        if (loadingUpi) {
+            showDialog("Info", "Loading payment methods, please wait.");
+            return;
+        }
+        if (!activeUpi) {
+            showDialog("Error", "No payment method is currently active. Please contact support.");
+            return;
+        }
+        setStep(2);
+        window.location.href = upiUri;
     }
 
     if (step === 2) {
@@ -197,37 +203,25 @@ export default function DepositPage() {
                     message={dialogState.message} 
                 />
                  <Button onClick={() => setStep(1)} variant="ghost" className="pl-0">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Change Amount
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Change Amount or Method
                 </Button>
                 <Card className="shadow-lg border-primary/20">
                     <CardHeader className="text-center">
-                        <CardTitle className='text-2xl text-primary'>Step 1: Make Payment</CardTitle>
-                        <CardDescription>Pay <span className="font-bold text-primary">₹{totalPayable.toFixed(2)}</span> to the UPI ID below.</CardDescription>
+                        <CardTitle className='text-2xl text-primary'>Complete Your Payment</CardTitle>
+                        <CardDescription>Your UPI app has been opened. After paying, upload the screenshot below.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 space-y-4 text-center">
-                        <div className="flex justify-center p-4 bg-white rounded-lg max-w-xs mx-auto">
-                             {loadingUpi ? <Loader2 className="h-20 w-20 animate-spin text-primary" /> : (
-                                activeUpi && amount >= MINIMUM_DEPOSIT ? <QRCode value={upiUri} size={256} /> : <p className="text-red-500 p-8 text-center">{amount >= MINIMUM_DEPOSIT ? "No active payment method available. Please contact support." : `Minimum deposit is ₹${MINIMUM_DEPOSIT}.`}</p>
-                            )}
-                        </div>
-                        {activeUpi && (
-                             <div className="text-center space-y-3">
-                                <Button asChild className="w-full">
-                                    <a href={upiUri}>
-                                        <Share className="mr-2 h-4 w-4"/> Pay via UPI App
-                                    </a>
-                                </Button>
-                                <p className="text-muted-foreground text-sm">Payable to: <span className="font-bold text-lg text-foreground">{activeUpi.payeeName}</span></p>
-                                <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
-                                    <p className="font-mono text-primary flex-shrink-1 overflow-x-auto whitespace-nowrap">{activeUpi.upiId}</p>
-                                    <Button size="icon" variant="ghost" onClick={() => handleCopy(activeUpi.upiId)}><Copy className="w-4 h-4"/></Button>
-                                </div>
+                        <div className="text-center space-y-3">
+                            <p className="text-muted-foreground text-sm">If your app didn't open, pay <span className='font-bold text-primary'>₹{totalPayable.toFixed(2)}</span> to:</p>
+                            <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
+                                <p className="font-mono text-primary flex-shrink-1 overflow-x-auto whitespace-nowrap">{activeUpi?.upiId}</p>
+                                <Button size="icon" variant="ghost" onClick={() => handleCopy(activeUpi?.upiId || '')}><Copy className="w-4 h-4"/></Button>
                             </div>
-                        )}
+                        </div>
                          <div className="border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg flex items-start gap-3 text-left">
                             <TriangleAlert className="h-5 w-5 text-yellow-700 dark:text-yellow-300 flex-shrink-0 mt-1" />
                             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                Only deposit from the same name that is on your KYC documents, otherwise the payment will be put on hold.
+                                Only deposit from the account with the same name as on your KYC documents, otherwise the payment will be put on hold.
                             </p>
                         </div>
                     </CardContent>
@@ -235,7 +229,7 @@ export default function DepositPage() {
 
                  <Card>
                     <CardHeader>
-                        <CardTitle className="text-primary">Step 2: Upload Screenshot</CardTitle>
+                        <CardTitle className="text-primary">Upload Screenshot</CardTitle>
                         <CardDescription>After payment, upload the confirmation screenshot to verify your deposit.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 space-y-4">
@@ -317,7 +311,7 @@ export default function DepositPage() {
                 onClick={handleProceed}
                 disabled={amount < MINIMUM_DEPOSIT || loadingUpi}
             >
-                 {loadingUpi ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                 {loadingUpi ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Share className="mr-2 h-5 w-5" />}
                 Proceed to Pay ₹{totalPayable.toFixed(2)}
             </Button>
         </div>

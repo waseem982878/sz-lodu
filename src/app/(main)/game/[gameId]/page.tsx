@@ -48,8 +48,8 @@ function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: 
     };
 
     const handleSave = async () => {
-        if (!newCode.trim()) {
-            showDialog("Error", "Room code cannot be empty.");
+        if (!newCode.trim() || newCode.trim().length > 9) {
+            showDialog("Error", "Room code must be 9 characters or less.");
             return;
         }
         setIsSaving(true);
@@ -167,11 +167,7 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
               return;
           }
           setImage(file);
-          const reader = new FileReader();
-          reader.onloadend = () => {
-              setImagePreview(reader.result as string);
-          }
-          reader.readAsDataURL(file);
+          setImagePreview(URL.createObjectURL(file));
       }
   }
 
@@ -194,6 +190,7 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
         }
     } catch (error: any) {
         showDialog("Error", `Failed to submit result: ${error.message}`);
+    } finally {
         setIsSubmitting(false);
     }
   }

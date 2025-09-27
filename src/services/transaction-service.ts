@@ -1,5 +1,5 @@
 import { db } from '@/firebase/config';
-import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment, updateDoc } from 'firebase/firestore';
 import { uploadImage } from './storage-service';
 import type { UserProfile } from '@/models/user.model';
 import type { PaymentUpi } from '@/models/payment-upi.model';
@@ -10,8 +10,9 @@ export const createDepositRequest = async (
   amount: number,
   gstBonusAmount: number,
   screenshotFile: File,
-  upiId: string // This should be the document ID from payment_upis
+  upiId: string // This is the document ID from payment_upis
 ): Promise<string> => {
+  // 1. Validate inputs
   if (!userId || amount <= 0 || !screenshotFile || !upiId) {
     throw new Error("User ID, amount, screenshot file, and UPI document ID are required.");
   }
@@ -19,13 +20,17 @@ export const createDepositRequest = async (
     throw new Error("Please upload an image file.");
   }
 
+  // 2. Prepare for the transaction
   const upiRef = doc(db, 'payment_upis', upiId);
+  const transactionsCollection = collection(db, 'transactions');
 
+  // 3. Run a secure Firestore transaction
   return await runTransaction(db, async (transaction) => {
     const upiDoc = await transaction.get(upiRef);
     if (!upiDoc.exists()) {
       throw new Error("Selected UPI payment method not found.");
     }
+
     const upiData = upiDoc.data() as PaymentUpi;
     if (!upiData.isActive) {
       throw new Error("Selected UPI payment method is currently not active.");
@@ -34,32 +39,34 @@ export const createDepositRequest = async (
       throw new Error("This UPI ID has reached its daily limit. Please try another method or contact support.");
     }
 
+    // 4. Upload the image (outside transaction if possible, but here for simplicity)
     const timestamp = Date.now();
     const fileExt = screenshotFile.name.split('.').pop() || 'png';
     const filePath = `deposits/${userId}/${timestamp}.${fileExt}`;
     const screenshotUrl = await uploadImage(screenshotFile, filePath);
 
+    // 5. Update UPI daily received amount
     transaction.update(upiRef, {
       currentReceived: increment(amount)
     });
 
-    const newTransactionRef = doc(collection(db, "transactions"));
-    
+    // 6. Create the transaction record
+    const newTransactionRef = doc(transactionsCollection);
     const newTransactionData: Omit<Transaction, 'id'> = {
-        userId,
-        amount,
-        bonusAmount: gstBonusAmount || 0,
-        type: 'deposit',
-        status: 'pending',
-        screenshotUrl,
-        upiId: upiData.upiId, 
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        isRead: false,
+      userId,
+      amount,
+      bonusAmount: gstBonusAmount || 0,
+      type: 'deposit',
+      status: 'pending',
+      screenshotUrl,
+      upiId: upiData.upiId, // Store the actual UPI ID string
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      isRead: false,
     };
-    
     transaction.set(newTransactionRef, newTransactionData);
 
+    // 7. Return the new transaction ID
     return newTransactionRef.id;
   });
 };
@@ -140,6 +147,7 @@ export const getActiveUpi = async (amount?: number): Promise<PaymentUpi | null> 
       : upis.filter(upi => upi.currentReceived < upi.dailyLimit);
 
     if (availableUpis.length > 0) {
+      // Sort by which UPI has the most capacity remaining
       return availableUpis.sort((a, b) => 
         (b.dailyLimit - b.currentReceived) - (a.dailyLimit - a.currentReceived)
       )[0];
