@@ -2586,3 +2586,97 @@
 [error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
 [debug] [2025-09-27T10:17:53.260Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
 [debug] [2025-09-27T10:17:53.264Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[debug] [2025-09-27T10:19:30.277Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:30.282Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:30.282Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:30.291Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:30.291Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:30.292Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:30.296Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.297Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.298Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.298Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.299Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.300Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.301Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.301Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.304Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-27T10:19:30.304Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:30.352Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-27T10:19:30.352Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:30.356Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-27T10:19:30.357Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:30.360Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-27T10:19:30.360Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:30.442Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:30.443Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:30.443Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:30.446Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:30.446Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:30.446Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:30.447Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.447Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.448Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.448Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.449Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.449Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.450Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.450Z] Checked if tokens are valid: true, expires at: 1758971865428
+[debug] [2025-09-27T10:19:30.450Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [none]
+[debug] [2025-09-27T10:19:30.450Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:30.453Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-09-27T10:19:30.453Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:30.456Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [none]
+[debug] [2025-09-27T10:19:30.457Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:30.460Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [none]
+[debug] [2025-09-27T10:19:30.460Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com x-goog-quota-user=projects/ludo-king-battles
+[debug] [2025-09-27T10:19:31.396Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-27T10:19:31.396Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-27T10:19:31.445Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-27T10:19:31.446Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-27T10:19:31.454Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-27T10:19:31.454Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-27T10:19:31.470Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com 403
+[debug] [2025-09-27T10:19:31.473Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebaseio.com [omitted]
+[debug] [2025-09-27T10:19:31.509Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-09-27T10:19:31.512Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-09-27T10:19:31.515Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com 200
+[debug] [2025-09-27T10:19:31.516Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/firebasecrashlytics.googleapis.com [omitted]
+[debug] [2025-09-27T10:19:31.768Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-27T10:19:31.768Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[debug] [2025-09-27T10:19:31.894Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ 200
+[debug] [2025-09-27T10:19:31.894Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/ludo-king-battles/services/ [omitted]
+[debug] [2025-09-27T10:19:31.895Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:31.895Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:31.895Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:31.909Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:31.910Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:31.910Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:31.914Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-27T10:19:31.917Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[debug] [2025-09-27T10:19:31.953Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:31.958Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:31.958Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:31.964Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:31.967Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:31.967Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:31.976Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:31.976Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:31.976Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:31.981Z] Object "/hosting" in "firebase.json" has unknown property: {"additionalProperty":"auth"}
+[debug] [2025-09-27T10:19:31.981Z] Field "/hosting" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-09-27T10:19:31.981Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-09-27T10:19:31.986Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-27T10:19:31.987Z] > authorizing via signed-in user (waseem982878@gmail.com)
+[debug] [2025-09-27T10:19:31.987Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-09-27T10:19:31.988Z] > authorizing via signed-in user (waseem982878@gmail.com)
