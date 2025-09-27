@@ -92,30 +92,35 @@ export default function KycPage() {
     e.preventDefault();
     if (!user) return;
     
-    if (!panFile && !userProfile.panCardUrl) {
-      showDialog("Error", "Please upload your PAN card photo.");
-      return;
-    }
-    if (!aadhaarFile && !userProfile.aadhaarCardUrl) {
-      showDialog("Error", "Please upload your Aadhaar card photo.");
-      return;
-    }
-    
     setIsSubmitting(true);
-    
+    console.log('📸 Starting KYC document upload...');
+
     try {
+        // 1. Validate files
+        if (!panFile && !userProfile.panCardUrl) {
+            throw new Error('Please upload your PAN card photo.');
+        }
+        if (!aadhaarFile && !userProfile.aadhaarCardUrl) {
+            throw new Error('Please upload your Aadhaar card photo.');
+        }
+        
         let panCardUrl = userProfile.panCardUrl;
         let aadhaarCardUrl = userProfile.aadhaarCardUrl;
-    
+
+        // 2. Upload new files if provided
         if (panFile) {
-            const fileName = `pan_${Date.now()}`;
-            panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/${fileName}`);
-        }
-        if (aadhaarFile) {
-            const fileName = `aadhaar_${Date.now()}`;
-            aadhaarCardUrl = await uploadImage(aadhaarFile, `kyc/${user.uid}/${fileName}`);
+            console.log('Uploading PAN card...');
+            panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/pan`);
+            console.log('PAN card uploaded:', panCardUrl);
         }
 
+        if (aadhaarFile) {
+            console.log('Uploading Aadhaar card...');
+            aadhaarCardUrl = await uploadImage(aadhaarFile, `kyc/${user.uid}/aadhaar`);
+            console.log('Aadhaar card uploaded:', aadhaarCardUrl);
+        }
+        
+        // 3. Submit KYC details
         await submitKycDetails(user.uid, {
             name,
             dob,
@@ -126,11 +131,13 @@ export default function KycPage() {
             aadhaarCardUrl,
         });
         
+        console.log('✅ KYC submitted successfully');
         showDialog("Success", "KYC details submitted successfully! Our team will review them shortly.");
         router.push('/profile');
 
     } catch (error: any) {
-        showDialog("Error", `Failed to submit KYC details: ${error.message}`);
+        console.error('❌ KYC submission error:', error);
+        showDialog("Error", `KYC submission failed: ${error.message}`);
     } finally {
         setIsSubmitting(false);
     }
