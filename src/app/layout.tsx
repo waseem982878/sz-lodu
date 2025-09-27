@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins, Montserrat } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
+import ClickAnimation from "@/components/ClickAnimation";
 
 const poppins = Poppins({ 
   subsets: ["latin"],
@@ -41,6 +42,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <ClickAnimation />
       </body>
     </html>
   );
