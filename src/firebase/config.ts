@@ -34,25 +34,24 @@ if (process.env.VERCEL && process.env.CI) {
     auth = {} as Auth;
     db = {} as Firestore;
     storage = {} as FirebaseStorage;
-} else if (getApps().length) {
-    app = getApp();
 } else {
-    // Check if all required environment variables are set before initializing
-    if (
-        !firebaseConfig.apiKey ||
-        !firebaseConfig.projectId ||
-        !firebaseConfig.authDomain
-    ) {
-        console.error("Firebase environment variables are not set. Please check your .env.local file and Vercel project settings.");
+    if (getApps().length === 0) {
+       // Check if all required environment variables are set before initializing
+        if (
+            !firebaseConfig.apiKey ||
+            !firebaseConfig.projectId ||
+            !firebaseConfig.authDomain
+        ) {
+            console.error("Firebase environment variables are not set. Please check your .env.local file and Vercel project settings.");
+        }
+        app = initializeApp(firebaseConfig);
+    } else {
+        app = getApp();
     }
-    app = initializeApp(firebaseConfig);
-}
-
-// Only get the real instances if not in Vercel build
-if (!process.env.VERCEL || !process.env.CI) {
     auth = getAuth(app);
     db = getFirestore(app);
     storage = getStorage(app);
 }
+
 
 export { app, auth, db, storage };
