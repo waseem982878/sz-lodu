@@ -23,6 +23,7 @@ let auth: Auth;
 let db: Firestore;
 let storage: FirebaseStorage;
 
+
 // This guard prevents re-initializing the app on every render in Next.js
 if (getApps().length === 0) {
     // Check if all required environment variables are set before initializing
@@ -34,8 +35,6 @@ if (getApps().length === 0) {
     const missingVars = requiredVars.filter(v => !process.env[v]);
 
     if (missingVars.length > 0) {
-        // This will only happen if environment variables are not set correctly in Vercel.
-        // This check prevents the app from crashing with a cryptic error.
         const errorMsg = `CRITICAL: The following Firebase environment variables are missing: ${missingVars.join(', ')}. Please check your .env.local file and Vercel project settings.`;
         console.error(errorMsg);
         
@@ -48,11 +47,18 @@ if (getApps().length === 0) {
     app = getApp();
 }
 
-// These services will be properly initialized if the app was initialized.
-// If not, they will be empty objects, and subsequent Firebase calls will fail,
-// which is expected if the config is missing.
-auth = getAuth(app);
-db = getFirestore(app);
-storage = getStorage(app);
+// These services will only be initialized if the app was successfully initialized.
+// This prevents the "Cannot read properties of undefined (reading 'getProvider')" error.
+if (app?.name) {
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+} else {
+    // If app is not initialized, provide empty objects to prevent crashes
+    auth = {} as Auth;
+    db = {} as Firestore;
+    storage = {} as FirebaseStorage;
+}
+
 
 export { app, auth, db, storage };
