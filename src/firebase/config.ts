@@ -26,16 +26,23 @@ let storage: FirebaseStorage;
 // This guard prevents re-initializing the app on every render in Next.js
 if (getApps().length === 0) {
     // Check if all required environment variables are set before initializing
-    if (
-        firebaseConfig.apiKey &&
-        firebaseConfig.projectId &&
-        firebaseConfig.authDomain
-    ) {
-        app = initializeApp(firebaseConfig);
-    } else {
-        console.error("CRITICAL: Firebase environment variables are not set. Please check your .env.local file and Vercel project settings.");
+    const requiredVars = [
+        'NEXT_PUBLIC_FIREBASE_API_KEY',
+        'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+        'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+    ];
+    const missingVars = requiredVars.filter(v => !process.env[v]);
+
+    if (missingVars.length > 0) {
+        // This will only happen if environment variables are not set correctly in Vercel.
+        // This check prevents the app from crashing with a cryptic error.
+        const errorMsg = `CRITICAL: The following Firebase environment variables are missing: ${missingVars.join(', ')}. Please check your .env.local file and Vercel project settings.`;
+        console.error(errorMsg);
+        
         // Provide mock/empty objects to prevent crashing, but functionality will be broken.
         app = {} as FirebaseApp;
+    } else {
+        app = initializeApp(firebaseConfig);
     }
 } else {
     app = getApp();
