@@ -1,5 +1,5 @@
-rules_version = '2';
 
+rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
@@ -8,32 +8,29 @@ service firebase.storage {
     }
 
     function isAdmin() {
-      // Ensure you have set this custom claim on your admin users' accounts
+      // Assumes you have a custom claim 'admin' set to true for admin users
       return request.auth.token.admin == true;
     }
 
-    // KYC Documents: User can write, user and admin can read.
+    // KYC Documents: User can write, admin can read/write
     match /kyc/{userId}/{allPaths=**} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Deposit Screenshots: User can write, admin can read/write
+    match /deposits/{userId}/{allPaths=**} {
+       allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Result Screenshots: User can write, admin can read/write
+    match /results/{battleId}/{userId}/{allPaths=**} {
+       allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
     }
     
-    // Deposit Screenshots: User can write, only admin can read.
-    match /deposits/{userId}/{allPaths=**} {
-      allow read: if isAuthenticated() && isAdmin();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Result Screenshots: User can write, only admin can read.
-    match /results/{battleId}/{userId}/{allPaths=**} {
-        allow read: if isAuthenticated() && isAdmin();
+    // Avatars: Any authenticated user can write to their own path
+    match /avatars/{userId}/{allPaths=**} {
         allow write: if isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // User Avatars: Publicly readable, only user can write.
-    match /avatars/{userId} {
-        allow read;
-        allow write: if isAuthenticated() && request.auth.uid == userId;
+        allow read; // Publicly readable
     }
   }
 }

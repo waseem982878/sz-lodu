@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, CheckCircle, XCircle, Eye, Download, Search } from "lucide-react";
-import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, where } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { Transaction } from "@/models/transaction.model";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { handleApproveDeposit, handleApproveWithdrawal, handleRejectTransaction } from "@/services/transaction-service";
 
 
 function ScreenshotModal({ imageUrl }: { imageUrl: string }) {
@@ -65,61 +67,32 @@ export default function TransactionsPage() {
     return () => unsubscribe();
   }, [filterType, filterStatus]);
   
-  const handleApproveDeposit = async (transaction: Transaction) => {
-      if (transaction.status !== 'pending' || transaction.type !== 'deposit') return;
-      
-      const transRef = doc(db, 'transactions', transaction.id);
-      const userRef = doc(db, 'users', transaction.userId);
-
+  const onApproveDeposit = async (transaction: Transaction) => {
       try {
-          await runTransaction(db, async (t) => {
-              const depositAmount = transaction.amount;
-              const bonusAmount = transaction.bonusAmount || 0;
-              const totalCredit = depositAmount + bonusAmount;
-
-              t.update(userRef, { depositBalance: increment(totalCredit) });
-              t.update(transRef, { 
-                  status: 'completed', 
-                  updatedAt: serverTimestamp(),
-                  processedBy: { id: "admin", name: "Admin" }
-              });
-          });
+          await handleApproveDeposit(transaction);
           alert('Deposit approved successfully.');
       } catch (error) {
-          alert("Error approving deposit.");
+          alert(`Error approving deposit: ${(error as Error).message}`);
       }
   }
 
-  const handleReject = async (transactionId: string, reason: string) => {
-    try {
-      await updateDoc(doc(db, 'transactions', transactionId), {
-        status: 'rejected',
-        notes: reason,
-        updatedAt: Timestamp.now()
-      });
-      // If it's a withdrawal, refund the amount
-      const t = transactions.find(tx => tx.id === transactionId);
-      if (t && t.type === 'withdrawal') {
-          await updateDoc(doc(db, 'users', t.userId), {
-              winningsBalance: increment(t.amount)
-          });
+  const onReject = async (transaction: Transaction) => {
+      const reason = prompt('Rejection reason:');
+      if (!reason) return;
+      try {
+        await handleRejectTransaction(transaction.id, reason, transaction.type, transaction.userId, transaction.amount);
+        alert('Transaction rejected');
+      } catch (error) {
+        alert(`Error rejecting transaction: ${(error as Error).message}`);
       }
-      alert('Transaction rejected');
-    } catch (error) {
-      alert('Error rejecting transaction');
-    }
   };
   
-   const handleApproveWithdrawal = async (transaction: Transaction) => {
-      if (transaction.status !== 'pending' || transaction.type !== 'withdrawal') return;
+   const onApproveWithdrawal = async (transaction: Transaction) => {
       try {
-        await updateDoc(doc(db, 'transactions', transaction.id), {
-          status: 'completed',
-          updatedAt: Timestamp.now()
-        });
+        await handleApproveWithdrawal(transaction.id);
         alert('Withdrawal approved. Please send the payment manually.');
       } catch (error) {
-        alert('Error approving withdrawal');
+        alert(`Error approving withdrawal: ${(error as Error).message}`);
       }
   };
 
@@ -214,7 +187,7 @@ export default function TransactionsPage() {
                         <>
                           <Button 
                             size="sm" 
-                            onClick={() => transaction.type === 'deposit' ? handleApproveDeposit(transaction) : handleApproveWithdrawal(transaction)}
+                            onClick={() => transaction.type === 'deposit' ? onApproveDeposit(transaction) : onApproveWithdrawal(transaction)}
                             className="bg-green-600 hover:bg-green-700"
                           >
                             <CheckCircle className="h-4 w-4 sm:mr-1" />
@@ -223,10 +196,7 @@ export default function TransactionsPage() {
                           <Button 
                             size="sm" 
                             variant="destructive"
-                            onClick={() => {
-                              const reason = prompt('Rejection reason (optional):') || "Rejected by admin";
-                              if (reason) handleReject(transaction.id, reason);
-                            }}
+                            onClick={() => onReject(transaction)}
                           >
                             <XCircle className="h-4 w-4 sm:mr-1" />
                              <span className="hidden sm:inline">Reject</span>

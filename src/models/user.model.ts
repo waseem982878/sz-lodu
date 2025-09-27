@@ -33,6 +33,7 @@ export interface UserProfile {
     kycNotes?: string; // Notes from admin on rejection
 
     // Role management
+    isActive?: boolean;
     isAgent?: boolean;
     isAdmin?: boolean; // Added for admin role
 }

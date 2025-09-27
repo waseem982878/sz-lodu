@@ -1,5 +1,5 @@
 
-import { doc, setDoc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, limit, addDoc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
 import type { User } from "firebase/auth";
@@ -39,6 +39,7 @@ export const createUserProfile = async (user: User, name: string): Promise<void>
         createdAt: serverTimestamp(),
         lastSeen: serverTimestamp(),
         isAdmin: user.email ? ADMIN_EMAILS.includes(user.email) : false, // Set admin flag based on email list
+        isActive: true, // Default to active
     };
 
     // Use setDoc with merge:true to either create the document or merge into it
@@ -93,11 +94,17 @@ export const updateUserBalances = async (userId: string, depositBalance: number,
 export const submitKycDetails = async (userId: string, data: Partial<UserProfile>) => {
     if (!db) throw new Error("Database not available.");
     const userRef = doc(db, 'users', userId);
+    const uniqueData = { ...data };
+    // Add a timestamp to URLs to bust cache if they are the same
+    if (uniqueData.panCardUrl) {
+      uniqueData.panCardUrl += `&t=${Date.now()}`;
+    }
+    if (uniqueData.aadhaarCardUrl) {
+      uniqueData.aadhaarCardUrl += `&t=${Date.now()}`;
+    }
     await updateDoc(userRef, {
-        ...data,
+        ...uniqueData,
         kycStatus: 'Pending',
         updatedAt: serverTimestamp(),
     });
 };
-
-    

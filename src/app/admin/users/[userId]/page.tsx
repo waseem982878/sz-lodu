@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { doc, getDoc, collection, query, where, getDocs, orderBy, or } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, orderBy, or, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
 import type { Transaction } from "@/models/transaction.model";
@@ -126,38 +126,44 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     const [battles, setBattles] = useState<Battle[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchAllData = useCallback(async () => {
+    const fetchAllData = useCallback(() => {
         if (!userId) return;
         setLoading(true);
-        try {
-            const userRef = doc(db, 'users', userId);
-            const userSnap = await getDoc(userRef);
+
+        const userRef = doc(db, 'users', userId);
+        const userUnsub = onSnapshot(userRef, (userSnap) => {
             if (userSnap.exists()) {
                 setUser({ uid: userSnap.id, ...userSnap.data() } as UserProfile);
             }
-
-            const transQuery = query(collection(db, 'transactions'), where('userId', '==', userId), orderBy('createdAt', 'desc'));
-            const transSnap = await getDocs(transQuery);
-            setTransactions(transSnap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
-
-            const battlesQuery = query(
-                collection(db, 'battles'),
-                or(where('creator.id', '==', userId), where('opponent.id', '==', userId)),
-                orderBy('createdAt', 'desc')
-            );
-            const battlesSnap = await getDocs(battlesQuery);
-            setBattles(battlesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Battle)));
-
-        } catch (error) {
-            console.error("Failed to fetch user data:", error);
-        } finally {
             setLoading(false);
-        }
+        }, () => setLoading(false));
+
+        const transQuery = query(collection(db, 'transactions'), where('userId', '==', userId), orderBy('createdAt', 'desc'));
+        const transUnsub = onSnapshot(transQuery, (transSnap) => {
+            setTransactions(transSnap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction)));
+        });
+
+        const battlesQuery = query(
+            collection(db, 'battles'),
+            or(where('creator.id', '==', userId), where('opponent.id', '==', userId)),
+            orderBy('createdAt', 'desc')
+        );
+        const battlesUnsub = onSnapshot(battlesQuery, (battlesSnap) => {
+            setBattles(battlesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Battle)));
+        });
+
+        return () => {
+            userUnsub();
+            transUnsub();
+            battlesUnsub();
+        };
+
     }, [userId]);
 
 
     useEffect(() => {
-        fetchAllData();
+        const unsub = fetchAllData();
+        return () => unsub && unsub();
     }, [fetchAllData]);
 
     if (loading) {

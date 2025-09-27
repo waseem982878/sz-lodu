@@ -1,5 +1,6 @@
+
 import { db } from '@/firebase/config';
-import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment, updateDoc, Timestamp } from 'firebase/firestore';
 import { uploadImage } from './storage-service';
 import type { UserProfile } from '@/models/user.model';
 import type { PaymentUpi } from '@/models/payment-upi.model';
@@ -22,7 +23,6 @@ export const createDepositRequest = async (
 
   // 2. Prepare for the transaction
   const upiRef = doc(db, 'payment_upis', upiId);
-  const transactionsCollection = collection(db, 'transactions');
 
   // 3. Run a secure Firestore transaction
   return await runTransaction(db, async (transaction) => {
@@ -39,7 +39,7 @@ export const createDepositRequest = async (
       throw new Error("This UPI ID has reached its daily limit. Please try another method or contact support.");
     }
 
-    // 4. Upload the image (outside transaction if possible, but here for simplicity)
+    // 4. Upload the image
     const timestamp = Date.now();
     const fileExt = screenshotFile.name.split('.').pop() || 'png';
     const filePath = `deposits/${userId}/${timestamp}.${fileExt}`;
@@ -51,8 +51,8 @@ export const createDepositRequest = async (
     });
 
     // 6. Create the transaction record
-    const newTransactionRef = doc(transactionsCollection);
-    const newTransactionData: Omit<Transaction, 'id'> = {
+    const newTransactionRef = doc(collection(db, 'transactions'));
+    const newTransactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'> = {
       userId,
       amount,
       bonusAmount: gstBonusAmount || 0,
@@ -60,11 +60,13 @@ export const createDepositRequest = async (
       status: 'pending',
       screenshotUrl,
       upiId: upiData.upiId, // Store the actual UPI ID string
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
       isRead: false,
     };
-    transaction.set(newTransactionRef, newTransactionData);
+    transaction.set(newTransactionRef, {
+        ...newTransactionData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
 
     // 7. Return the new transaction ID
     return newTransactionRef.id;
@@ -159,3 +161,59 @@ export const getActiveUpi = async (amount?: number): Promise<PaymentUpi | null> 
     return null;
   }
 };
+
+export const handleApproveDeposit = async (transactionRecord: Transaction) => {
+      if (transactionRecord.status !== 'pending' || transactionRecord.type !== 'deposit') return;
+      
+      const transRef = doc(db, 'transactions', transactionRecord.id);
+      const userRef = doc(db, 'users', transactionRecord.userId);
+
+      try {
+          await runTransaction(db, async (t) => {
+              const depositAmount = transactionRecord.amount;
+              const bonusAmount = transactionRecord.bonusAmount || 0;
+              const totalCredit = depositAmount + bonusAmount;
+
+              t.update(userRef, { depositBalance: increment(totalCredit) });
+              t.update(transRef, { 
+                  status: 'completed', 
+                  updatedAt: serverTimestamp(),
+                  processedBy: { id: "admin", name: "Admin" }
+              });
+          });
+      } catch (error) {
+          console.error("Error approving deposit:", error);
+          throw new Error("Error approving deposit.");
+      }
+  }
+
+  export const handleRejectTransaction = async (transactionId: string, reason: string, transactionType: 'deposit' | 'withdrawal', userId: string, amount: number) => {
+    try {
+      await updateDoc(doc(db, 'transactions', transactionId), {
+        status: 'rejected',
+        notes: reason,
+        updatedAt: Timestamp.now()
+      });
+      // If it's a rejected withdrawal, refund the amount to the user's winnings balance
+      if (transactionType === 'withdrawal') {
+          await updateDoc(doc(db, 'users', userId), {
+              winningsBalance: increment(amount)
+          });
+      }
+    } catch (error) {
+      console.error('Error rejecting transaction:', error);
+      throw new Error('Error rejecting transaction');
+    }
+  };
+  
+   export const handleApproveWithdrawal = async (transactionId: string) => {
+      try {
+        await updateDoc(doc(db, 'transactions', transactionId), {
+          status: 'completed',
+          updatedAt: Timestamp.now()
+        });
+      } catch (error) {
+        console.error('Error approving withdrawal:', error);
+        throw new Error('Error approving withdrawal');
+      }
+  };

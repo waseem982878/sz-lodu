@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -27,6 +28,7 @@ export default function BattlesPage() {
       setBattles(battlesData);
       setLoading(false);
     }, (error) => {
+      console.error("Error fetching battles:", error);
       setLoading(false);
     });
 

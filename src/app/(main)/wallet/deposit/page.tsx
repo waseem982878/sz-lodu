@@ -176,7 +176,7 @@ export default function DepositPage() {
         return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
     }
     
-    const handleProceed = () => {
+    const handleProceed = async () => {
         if (amount < MINIMUM_DEPOSIT) {
             showDialog("Error", `Minimum deposit is ₹${MINIMUM_DEPOSIT}.`);
             return;
@@ -189,6 +189,7 @@ export default function DepositPage() {
             showDialog("Error", "No payment method is currently active. Please contact support.");
             return;
         }
+
         setStep(2);
         window.location.href = upiUri;
     }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -37,8 +38,6 @@ export default function UsersPage() {
   }, []);
 
   const handleToggleUser = async (userId: string, currentStatus: boolean) => {
-    // We assume 'isActive' property exists, if not, we need to add it to the model.
-    // Let's add it via a migration or by default in user creation. For now, let's assume it exists or is undefined.
     if (confirm(`Are you sure you want to ${!currentStatus ? 'activate' : 'block'} this user?`)) {
         try {
             await updateDoc(doc(db, 'users', userId), {

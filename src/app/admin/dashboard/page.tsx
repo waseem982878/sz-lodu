@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Swords, Wallet, ShieldCheck, IndianRupee, Loader2, ArrowRight, DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
+import { Users, Wallet, ShieldCheck, IndianRupee, Loader2, ArrowRight, DollarSign, TrendingUp, AlertTriangle } from "lucide-react";
 import type { Transaction } from "@/models/transaction.model";
 import type { UserProfile } from "@/models/user.model";
 import Link from "next/link";
@@ -26,60 +27,42 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      try {
-        // Total users
-        const usersSnap = await getDocs(collection(db, 'users'));
-        
-        // Today's deposits
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const depositsQuery = query(
-          collection(db, 'transactions'),
-          where('type', '==', 'deposit'),
-          where('status', '==', 'completed'), // Note: Changed from 'approved' to 'completed' to match model
-          where('createdAt', '>=', Timestamp.fromDate(today))
-        );
-        const depositsSnap = await getDocs(depositsQuery);
-        
-        // Pending transactions
-        const pendingQuery = query(
-          collection(db, 'transactions'),
-          where('status', '==', 'pending')
-        );
-        const pendingSnap = await getDocs(pendingQuery);
-        
-        // Pending KYC
-        const kycQuery = query(
-          collection(db, 'users'),
-          where('kycStatus', '==', 'Pending')
-        );
-        const kycSnap = await getDocs(kycQuery);
+    const fetchInitialStats = async () => {
+        setLoading(true);
+        try {
+            const usersSnap = await getDocs(collection(db, 'users'));
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const depositsQuery = query(
+              collection(db, 'transactions'),
+              where('type', '==', 'deposit'),
+              where('status', '==', 'completed'),
+              where('createdAt', '>=', Timestamp.fromDate(today))
+            );
+            const depositsSnap = await getDocs(depositsQuery);
 
-        setStats({
-          totalUsers: usersSnap.size,
-          totalDeposits: depositsSnap.docs.reduce((sum, doc) => sum + doc.data().amount, 0),
-          pendingTransactions: pendingSnap.size,
-          pendingKYC: kycSnap.size
-        });
-      } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
-      } finally {
-        setLoading(false);
-      }
+            setStats(prev => ({
+                ...prev,
+                totalUsers: usersSnap.size,
+                totalDeposits: depositsSnap.docs.reduce((sum, doc) => sum + doc.data().amount, 0),
+            }));
+        } catch (error) {
+            console.error("Error fetching initial dashboard stats:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    fetchStats();
+    fetchInitialStats();
     
-    // Also setting up listeners for real-time updates on pending counts
+    // Listeners for real-time updates on pending counts
     const pendingKycUnsub = onSnapshot(query(collection(db, 'users'), where('kycStatus', '==', 'Pending')), (snap) => {
         setStats(prev => ({ ...prev, pendingKYC: snap.size }));
     });
     const pendingTxUnsub = onSnapshot(query(collection(db, 'transactions'), where('status', '==', 'pending')), (snap) => {
         setStats(prev => ({ ...prev, pendingTransactions: snap.size }));
     });
-
 
     return () => {
         pendingKycUnsub();

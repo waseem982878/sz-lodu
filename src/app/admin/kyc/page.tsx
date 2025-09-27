@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -76,6 +77,7 @@ export default function KycPage() {
       setUsers(usersData);
       setLoading(false);
     }, (error) => {
+      console.error("Error fetching KYC requests:", error);
       setLoading(false);
     });
 
@@ -83,10 +85,12 @@ export default function KycPage() {
   }, [filter]);
 
   const handleKycUpdate = async (userId: string, status: 'Verified' | 'Rejected') => {
-      const reasonForRejection = status === 'Rejected' ? prompt("Reason for rejection (optional):") : null;
-      
-      if (status === 'Rejected' && reasonForRejection === null) {
-          return;
+      let reasonForRejection: string | null = '';
+      if (status === 'Rejected') {
+          reasonForRejection = prompt("Reason for rejection (optional):");
+          if (reasonForRejection === null) { // User clicked cancel
+            return;
+          }
       }
       
       if (confirm(`Are you sure you want to ${status} this KYC application?`)) {
@@ -98,7 +102,7 @@ export default function KycPage() {
             });
             alert(`User KYC has been successfully ${status.toLowerCase()}.`);
           } catch (e) {
-            alert("Failed to update KYC status.");
+            alert(`Failed to update KYC status: ${(e as Error).message}`);
           }
       }
   }
