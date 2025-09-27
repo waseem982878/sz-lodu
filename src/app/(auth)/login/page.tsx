@@ -87,7 +87,7 @@ export default function LoginPage() {
             console.error("Error during OTP sending:", error);
             showDialog("Error", "Failed to send OTP. Please check your phone number, refresh the page, and try again.");
             // @ts-ignore
-            if (window.grecaptcha && window.recaptchaVerifier) {
+            if (window.grecaptcha && window.recaptchaVerifier && window.recaptchaVerifier.widgetId) {
                  // @ts-ignore
                 window.grecaptcha.reset(window.recaptchaVerifier.widgetId);
             }
