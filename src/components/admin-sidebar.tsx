@@ -81,7 +81,8 @@ export function AdminSidebar() {
                 onClick={handleLinkClick}
                 className={cn(
                   "flex items-center gap-3 p-3 rounded-lg text-gray-600 font-medium hover:bg-gray-100 hover:text-primary transition-colors",
-                  pathname.startsWith(item.href) ? "bg-primary/10 text-primary" : ""
+                  pathname.startsWith(item.href) && item.href !== '/admin/users' ? "bg-primary/10 text-primary" : "",
+                  pathname.startsWith('/admin/users') && item.href === '/admin/users' ? "bg-primary/10 text-primary" : ""
                 )}
               >
                 <item.icon className="h-5 w-5" />

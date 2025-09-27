@@ -3,43 +3,36 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function isAdmin() {
-      // Check for the custom admin claim on the user's token.
-      // This claim must be set via the Firebase Admin SDK.
+      // Ensure you have set this custom claim on your admin users' accounts
       return request.auth.token.admin == true;
     }
+
+    // KYC Documents: User can write, user and admin can read.
+    match /kyc/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
     
-    // Rules for user avatars
-    match /avatars/{userId} {
-      // Anyone can read avatars, but only the owner can write.
-      allow read;
+    // Deposit Screenshots: User can write, only admin can read.
+    match /deposits/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && isAdmin();
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Rules for KYC documents
-    match /kyc/{userId}/{fileName} {
-      // User can write to their own KYC folder.
-      // User and Admin can read from the folder.
-      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    // Result Screenshots: User can write, only admin can read.
+    match /results/{battleId}/{userId}/{allPaths=**} {
+        allow read: if isAuthenticated() && isAdmin();
+        allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Rules for deposit screenshots
-    match /deposits/{userId}/{fileName} {
-      // User can write to their own deposits folder.
-      // User and Admin can read.
-      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-    }
-    
-    // Rules for game result screenshots
-    match /results/{battleId}/{userId}/{fileName} {
-        // Only an authenticated user who is part of the battle can upload.
-        // Admins can read all results for verification.
-        allow read: if isAuthenticated() && (request.resource.metadata.uid == request.auth.uid || isAdmin());
+    // User Avatars: Publicly readable, only user can write.
+    match /avatars/{userId} {
+        allow read;
         allow write: if isAuthenticated() && request.auth.uid == userId;
     }
   }

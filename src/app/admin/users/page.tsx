@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -7,139 +6,149 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Loader2, CircleUserRound } from "lucide-react";
-import Image from "next/image";
-import { collection, query, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { Search, UserPlus, Loader2, CircleUserRound, Shield, Mail, Phone, Calendar, AlertTriangle, CheckCircle, Wallet, Edit } from "lucide-react";
+import { collection, query, orderBy, onSnapshot, Timestamp, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { UserProfile } from "@/models/user.model";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 
 export default function UsersPage() {
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
   useEffect(() => {
     setLoading(true);
-    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const usersData: UserProfile[] = [];
-      snapshot.forEach(doc => usersData.push({ uid: doc.id, ...doc.data() } as UserProfile));
-      setAllUsers(usersData);
-      setLoading(false);
-    }, (error) => {
+      snapshot.forEach((doc) => {
+        usersData.push({ uid: doc.id, ...doc.data() } as UserProfile);
+      });
+      setUsers(usersData);
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
-  
-  const filteredUsers = useMemo(() => {
-      if (!searchTerm) return allUsers;
-      return allUsers.filter(u => 
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (u.phoneNumber && u.phoneNumber.includes(searchTerm))
-      );
-  }, [allUsers, searchTerm]);
-  
-  const handleUserClick = (userId: string) => {
-      router.push(`/admin/users/${userId}`);
-  }
 
-  const formatLastSeen = (timestamp: Timestamp | undefined) => {
-    if (!timestamp) return 'Never';
-    const date = timestamp.toDate();
-    const now = new Date();
-    const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000);
-
-    if (diffSeconds < 60) return `${diffSeconds}s ago`;
-    const diffMinutes = Math.round(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    const diffHours = Math.round(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    
-    return date.toLocaleDateString();
+  const handleToggleUser = async (userId: string, currentStatus: boolean) => {
+    // We assume 'isActive' property exists, if not, we need to add it to the model.
+    // Let's add it via a migration or by default in user creation. For now, let's assume it exists or is undefined.
+    if (confirm(`Are you sure you want to ${!currentStatus ? 'activate' : 'block'} this user?`)) {
+        try {
+            await updateDoc(doc(db, 'users', userId), {
+                isActive: !currentStatus
+            });
+            alert("User status updated.");
+        } catch (error) {
+            alert('Error updating user status');
+        }
+    }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-        <h1 className="text-3xl font-bold text-primary">User Management</h1>
-        <Button disabled>
-          <UserPlus className="mr-2 h-4 w-4" /> Add New User
-        </Button>
-      </div>
 
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm) return users;
+    return users.filter(user =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phoneNumber?.includes(searchTerm)
+    );
+  }, [users, searchTerm]);
+
+  return (
+    <div className="p-0 sm:p-6 space-y-6">
+       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <h1 className="text-2xl font-bold">User Management</h1>
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
+      
       <Card>
-        <CardHeader>
-          <CardTitle className="text-primary">All Users ({filteredUsers.length})</CardTitle>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search by name, email, or phone..." 
-                className="pl-8" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Wallet (Dep/Win)</TableHead>
+                  <TableHead>KYC</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading && <tr><TableCell colSpan={6} className="text-center py-10"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></tr>}
+                {!loading && filteredUsers.map((user) => (
+                  <TableRow key={user.uid}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                          <CircleUserRound className="h-8 w-8 text-muted-foreground" />
+                          <div>
+                            <p className="font-semibold">{user.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{user.uid}</p>
+                          </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <p>{user.email}</p>
+                        <p className="text-muted-foreground">{user.phoneNumber}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <p className="text-sm font-semibold">
+                          ₹{user.depositBalance.toFixed(0)} / <span className="text-green-600">₹{user.winningsBalance.toFixed(0)}</span>
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        user.kycStatus === 'Verified' ? 'default' :
+                        user.kycStatus === 'Pending' ? 'secondary' : 'destructive'
+                      }>
+                        {user.kycStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                       <Badge variant={user.isActive === false ? 'destructive' : 'default'}>
+                         {user.isActive === false ? 'Blocked' : 'Active'}
+                       </Badge>
+                    </TableCell>
+                    <TableCell className="flex gap-2">
+                       <Button asChild size="sm" variant="outline">
+                        <Link href={`/admin/users/${user.uid}`}>
+                            <Edit className="h-3 w-3 mr-1"/> View
+                        </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={user.isActive === false ? 'default' : 'destructive'}
+                        onClick={() => handleToggleUser(user.uid, user.isActive !== false)}
+                      >
+                        {user.isActive === false ? 'Unblock' : 'Block'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {!loading && filteredUsers.length === 0 && (
+                <p className="text-center py-10 text-muted-foreground">No users found.</p>
+            )}
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-             <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead className="hidden md:table-cell">Contact</TableHead>
-                        <TableHead>KYC</TableHead>
-                        <TableHead className="hidden lg:table-cell">Wallet</TableHead>
-                        <TableHead className="hidden md:table-cell">Joined</TableHead>
-                        <TableHead>Last Seen</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {filteredUsers.map((user) => (
-                        <TableRow key={user.uid} onClick={() => handleUserClick(user.uid)} className="cursor-pointer">
-                        <TableCell>
-                            <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted">
-                                <CircleUserRound className="w-6 h-6 text-muted-foreground" />
-                            </div>
-                            <div>
-                                <span className="font-medium">{user.name}</span>
-                                <div className="text-gray-500 text-sm md:hidden">{user.phoneNumber}</div>
-                            </div>
-                            </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                            <div>{user.email}</div>
-                            <div className="text-gray-500 text-sm">{user.phoneNumber}</div>
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant={user.kycStatus === 'Verified' ? 'default' : user.kycStatus === 'Pending' ? 'secondary' : 'destructive'}>{user.kycStatus}</Badge>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                            ₹{user.depositBalance.toFixed(0)} / <span className="text-green-600 font-medium">₹{user.winningsBalance.toFixed(0)}</span>
-                        </TableCell>
-                        <TableCell className="text-gray-500 hidden md:table-cell">
-                            {user.createdAt instanceof Timestamp ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}
-                        </TableCell>
-                         <TableCell className="text-gray-500 whitespace-nowrap">
-                            {formatLastSeen(user.lastSeen)}
-                        </TableCell>
-                        </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

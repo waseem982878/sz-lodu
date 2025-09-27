@@ -5,12 +5,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Check, X, Eye, Send } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment } from "firebase/firestore";
+import { Input } from "@/components/ui/input";
+import { Loader2, CheckCircle, XCircle, Eye, Download, Search } from "lucide-react";
+import { collection, query, orderBy, doc, runTransaction, serverTimestamp, where, onSnapshot, updateDoc, increment, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase/config";
 import type { Transaction } from "@/models/transaction.model";
-import type { UserProfile } from "@/models/user.model";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -19,7 +18,7 @@ function ScreenshotModal({ imageUrl }: { imageUrl: string }) {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm"><Eye className="mr-1 h-4 w-4" /> View</Button>
+                <Button variant="outline" size="sm"><Eye className="mr-1 h-4 w-4" /> View Proof</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
                 <DialogHeader>
@@ -34,213 +33,220 @@ function ScreenshotModal({ imageUrl }: { imageUrl: string }) {
 }
 
 export default function TransactionsPage() {
-  const [deposits, setDeposits] = useState<Transaction[]>([]);
-  const [withdrawals, setWithdrawals] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed' | 'rejected'>('all');
 
   useEffect(() => {
     setLoading(true);
+    let q = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
     
-    const depositQuery = query(collection(db, "transactions"), where("type", "==", "deposit"), orderBy("createdAt", "desc"));
-    const withdrawalQuery = query(collection(db, "transactions"), where("type", "==", "withdrawal"), orderBy("createdAt", "desc"));
-    
-    let activeListeners = 2;
-    const onListenerDone = () => {
-        activeListeners--;
-        if (activeListeners === 0) {
-            setLoading(false);
-        }
-    };
+    if (filterType !== 'all') {
+      q = query(q, where('type', '==', filterType));
+    }
+    if (filterStatus !== 'all') {
+      q = query(q, where('status', '==', filterStatus));
+    }
 
-    const unsubDeposits = onSnapshot(depositQuery, (snap) => {
-        const depositData: Transaction[] = [];
-        snap.forEach(doc => depositData.push({ id: doc.id, ...doc.data() } as Transaction));
-        setDeposits(depositData);
-        onListenerDone();
-    }, (err) => {
-        console.error("Error fetching deposits:", err);
-        onListenerDone();
-    });
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const transactionsData: Transaction[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+        setTransactions(transactionsData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Transaction fetch error:', error);
+        setLoading(false);
+      }
+    );
 
-    const unsubWithdrawals = onSnapshot(withdrawalQuery, (snap) => {
-        const withdrawalData: Transaction[] = [];
-        snap.forEach(doc => withdrawalData.push({ id: doc.id, ...doc.data() } as Transaction));
-        setWithdrawals(withdrawalData);
-        onListenerDone();
-    }, (err) => {
-        console.error("Error fetching withdrawals:", err);
-        onListenerDone();
-    });
-
-    return () => {
-        unsubDeposits();
-        unsubWithdrawals();
-    };
-  }, []);
+    return () => unsubscribe();
+  }, [filterType, filterStatus]);
   
-  const handleDeposit = async (transaction: Transaction, newStatus: 'completed' | 'rejected') => {
-      if(transaction.status !== 'pending') return;
+  const handleApproveDeposit = async (transaction: Transaction) => {
+      if (transaction.status !== 'pending' || transaction.type !== 'deposit') return;
+      
       const transRef = doc(db, 'transactions', transaction.id);
       const userRef = doc(db, 'users', transaction.userId);
 
       try {
           await runTransaction(db, async (t) => {
-              if (newStatus === 'completed') {
-                  const depositAmount = transaction.amount;
-                  const bonusAmount = transaction.bonusAmount || 0;
-                  const totalCredit = depositAmount + bonusAmount;
+              const depositAmount = transaction.amount;
+              const bonusAmount = transaction.bonusAmount || 0;
+              const totalCredit = depositAmount + bonusAmount;
 
-                  t.update(userRef, { depositBalance: increment(totalCredit) });
-              }
+              t.update(userRef, { depositBalance: increment(totalCredit) });
               t.update(transRef, { 
-                  status: newStatus, 
+                  status: 'completed', 
                   updatedAt: serverTimestamp(),
                   processedBy: { id: "admin", name: "Admin" }
               });
           });
-          alert(`Deposit has been ${newStatus}.`);
+          alert('Deposit approved successfully.');
       } catch (error) {
-          alert("Error updating deposit status.");
+          alert("Error approving deposit.");
       }
   }
+
+  const handleReject = async (transactionId: string, reason: string) => {
+    try {
+      await updateDoc(doc(db, 'transactions', transactionId), {
+        status: 'rejected',
+        notes: reason,
+        updatedAt: Timestamp.now()
+      });
+      // If it's a withdrawal, refund the amount
+      const t = transactions.find(tx => tx.id === transactionId);
+      if (t && t.type === 'withdrawal') {
+          await updateDoc(doc(db, 'users', t.userId), {
+              winningsBalance: increment(t.amount)
+          });
+      }
+      alert('Transaction rejected');
+    } catch (error) {
+      alert('Error rejecting transaction');
+    }
+  };
   
-  const handleWithdrawal = async (transaction: Transaction, newStatus: 'completed' | 'rejected') => {
-       if(transaction.status !== 'pending') return;
-       const transRef = doc(db, 'transactions', transaction.id);
-       const userRef = doc(db, 'users', transaction.userId);
-       
-       try {
-           await runTransaction(db, async (t) => {
-                const userDoc = await t.get(userRef);
-                if (!userDoc.exists()) throw new Error("User not found");
-                
-                if (newStatus === 'rejected') {
-                    t.update(userRef, { winningsBalance: increment(transaction.amount) });
-                    t.update(transRef, { 
-                        status: newStatus, 
-                        updatedAt: serverTimestamp(), 
-                        notes: "Admin rejected withdrawal.",
-                        processedBy: { id: "admin", name: "Admin" }
-                    });
-                } else {
-                    t.update(transRef, { 
-                        status: newStatus, 
-                        updatedAt: serverTimestamp(), 
-                        notes: "Admin approved withdrawal. Awaiting payment confirmation.",
-                        processedBy: { id: "admin", name: "Admin" }
-                    });
-                }
-           });
-           alert(`Withdrawal has been ${newStatus}.`);
-       } catch (error) {
-            const err = error as Error;
-            alert(`Error updating withdrawal status: ${err.message}`);
-       }
-  }
-  
-  const confirmPaymentSent = async (transactionId: string) => {
-      if (confirm("Are you sure you have sent the payment for this withdrawal? This marks the final step.")) {
-        const transRef = doc(db, 'transactions', transactionId);
-        await updateDoc(transRef, {
-            paymentSent: true,
-            notes: "Payment confirmed by admin."
+   const handleApproveWithdrawal = async (transaction: Transaction) => {
+      if (transaction.status !== 'pending' || transaction.type !== 'withdrawal') return;
+      try {
+        await updateDoc(doc(db, 'transactions', transaction.id), {
+          status: 'completed',
+          updatedAt: Timestamp.now()
         });
-        alert("Payment marked as sent.");
+        alert('Withdrawal approved. Please send the payment manually.');
+      } catch (error) {
+        alert('Error approving withdrawal');
       }
-  }
+  };
 
-  const renderTable = (type: 'deposit' | 'withdrawal', data: Transaction[]) => {
-    if (loading) return <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-    
-    return (
-        <div className="overflow-x-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead className="hidden sm:table-cell">Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Details</TableHead>
-                        <TableHead className="hidden sm:table-cell">Processed By</TableHead>
-                        <TableHead>Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {data.map(t => (
-                        <TableRow key={t.id}>
-                            <TableCell className="font-mono text-xs break-all max-w-xs">{t.userId}</TableCell>
-                            <TableCell>
-                                ₹{t.amount}
-                                {t.type === 'deposit' && t.bonusAmount ? <span className="text-green-600 text-xs ml-1 block sm:inline">(+₹{t.bonusAmount} bonus)</span> : ''}
-                            </TableCell>
-                            <TableCell className="text-xs hidden sm:table-cell whitespace-nowrap">{t.createdAt?.toDate ? t.createdAt.toDate().toLocaleString() : 'N/A'}</TableCell>
-                            <TableCell>
-                                <Badge variant={t.status === 'completed' ? 'default' : t.status === 'pending' ? 'secondary' : 'destructive'}>{t.status}</Badge>
-                                {t.status === 'completed' && t.paymentSent && type === 'withdrawal' && <Badge className="ml-1 bg-blue-500 hidden sm:inline-flex">Paid</Badge>}
-                            </TableCell>
-                            
-                            <TableCell>
-                                {t.type === 'deposit' && t.screenshotUrl && (<ScreenshotModal imageUrl={t.screenshotUrl} />)}
-                                {t.type === 'withdrawal' && t.withdrawalDetails && (<span className="text-xs break-all block w-28">{t.withdrawalDetails.method}: {t.withdrawalDetails.address}</span>)}
-                            </TableCell>
 
-                            <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{t.processedBy?.name || 'N/A'}</TableCell>
-
-                            <TableCell>
-                                {t.status === 'pending' && (
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                        <Button size="sm" variant="default" onClick={() => type === 'deposit' ? handleDeposit(t, 'completed') : handleWithdrawal(t, 'completed')}>
-                                            <Check className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Approve</span>
-                                        </Button>
-                                        <Button size="sm" variant="destructive" onClick={() => type === 'deposit' ? handleDeposit(t, 'rejected') : handleWithdrawal(t, 'rejected')}>
-                                            <X className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Reject</span>
-                                        </Button>
-                                    </div>
-                                )}
-                                 {t.status === 'completed' && !t.paymentSent && type === 'withdrawal' && (
-                                    <Button size="sm" variant="secondary" onClick={() => confirmPaymentSent(t.id)}>
-                                        <Send className="h-4 w-4 mr-1"/> <span className="hidden sm:inline">Confirm</span>
-                                    </Button>
-                                 )}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
-    )
-  }
+  const filteredTransactions = transactions.filter(t =>
+    (t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.upiId?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-primary">Transactions</h1>
-      <Tabs defaultValue="deposits">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="deposits">Deposit Requests</TabsTrigger>
-          <TabsTrigger value="withdrawals">Withdrawal Requests</TabsTrigger>
-        </TabsList>
-        <TabsContent value="deposits">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-primary">Deposit History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderTable('deposit', deposits)}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="withdrawals">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-primary">Withdrawal History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {renderTable('withdrawal', withdrawals)}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+    <div className="p-0 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <h1 className="text-2xl font-bold">Transaction Management</h1>
+        <Button disabled>
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
+      </div>
+
+      <Card>
+          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+             <div className="relative md:col-span-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by ID, User ID, UPI..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+             </div>
+            <select 
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+              className="p-2 border rounded-md bg-background text-sm"
+            >
+              <option value="all">All Types</option>
+              <option value="deposit">Deposits</option>
+              <option value="withdrawal">Withdrawals</option>
+            </select>
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as any)}
+              className="p-2 border rounded-md bg-background text-sm"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </CardContent>
+      </Card>
+      
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[120px]">User ID</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading && <tr><TableCell colSpan={6} className="text-center py-10"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></tr>}
+                {!loading && filteredTransactions.map((transaction) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell className="font-mono text-xs break-all">{transaction.userId}</TableCell>
+                    <TableCell>₹{transaction.amount}</TableCell>
+                    <TableCell>
+                      <Badge variant={transaction.type === 'deposit' ? 'default' : 'secondary'} className={transaction.type === 'deposit' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                        {transaction.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        transaction.status === 'completed' ? 'default' :
+                        transaction.status === 'rejected' ? 'destructive' : 'secondary'
+                      }>
+                        {transaction.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {transaction.createdAt?.toDate().toLocaleString()}
+                    </TableCell>
+                    <TableCell className="flex gap-2 flex-col sm:flex-row">
+                      {transaction.status === 'pending' && (
+                        <>
+                          <Button 
+                            size="sm" 
+                            onClick={() => transaction.type === 'deposit' ? handleApproveDeposit(transaction) : handleApproveWithdrawal(transaction)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Approve</span>
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => {
+                              const reason = prompt('Rejection reason (optional):') || "Rejected by admin";
+                              if (reason) handleReject(transaction.id, reason);
+                            }}
+                          >
+                            <XCircle className="h-4 w-4 sm:mr-1" />
+                             <span className="hidden sm:inline">Reject</span>
+                          </Button>
+                        </>
+                      )}
+                       {transaction.screenshotUrl && (
+                         <ScreenshotModal imageUrl={transaction.screenshotUrl} />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+             {!loading && filteredTransactions.length === 0 && (
+                <p className="text-center py-10 text-muted-foreground">No transactions found for the selected filters.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
