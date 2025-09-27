@@ -36,3 +36,4 @@ db = getFirestore(app);
 storage = getStorage(app);
 
 export { app, auth, db, storage };
+
