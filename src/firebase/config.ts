@@ -26,7 +26,15 @@ let db: Firestore;
 let storage: FirebaseStorage;
 
 // This guard is crucial to prevent "Firebase app already exists" errors in Next.js.
-if (getApps().length) {
+// It also prevents initialization during the build process on Vercel.
+if (process.env.VERCEL && process.env.CI) {
+    // During Vercel build, Firebase can't be initialized due to missing env vars.
+    // We provide mock/empty objects to prevent build failure.
+    app = {} as FirebaseApp;
+    auth = {} as Auth;
+    db = {} as Firestore;
+    storage = {} as FirebaseStorage;
+} else if (getApps().length) {
     app = getApp();
 } else {
     // Check if all required environment variables are set before initializing
@@ -40,8 +48,11 @@ if (getApps().length) {
     app = initializeApp(firebaseConfig);
 }
 
-auth = getAuth(app);
-db = getFirestore(app);
-storage = getStorage(app);
+// Only get the real instances if not in Vercel build
+if (!process.env.VERCEL || !process.env.CI) {
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+}
 
 export { app, auth, db, storage };
