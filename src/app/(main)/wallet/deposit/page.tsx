@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { IndianRupee, Loader2, CreditCard, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/firebase/config';
@@ -70,6 +70,8 @@ export default function DepositPage() {
         setIsRedirecting(true);
 
         try {
+            // Success and cancel URLs are now defined in the Firebase Extension settings
+            // for security and to avoid build errors.
             const checkoutSessionRef = await addDoc(
                 collection(db, 'users', user.uid, 'checkout_sessions'),
                 {
@@ -103,7 +105,7 @@ export default function DepositPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <Card>
                 <CardHeader>
                     <CardTitle className='text-center text-primary'>Add Funds to Your Wallet</CardTitle>
@@ -115,12 +117,12 @@ export default function DepositPage() {
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         </div>
                     ) : products.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {products.flatMap(p => p.prices).sort((a,b) => a.unit_amount - b.unit_amount).map((price) => (
                                 <Button
                                     key={price.id}
                                     variant={selectedPriceId === price.id ? "default" : "outline"}
-                                    className="h-auto py-4 flex flex-col items-center justify-center text-center"
+                                    className="h-auto p-3 flex flex-col items-center justify-center text-center text-base"
                                     onClick={() => handleCheckout(price.id)}
                                     disabled={isRedirecting}
                                 >
@@ -128,8 +130,8 @@ export default function DepositPage() {
                                         <Loader2 className="h-6 w-6 animate-spin" />
                                     ) : (
                                         <>
-                                            <span className="text-2xl font-bold">₹{price.unit_amount / 100}</span>
-                                            <span className="text-xs text-muted-foreground">{price.description || 'One-time deposit'}</span>
+                                            <span className="text-xl font-bold">₹{price.unit_amount / 100}</span>
+                                            {price.description && <span className="text-xs text-muted-foreground mt-1">{price.description}</span>}
                                         </>
                                     )}
                                 </Button>
@@ -145,13 +147,10 @@ export default function DepositPage() {
                 </CardContent>
             </Card>
 
-             <Card className="border-green-500 bg-green-50">
-                <CardHeader>
-                    <CardTitle className="text-green-700 flex items-center gap-2"><CheckCircle className="h-5 w-5"/> Secure & Automated</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-green-600 space-y-2">
-                    <p>Your payments are processed by Stripe, a global leader in online payments.</p>
-                    <p>Your balance will be updated automatically as soon as the payment is successful. No need to upload screenshots!</p>
+             <Card className="border-green-500 bg-green-50 dark:bg-green-900/20 p-2">
+                <CardContent className="text-sm text-green-600 dark:text-green-300 space-y-1 p-2">
+                    <p>✓ Your payments are processed by Stripe, a global leader in online payments.</p>
+                    <p>✓ Your balance will be updated automatically as soon as the payment is successful.</p>
                 </CardContent>
             </Card>
         </div>
