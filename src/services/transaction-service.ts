@@ -96,25 +96,28 @@ export const handleApproveWithdrawal = async (transactionId: string) => {
 
   export const handleRejectTransaction = async (transactionId: string, reason: string, transactionType: 'deposit' | 'withdrawal', userId: string, amount: number) => {
     try {
-      await updateDoc(doc(db, 'transactions', transactionId), {
-        status: 'rejected',
-        notes: reason,
-        updatedAt: Timestamp.now()
+      await runTransaction(db, async (t) => {
+        const transRef = doc(db, 'transactions', transactionId);
+        t.update(transRef, {
+            status: 'rejected',
+            notes: reason,
+            updatedAt: serverTimestamp()
+        });
+
+        // If it's a rejected withdrawal, refund the amount to the user's winnings balance
+        if (transactionType === 'withdrawal') {
+            const userRef = doc(db, 'users', userId);
+            t.update(userRef, {
+                winningsBalance: increment(amount)
+            });
+        }
       });
-      // If it's a rejected withdrawal, refund the amount to the user's winnings balance
-      if (transactionType === 'withdrawal') {
-          await updateDoc(doc(db, 'users', userId), {
-              winningsBalance: increment(amount)
-          });
-      }
     } catch (error) {
       console.error('Error rejecting transaction:', error);
       throw new Error('Error rejecting transaction');
     }
   };
 
-  // The following functions are deprecated as we move to Stripe.
-  // Kept for reference or if manual processing is ever needed again.
 
   export const handleApproveDeposit = async (transactionRecord: Transaction) => {
       if (transactionRecord.status !== 'pending' || transactionRecord.type !== 'deposit') return;

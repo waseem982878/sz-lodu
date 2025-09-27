@@ -27,7 +27,9 @@ export const uploadImage = async (file: File, path: string): Promise<string> => 
     }
 
     try {
-        const storageRef = ref(storage, path);
+        const timestamp = Date.now();
+        const uniquePath = `${path}_${timestamp}`;
+        const storageRef = ref(storage, uniquePath);
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
         return downloadURL;
