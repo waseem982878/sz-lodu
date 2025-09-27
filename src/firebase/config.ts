@@ -7,6 +7,7 @@ import { getStorage, FirebaseStorage } from "firebase/storage";
 // Removed getAnalytics as it's not used in a way that requires explicit handling here.
 
 // Your web app's Firebase configuration
+// These values are now sourced from environment variables for security
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -28,6 +29,14 @@ let storage: FirebaseStorage;
 if (getApps().length) {
     app = getApp();
 } else {
+    // Check if all required environment variables are set before initializing
+    if (
+        !firebaseConfig.apiKey ||
+        !firebaseConfig.projectId ||
+        !firebaseConfig.authDomain
+    ) {
+        console.error("Firebase environment variables are not set. Please check your .env.local file and Vercel project settings.");
+    }
     app = initializeApp(firebaseConfig);
 }
 
