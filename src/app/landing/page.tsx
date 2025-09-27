@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Banknote, Instagram, MessageSquare, Send, ShieldCheck, Star, Swords, Trophy, UserPlus, Youtube, Zap } from "lucide-react";
 import Link from "next/link";
@@ -6,8 +5,8 @@ import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card } from "@/components/ui/card";
 import imagePaths from '@/lib/image-paths.json';
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { getFirebaseAdminApp } from "@/firebase/admin-config";
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 
 
 type LandingPageContent = {
@@ -73,22 +72,31 @@ export default async function LandingPage() {
     
     let content: Partial<LandingPageContent> = {};
     let socialLinks: Partial<SocialMediaLinks> = {};
-    try {
-        const landingRef = doc(db, 'config', 'landingPage');
-        const socialRef = doc(db, 'config', 'socialMedia');
-        const [landingSnap, socialSnap] = await Promise.all([
-            getDoc(landingRef),
-            getDoc(socialRef),
-        ]);
+    
+    // Only attempt to fetch data if not in a Vercel CI build environment without credentials
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+        try {
+            const adminApp = getFirebaseAdminApp();
+            const db = getAdminFirestore(adminApp);
 
-        if (landingSnap.exists()) {
-            content = landingSnap.data() as LandingPageContent;
+            const landingRef = db.collection('config').doc('landingPage');
+            const socialRef = db.collection('config').doc('socialMedia');
+            
+            const [landingSnap, socialSnap] = await Promise.all([
+                landingRef.get(),
+                socialRef.get(),
+            ]);
+
+            if (landingSnap.exists) {
+                content = landingSnap.data() as LandingPageContent;
+            }
+            if (socialSnap.exists) {
+                socialLinks = socialSnap.data() as SocialMediaLinks;
+            }
+        } catch (error) {
+            console.error("Could not fetch landing page content during build:", error);
+            // Use default content on error
         }
-        if (socialSnap.exists()) {
-            socialLinks = socialSnap.data() as SocialMediaLinks;
-        }
-    } catch (error) {
-        console.error("Could not fetch landing page content, using defaults.", error);
     }
     
     return (
