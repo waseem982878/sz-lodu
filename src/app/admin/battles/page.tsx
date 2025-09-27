@@ -61,7 +61,7 @@ export default function BattlesPage() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h1 className="text-3xl font-bold text-primary">Battle Management</h1>
       <Card>
         <CardHeader>
@@ -89,11 +89,11 @@ export default function BattlesPage() {
                 <TableBody>
                   {battles.map((battle) => (
                     <TableRow key={battle.id}>
-                      <TableCell className="font-mono text-xs text-muted-foreground break-all max-w-xs">{battle.id}</TableCell>
-                      <TableCell>₹{battle.amount}</TableCell>
-                      <TableCell>{battle.creator.name}</TableCell>
-                      <TableCell>{battle.opponent?.name || 'N/A'}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground break-all max-w-xs p-2">{battle.id}</TableCell>
+                      <TableCell className="p-2">₹{battle.amount}</TableCell>
+                      <TableCell className="p-2">{battle.creator.name}</TableCell>
+                      <TableCell className="p-2">{battle.opponent?.name || 'N/A'}</TableCell>
+                      <TableCell className="p-2">
                         <Badge 
                           variant={
                             battle.status === 'completed' ? 'default' : 
@@ -104,27 +104,27 @@ export default function BattlesPage() {
                           {battle.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{battle.winnerId ? (battle.winnerId === battle.creator.id ? battle.creator.name : battle.opponent?.name) : 'N/A'}</TableCell>
-                      <TableCell>
+                      <TableCell className="p-2">{battle.winnerId ? (battle.winnerId === battle.creator.id ? battle.creator.name : battle.opponent?.name) : 'N/A'}</TableCell>
+                      <TableCell className="p-2">
                           {(battle.status === 'result_pending' || battle.status === 'inprogress') && battle.opponent && (
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-col gap-1">
                                   <Button 
                                       size="sm" 
-                                      className="bg-green-600 hover:bg-green-700 text-white" 
+                                      className="bg-green-600 hover:bg-green-700 text-white h-7" 
                                       onClick={() => handleSetWinner(battle, battle.creator.id)}
                                       disabled={updatingBattleId === battle.id}
                                   >
-                                      {updatingBattleId === battle.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Crown className="mr-2 h-4 w-4" />}
-                                      Set {battle.creator.name} as Winner
+                                      {updatingBattleId === battle.id ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Crown className="mr-1 h-3 w-3" />}
+                                      {battle.creator.name}
                                   </Button>
                                   <Button 
                                       size="sm" 
-                                      className="bg-blue-600 hover:bg-blue-700 text-white" 
+                                      className="bg-blue-600 hover:bg-blue-700 text-white h-7" 
                                       onClick={() => handleSetWinner(battle, battle.opponent!.id)}
                                       disabled={updatingBattleId === battle.id}
                                   >
-                                      {updatingBattleId === battle.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Crown className="mr-2 h-4 w-4" />}
-                                      Set {battle.opponent.name} as Winner
+                                      {updatingBattleId === battle.id ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Crown className="mr-1 h-3 w-3" />}
+                                      {battle.opponent.name}
                                   </Button>
                               </div>
                           )}

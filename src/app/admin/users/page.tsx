@@ -61,7 +61,7 @@ export default function UsersPage() {
   }, [users, searchTerm]);
 
   return (
-    <div className="p-0 sm:p-6 space-y-6">
+    <div className="p-0 sm:p-2 space-y-4">
        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <h1 className="text-2xl font-bold">User Management</h1>
         <div className="relative w-full max-w-sm">
@@ -93,27 +93,27 @@ export default function UsersPage() {
                 {loading && <tr><TableCell colSpan={6} className="text-center py-10"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></tr>}
                 {!loading && filteredUsers.map((user) => (
                   <TableRow key={user.uid}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                          <CircleUserRound className="h-8 w-8 text-muted-foreground" />
+                    <TableCell className="p-2">
+                      <div className="flex items-center gap-2">
+                          <CircleUserRound className="h-6 w-6 text-muted-foreground" />
                           <div>
-                            <p className="font-semibold">{user.name}</p>
+                            <p className="font-semibold text-sm">{user.name}</p>
                             <p className="text-xs text-muted-foreground font-mono">{user.uid}</p>
                           </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
+                    <TableCell className="p-2">
+                      <div className="text-xs">
                         <p>{user.email}</p>
                         <p className="text-muted-foreground">{user.phoneNumber}</p>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <p className="text-sm font-semibold">
+                    <TableCell className="p-2">
+                      <p className="text-xs font-semibold">
                           ₹{user.depositBalance.toFixed(0)} / <span className="text-green-600">₹{user.winningsBalance.toFixed(0)}</span>
                       </p>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-2">
                       <Badge variant={
                         user.kycStatus === 'Verified' ? 'default' :
                         user.kycStatus === 'Pending' ? 'secondary' : 'destructive'
@@ -121,12 +121,12 @@ export default function UsersPage() {
                         {user.kycStatus}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-2">
                        <Badge variant={user.isActive === false ? 'destructive' : 'default'}>
                          {user.isActive === false ? 'Blocked' : 'Active'}
                        </Badge>
                     </TableCell>
-                    <TableCell className="flex gap-2">
+                    <TableCell className="p-2 flex gap-1">
                        <Button asChild size="sm" variant="outline">
                         <Link href={`/admin/users/${user.uid}`}>
                             <Edit className="h-3 w-3 mr-1"/> View

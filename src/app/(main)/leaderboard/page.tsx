@@ -52,21 +52,21 @@ export default function LeaderboardPage() {
     }, []);
 
     return (
-        <div className="space-y-6">
-            <Card className="bg-primary text-primary-foreground overflow-hidden relative p-4 h-[88px] flex items-center">
+        <div className="space-y-4">
+            <Card className="bg-primary text-primary-foreground overflow-hidden relative p-3 h-[72px] flex items-center">
                  <div className="flex items-center justify-between w-full">
                     <div className="flex-1">
-                         <CardTitle className="text-2xl sm:text-3xl">Top Players</CardTitle>
-                        <CardDescription className="text-primary-foreground/80 pt-1 text-xs sm:text-sm">
+                         <CardTitle className="text-xl sm:text-2xl">Top Players</CardTitle>
+                        <CardDescription className="text-primary-foreground/80 pt-1 text-xs">
                             See who is leading the charts!
                         </CardDescription>
                     </div>
-                     <div className="relative w-24 h-24 flex-shrink-0 -mr-4">
+                     <div className="relative w-20 h-20 flex-shrink-0 -mr-3">
                          <Image
                             src={imagePaths.trophyIcon.path}
                             alt={imagePaths.trophyIcon.alt}
-                            width={104}
-                            height={104}
+                            width={80}
+                            height={80}
                             className="object-contain"
                         />
                     </div>
@@ -83,10 +83,10 @@ export default function LeaderboardPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-1/6 text-center">Rank</TableHead>
-                                    <TableHead className="w-3/6">Player</TableHead>
-                                    <TableHead className="w-1/6 text-center">Wins</TableHead>
-                                    <TableHead className="w-1/6 text-center">Win Rate</TableHead>
+                                    <TableHead className="w-1/6 text-center px-2">Rank</TableHead>
+                                    <TableHead className="w-3/6 px-2">Player</TableHead>
+                                    <TableHead className="w-1/6 text-center px-2">Wins</TableHead>
+                                    <TableHead className="w-1/6 text-center px-2">Win Rate</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -94,19 +94,19 @@ export default function LeaderboardPage() {
                                     const winRate = player.gamesPlayed > 0 ? ((player.gamesWon / player.gamesPlayed) * 100).toFixed(0) : 0;
                                     return (
                                         <TableRow key={player.uid} className={index < 3 ? 'bg-muted/50' : ''}>
-                                            <TableCell className="font-bold text-center flex justify-center items-center h-full">
+                                            <TableCell className="font-bold text-center flex justify-center items-center h-full p-2">
                                                {getRankIcon(index + 1)}
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center border">
-                                                        <CircleUserRound className="w-6 h-6 text-muted-foreground" />
+                                            <TableCell className="p-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center border">
+                                                        <CircleUserRound className="w-5 h-5 text-muted-foreground" />
                                                     </div>
-                                                    <span className="font-medium">{player.name}</span>
+                                                    <span className="font-medium text-sm">{player.name}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="font-semibold text-center">{player.gamesWon}</TableCell>
-                                            <TableCell className="text-center">{winRate}%</TableCell>
+                                            <TableCell className="font-semibold text-center p-2">{player.gamesWon}</TableCell>
+                                            <TableCell className="text-center p-2">{winRate}%</TableCell>
                                         </TableRow>
                                     )
                                 })}

@@ -104,7 +104,7 @@ export default function TransactionsPage() {
   );
 
   return (
-    <div className="p-0 sm:p-6 space-y-6">
+    <div className="p-0 sm:p-2 space-y-4">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Transaction Management</h1>
         <Button disabled>
@@ -114,7 +114,7 @@ export default function TransactionsPage() {
       </div>
 
       <Card>
-          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <CardContent className="p-2 grid grid-cols-1 md:grid-cols-4 gap-2">
              <div className="relative md:col-span-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -164,14 +164,14 @@ export default function TransactionsPage() {
                 {loading && <tr><TableCell colSpan={6} className="text-center py-10"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></TableCell></tr>}
                 {!loading && filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
-                    <TableCell className="font-mono text-xs break-all">{transaction.userId}</TableCell>
-                    <TableCell>₹{transaction.amount}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-mono text-xs break-all p-2">{transaction.userId}</TableCell>
+                    <TableCell className="p-2">₹{transaction.amount}</TableCell>
+                    <TableCell className="p-2">
                       <Badge variant={transaction.type === 'deposit' ? 'default' : 'secondary'} className={transaction.type === 'deposit' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
                         {transaction.type}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="p-2">
                       <Badge variant={
                         transaction.status === 'completed' ? 'default' :
                         transaction.status === 'rejected' ? 'destructive' : 'secondary'
@@ -179,27 +179,26 @@ export default function TransactionsPage() {
                         {transaction.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">
+                    <TableCell className="text-xs whitespace-nowrap p-2">
                       {transaction.createdAt?.toDate().toLocaleString()}
                     </TableCell>
-                    <TableCell className="flex gap-2 flex-col sm:flex-row">
+                    <TableCell className="flex gap-1 p-2">
                       {transaction.status === 'pending' && (
                         <>
                           <Button 
                             size="sm" 
                             onClick={() => transaction.type === 'deposit' ? onApproveDeposit(transaction) : onApproveWithdrawal(transaction)}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-600 hover:bg-green-700 h-8"
                           >
-                            <CheckCircle className="h-4 w-4 sm:mr-1" />
-                            <span className="hidden sm:inline">Approve</span>
+                            <CheckCircle className="h-4 w-4" />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="destructive"
                             onClick={() => onReject(transaction)}
+                             className="h-8"
                           >
-                            <XCircle className="h-4 w-4 sm:mr-1" />
-                             <span className="hidden sm:inline">Reject</span>
+                            <XCircle className="h-4 w-4" />
                           </Button>
                         </>
                       )}

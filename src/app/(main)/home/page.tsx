@@ -27,7 +27,7 @@ type GameCardProps = {
 function GameCard({ title, description, imageUrl, href, priority = false, titleClassName }: GameCardProps) {
   return (
     <Link href={href} className="no-underline group">
-      <Card className="overflow-hidden bg-card border-primary/20 border-2 rounded-xl shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-1">
+      <Card className="overflow-hidden bg-card border-primary/20 border rounded-xl shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-1">
         <Image
           src={imageUrl}
           alt={title}
@@ -92,7 +92,7 @@ function RulesDialog() {
 
 function KycNoticeBanner() {
     return (
-        <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 mb-6">
+        <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 mb-4">
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
                     <ShieldAlert className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-1 flex-shrink-0" />
@@ -159,11 +159,11 @@ export default function HomePage() {
   const showKycBanner = userProfile && userProfile.kycStatus !== 'Verified';
 
   return (
-    <>
+    <div className="space-y-4">
       {showKycBanner && <KycNoticeBanner />}
 
       {notice && (
-        <Card className="bg-yellow-100 border-yellow-300 p-3 mb-6 dark:bg-yellow-900/30 dark:border-yellow-700">
+        <Card className="bg-yellow-100 border-yellow-300 p-3 dark:bg-yellow-900/30 dark:border-yellow-700">
           <div className="flex items-start">
             <TriangleAlert className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-3 mt-1 flex-shrink-0" />
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -173,7 +173,7 @@ export default function HomePage() {
         </Card>
       )}
 
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-primary">Available Games</h1>
         <RulesDialog />
       </div>
@@ -195,12 +195,12 @@ export default function HomePage() {
           />
       </div>
 
-      <div className="relative flex py-5 items-center">
+      <div className="relative flex py-3 items-center">
         <div className="flex-grow border-t border-muted-foreground/20"></div>
       </div>
       
       {disclaimerText && (
-        <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4 overflow-hidden">
+        <Card className="border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3">
           <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2 mb-2">
               <TriangleAlert className="h-5 w-5 animate-pulse"/> Disclaimer
           </h3>
@@ -218,8 +218,6 @@ export default function HomePage() {
           </motion.p>
         </Card>
       )}
-    </>
+    </div>
   );
 }
-
-    

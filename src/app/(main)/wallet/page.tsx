@@ -66,8 +66,8 @@ function BalanceCard({ title, balance, buttonText, buttonAction, icon: Icon, var
         <CardTitle className={`text-sm font-medium text-muted-foreground`}>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className={`text-3xl font-bold ${variant === 'primary' ? 'text-primary' : 'text-green-600'}`}>₹{balance.toFixed(2)}</p>
-        <Button onClick={buttonAction} size="sm" className={`w-full mt-4 ${variant === 'primary' ? 'bg-primary hover:bg-primary/90' : 'bg-green-600 hover:bg-green-700'}`}>
+        <p className={`text-2xl font-bold ${variant === 'primary' ? 'text-primary' : 'text-green-600'}`}>₹{balance.toFixed(2)}</p>
+        <Button onClick={buttonAction} size="sm" className={`w-full mt-2 h-8 ${variant === 'primary' ? 'bg-primary hover:bg-primary/90' : 'bg-green-600 hover:bg-green-700'}`}>
           <Icon className="mr-2 h-4 w-4" />
           {buttonText}
         </Button>
@@ -103,11 +103,11 @@ function GameHistoryCard({ game }: { game: Battle }) {
     const prizeMoney = (game.amount * 2 * 0.95); // 5% commission
 
     return (
-        <Card className="p-4 transition-all hover:shadow-md">
+        <Card className="p-3 transition-all hover:shadow-md">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted border">
-                        <CircleUserRound className="h-6 w-6 text-muted-foreground" />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-muted border">
+                        <CircleUserRound className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
                         <p className="font-bold text-sm">vs {opponent?.name || 'Waiting...'}</p>
@@ -117,13 +117,13 @@ function GameHistoryCard({ game }: { game: Battle }) {
                     </div>
                 </div>
                 <div className="text-right flex flex-col items-end">
-                     <p className={`font-bold text-lg ${displayStatus.color}`}>
+                     <p className={`font-bold text-md ${displayStatus.color}`}>
                        {game.status === 'completed' 
                            ? (isWin ? `+₹${prizeMoney.toFixed(0)}` : `-₹${game.amount}`)
                            : `₹${game.amount}`
                        }
                     </p>
-                    <Badge variant={displayStatus.variant} className="flex items-center gap-1">
+                    <Badge variant={displayStatus.variant} className="flex items-center gap-1 text-xs">
                         <displayStatus.icon className="h-3 w-3"/>
                         {displayStatus.text}
                     </Badge>
@@ -145,24 +145,24 @@ function TransactionHistoryCard({ transaction }: { transaction: Transaction }) {
     const Icon = isDeposit ? ArrowDownCircle : ArrowUpCircle;
 
     return (
-        <Card className="p-4 transition-all hover:shadow-md">
+        <Card className="p-3 transition-all hover:shadow-md">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                     <div className={`flex items-center justify-center h-10 w-10 rounded-full ${isDeposit ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
-                        <Icon className={`h-6 w-6 ${isDeposit ? 'text-green-600' : 'text-red-600'}`} />
+                     <div className={`flex items-center justify-center h-8 w-8 rounded-full ${isDeposit ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
+                        <Icon className={`h-5 w-5 ${isDeposit ? 'text-green-600' : 'text-red-600'}`} />
                     </div>
                     <div>
-                        <p className="font-bold capitalize">{transaction.type}</p>
-                         <p className="text-sm text-muted-foreground">
+                        <p className="font-bold capitalize text-sm">{transaction.type}</p>
+                         <p className="text-xs text-muted-foreground">
                             {transaction.createdAt?.toDate ? transaction.createdAt.toDate().toLocaleString() : 'Just now'}
                         </p>
                     </div>
                 </div>
                 <div className="text-right flex flex-col items-end">
-                     <p className={`font-bold text-lg ${isDeposit ? 'text-green-500' : 'text-red-500'}`}>
+                     <p className={`font-bold text-md ${isDeposit ? 'text-green-500' : 'text-red-500'}`}>
                        {isDeposit ? `+₹${transaction.amount}` : `-₹${transaction.amount}`}
                     </p>
-                    <Badge variant={statusVariant[transaction.status]}>{transaction.status}</Badge>
+                    <Badge variant={statusVariant[transaction.status]} className="text-xs">{transaction.status}</Badge>
                 </div>
             </div>
         </Card>
@@ -258,27 +258,27 @@ export default function WalletPage() {
   const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
         <InfoDialog 
             open={dialogState.open} 
             onClose={() => setDialogState({ ...dialogState, open: false })} 
             title={dialogState.title}
             message={dialogState.message} 
         />
-       <Card className="bg-primary text-primary-foreground overflow-hidden p-4 h-[88px] flex items-center">
+       <Card className="bg-primary text-primary-foreground overflow-hidden p-3 h-[72px] flex items-center">
          <div className="flex items-center justify-between w-full">
             <div className="text-left">
-                <CardTitle className="text-lg text-primary-foreground">Total Balance</CardTitle>
-                <CardDescription className="text-primary-foreground/80 text-4xl sm:text-5xl font-bold pt-1">
+                <CardTitle className="text-md text-primary-foreground">Total Balance</CardTitle>
+                <CardDescription className="text-primary-foreground/80 text-3xl font-bold">
                     ₹{totalBalance.toFixed(2)}
                 </CardDescription>
             </div>
-            <div className="relative h-24 w-24 flex-shrink-0 -mr-4">
+            <div className="relative h-20 w-20 flex-shrink-0 -mr-3">
                 <Image
                     src={imagePaths.walletIcon.path}
                     alt={imagePaths.walletIcon.alt}
-                    width={104}
-                    height={104}
+                    width={80}
+                    height={80}
                     className="object-contain"
                 />
             </div>
@@ -311,10 +311,10 @@ export default function WalletPage() {
           </TabsList>
           <TabsContent value="games">
               <Card>
-                  <CardHeader>
-                      <CardTitle className="text-primary flex items-center gap-2"><Swords className="h-5 w-5"/>Game History</CardTitle>
+                  <CardHeader className="p-4">
+                      <CardTitle className="text-primary flex items-center gap-2 text-lg"><Swords className="h-5 w-5"/>Game History</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-2 p-4 pt-0">
                       {loading ? (
                           <div className="flex justify-center items-center py-10">
                               <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -329,10 +329,10 @@ export default function WalletPage() {
           </TabsContent>
           <TabsContent value="transactions">
               <Card>
-                  <CardHeader>
-                      <CardTitle className="text-primary flex items-center gap-2"><IndianRupee className="h-5 w-5"/>Transaction History</CardTitle>
+                  <CardHeader className="p-4">
+                      <CardTitle className="text-primary flex items-center gap-2 text-lg"><IndianRupee className="h-5 w-5"/>Transaction History</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-2 p-4 pt-0">
                      {loading ? (
                           <div className="flex justify-center items-center py-10">
                               <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -349,4 +349,3 @@ export default function WalletPage() {
     </div>
   );
 }
-

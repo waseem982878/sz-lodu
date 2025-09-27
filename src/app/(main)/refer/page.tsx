@@ -98,18 +98,18 @@ export default function ReferPage() {
     }
 
   return (
-    <div className="space-y-6 text-center">
+    <div className="space-y-4 text-center">
          <InfoDialog 
             open={dialogState.open} 
             onClose={() => setDialogState({ ...dialogState, open: false })} 
             title={dialogState.title}
             message={dialogState.message} 
         />
-        <Card className="bg-primary text-primary-foreground overflow-hidden relative p-4 h-[88px] flex items-center">
+        <Card className="bg-primary text-primary-foreground overflow-hidden relative p-3 h-[72px] flex items-center">
             <div className="flex items-center justify-between w-full">
                 <div className="flex-1 z-10">
-                    <CardTitle className="text-2xl sm:text-3xl">Refer & Earn</CardTitle>
-                    <CardDescription className="text-primary-foreground/80 pt-1 text-xs sm:text-sm">
+                    <CardTitle className="text-xl sm:text-2xl">Refer & Earn</CardTitle>
+                    <CardDescription className="text-primary-foreground/80 pt-1 text-xs">
                         Invite friends & earn ₹25!
                     </CardDescription>
                 </div>
@@ -125,14 +125,14 @@ export default function ReferPage() {
         </Card>
 
         <Card>
-            <CardHeader>
-                <CardTitle className="text-primary">Your Unique Referral Code</CardTitle>
+            <CardHeader className="p-4">
+                <CardTitle className="text-primary text-lg">Your Unique Referral Code</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 p-4 pt-0">
                 <div className="p-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2">
-                    <p className="text-2xl md:text-3xl font-bold tracking-widest flex-shrink-1 overflow-x-auto whitespace-nowrap">{referralCode}</p>
+                    <p className="text-xl md:text-2xl font-bold tracking-widest flex-shrink-1 overflow-x-auto whitespace-nowrap">{referralCode}</p>
                     <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!user}>
-                        <Copy className="w-6 h-6" />
+                        <Copy className="w-5 h-5" />
                     </Button>
                 </div>
                 <Button className="w-full" onClick={handleShare} disabled={!user}>
@@ -142,13 +142,13 @@ export default function ReferPage() {
         </Card>
         
         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center justify-center gap-2 text-primary">
-                    <Users className="h-6 w-6"/>
+            <CardHeader className="p-4">
+                <CardTitle className="flex items-center justify-center gap-2 text-primary text-lg">
+                    <Users className="h-5 w-5"/>
                     Your Referrals
                 </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
                 {loading ? (
                     <div className="flex justify-center items-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin" />
@@ -157,21 +157,21 @@ export default function ReferPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Friend</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead className="px-2">Friend</TableHead>
+                                <TableHead className="px-2">Status</TableHead>
+                                <TableHead className="px-2">Date</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {referrals.map(ref => (
                                 <TableRow key={ref.id}>
-                                    <TableCell>{ref.referredName}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-2">{ref.referredName}</TableCell>
+                                    <TableCell className="p-2">
                                         <Badge variant={ref.status === 'completed' ? 'default' : 'secondary'}>
                                             {ref.status === 'completed' ? 'Bonus Awarded' : 'Pending Game'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-2 text-xs">
                                         {ref.createdAt?.toDate ? ref.createdAt.toDate().toLocaleDateString() : 'N/A'}
                                     </TableCell>
                                 </TableRow>
@@ -186,5 +186,3 @@ export default function ReferPage() {
     </div>
   );
 }
-
-    

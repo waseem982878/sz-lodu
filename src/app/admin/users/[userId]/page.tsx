@@ -46,8 +46,8 @@ function EditBalanceModal({ user, onUpdate }: { user: UserProfile, onUpdate: () 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="ml-4">
-                    <Edit className="h-4 w-4 mr-1" /> Edit Balance
+                <Button variant="outline" size="sm" className="ml-2">
+                    <Edit className="h-3 w-3" />
                 </Button>
             </DialogTrigger>
             <DialogContent>
@@ -104,13 +104,13 @@ type StatCardProps = {
 
 const StatCard = ({ icon: Icon, label, value, color, children }: StatCardProps) => (
     <Card className={`bg-opacity-10 border-l-4 ${color}`}>
-        <CardContent className="p-4 flex items-center gap-4">
-            <div className={`p-3 rounded-full bg-opacity-20 ${color}`}>
-                <Icon className="h-6 w-6" />
+        <CardContent className="p-3 flex items-center gap-3">
+            <div className={`p-2 rounded-full bg-opacity-20 ${color}`}>
+                <Icon className="h-5 w-5" />
             </div>
             <div className="flex-1">
-                <p className="text-2xl font-bold">{value}</p>
-                <p className="text-sm text-muted-foreground">{label}</p>
+                <p className="text-xl font-bold">{value}</p>
+                <p className="text-xs text-muted-foreground">{label}</p>
             </div>
             {children}
         </CardContent>
@@ -177,31 +177,31 @@ export default function UserDetailPage({ params }: { params: { userId: string } 
     const winRate = user.gamesPlayed > 0 ? ((user.gamesWon / user.gamesPlayed) * 100).toFixed(0) : 0;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <Button onClick={() => router.back()} variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Users</Button>
             
             <Card>
-                <CardHeader className="flex flex-col md:flex-row items-start gap-6">
-                    <div className="w-[100px] h-[100px] rounded-full border-4 border-primary bg-muted flex items-center justify-center">
-                        <CircleUserRound className="w-16 h-16 text-muted-foreground" />
+                <CardHeader className="flex flex-col md:flex-row items-start gap-4">
+                    <div className="w-20 h-20 rounded-full border-4 border-primary bg-muted flex items-center justify-center">
+                        <CircleUserRound className="w-12 h-12 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
-                        <CardTitle className="text-3xl text-primary">{user.name}</CardTitle>
-                        <div className="space-y-1 mt-2 text-sm text-muted-foreground">
-                            <p className="flex items-center gap-2"><Mail className="h-4 w-4" /> <span>{user.email}</span></p>
-                            <p className="flex items-center gap-2"><Phone className="h-4 w-4" /> <span>{user.phoneNumber}</span></p>
-                            <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> <span>Joined on {new Date((user.createdAt as any).seconds * 1000).toLocaleDateString()}</span></p>
+                        <CardTitle className="text-2xl text-primary">{user.name}</CardTitle>
+                        <div className="space-y-1 mt-1 text-xs text-muted-foreground">
+                            <p className="flex items-center gap-2"><Mail className="h-3 w-3" /> <span>{user.email}</span></p>
+                            <p className="flex items-center gap-2"><Phone className="h-3 w-3" /> <span>{user.phoneNumber}</span></p>
+                            <p className="flex items-center gap-2"><Calendar className="h-3 w-3" /> <span>Joined on {new Date((user.createdAt as any).seconds * 1000).toLocaleDateString()}</span></p>
                             <p className="flex items-center gap-2 pt-1"><UserCheck className="h-4 w-4" /> <Badge variant={user.kycStatus === 'Verified' ? 'default' : 'secondary'}>{user.kycStatus}</Badge></p>
                         </div>
                     </div>
                 </CardHeader>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                 <StatCard 
                     icon={Wallet} 
-                    label={`Dep: ₹${user.depositBalance.toFixed(2)} | Win: ₹${user.winningsBalance.toFixed(2)}`} 
-                    value={`₹${(user.depositBalance + user.winningsBalance).toFixed(2)}`} 
+                    label={`Dep: ₹${user.depositBalance.toFixed(0)} | Win: ₹${user.winningsBalance.toFixed(0)}`} 
+                    value={`₹${(user.depositBalance + user.winningsBalance).toFixed(0)}`} 
                     color="border-blue-500 text-blue-500"
                 >
                    <EditBalanceModal user={user} onUpdate={fetchAllData} />

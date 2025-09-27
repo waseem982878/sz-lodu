@@ -75,10 +75,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-0 sm:p-6 space-y-6">
+    <div className="p-0 sm:p-4 space-y-4">
       <h1 className="text-2xl font-bold">Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -120,16 +120,16 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
                 <CardHeader>
                     <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4">
-                    <Button onClick={() => router.push('/admin/transactions')} variant="outline">Manage Transactions</Button>
-                    <Button onClick={() => router.push('/admin/users')} variant="outline">Manage Users</Button>
-                    <Button onClick={() => router.push('/admin/kyc')} variant="outline">Review KYCs</Button>
-                    <Button onClick={() => router.push('/admin/battles')} variant="outline">View Battles</Button>
+                <CardContent className="grid grid-cols-2 gap-2">
+                    <Button onClick={() => router.push('/admin/transactions')} variant="outline" size="sm">Manage Transactions</Button>
+                    <Button onClick={() => router.push('/admin/users')} variant="outline" size="sm">Manage Users</Button>
+                    <Button onClick={() => router.push('/admin/kyc')} variant="outline" size="sm">Review KYCs</Button>
+                    <Button onClick={() => router.push('/admin/battles')} variant="outline" size="sm">View Battles</Button>
                 </CardContent>
             </Card>
              <Card>

@@ -15,7 +15,7 @@ export default function MainLayout({
         <div className="flex flex-col min-h-screen">
           <Header />
           <Sidebar />
-          <main className="flex-1 container mx-auto py-4 px-4 sm:px-6 lg:px-8">
+          <main className="flex-1 container mx-auto py-2 px-4 sm:px-6 lg:px-8">
             {children}
           </main>
           {/* Add padding to the bottom to account for the fixed nav bar */}

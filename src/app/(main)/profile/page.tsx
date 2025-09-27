@@ -24,8 +24,8 @@ type MetricProps = {
 function MetricCard({ icon: Icon, label, value, color = "text-primary" }: MetricProps) {
   return (
     <div className="bg-muted/50 p-3 rounded-lg text-center flex-1">
-      <Icon className={`h-6 w-6 mx-auto mb-1 ${color}`} />
-      <p className="text-xl font-bold">{value}</p>
+      <Icon className={`h-5 w-5 mx-auto mb-1 ${color}`} />
+      <p className="text-lg font-bold">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
@@ -55,9 +55,9 @@ function KycSection({ kycStatus }: { kycStatus: UserProfile['kycStatus'] }) {
                     <span>{currentStatus.text}</span>
                 </div>
             </div>
-            <Button variant="outline" className="border-current hover:bg-current/10" onClick={handleKycClick}>
+            <Button variant="outline" className="border-current hover:bg-current/10 h-8" onClick={handleKycClick}>
               <UserCheck className="mr-2 h-4 w-4" />
-              {kycStatus === 'Verified' ? 'View Details' : kycStatus === 'Pending' ? 'Check Status' : 'Start KYC'}
+              {kycStatus === 'Verified' ? 'View' : kycStatus === 'Pending' ? 'Status' : 'Start'}
             </Button>
         </div>
     )
@@ -115,37 +115,37 @@ export default function ProfilePage() {
 
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 pb-10">
       <Card>
-        <CardHeader className="text-center relative">
-          <div className="absolute top-4 right-4">
-             <Button variant="ghost" size="icon" onClick={handleEditToggle}>
-                {isEditing ? <X className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
+        <CardHeader className="text-center relative pt-4 pb-2">
+          <div className="absolute top-2 right-2">
+             <Button variant="ghost" size="icon" onClick={handleEditToggle} className="h-8 w-8">
+                {isEditing ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
              </Button>
           </div>
           
-          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-4 border-primary bg-primary/10">
-             <CircleUserRound className="w-16 h-16 text-primary" />
+          <div className="relative w-20 h-20 mx-auto flex items-center justify-center rounded-full border-4 border-primary bg-primary/10">
+             <CircleUserRound className="w-12 h-12 text-primary" />
           </div>
           
           {isEditing ? (
-            <div className="mt-4">
+            <div className="mt-2">
               <Input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="text-center text-2xl font-semibold"
+                className="text-center text-xl font-semibold h-9"
                 disabled={isSaving}
                 maxLength={50}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                {displayName.length}/50 characters
+                {displayName.length}/50
               </p>
             </div>
           ) : (
-            <CardTitle className="mt-4">{displayName}</CardTitle>
+            <CardTitle className="mt-2 text-xl">{displayName}</CardTitle>
           )}
           
-          <CardDescription>{user.phoneNumber || user.email}</CardDescription>
+          <CardDescription className="text-xs">{user.phoneNumber || user.email}</CardDescription>
         </CardHeader>
         
         <CardContent className="px-4 pb-4">
@@ -153,39 +153,39 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2">
            <Link href="/wallet" className="no-underline group col-span-2">
-                <Card className="bg-gradient-to-br from-red-500 to-primary text-primary-foreground p-4 flex justify-between items-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-[88px] relative overflow-hidden">
-                    <div className="space-y-1">
-                        <p className="font-bold text-lg">My Wallet</p>
-                        <p className="text-2xl font-bold tracking-wider">₹{(userProfile.depositBalance + userProfile.winningsBalance).toFixed(2)}</p>
+                <Card className="bg-gradient-to-br from-red-500 to-primary text-primary-foreground p-3 flex justify-between items-center transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-0.5 h-[72px] relative overflow-hidden">
+                    <div className="space-y-0">
+                        <p className="font-bold text-md">My Wallet</p>
+                        <p className="text-xl font-bold tracking-wider">₹{(userProfile.depositBalance + userProfile.winningsBalance).toFixed(2)}</p>
                     </div>
-                     <div className="flex items-center gap-2">
-                       <p className="text-sm opacity-80 group-hover:opacity-100">View History</p>
-                       <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                     <div className="flex items-center gap-1">
+                       <p className="text-xs opacity-80 group-hover:opacity-100">History</p>
+                       <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                    </div>
-                   <Wallet className="absolute h-24 w-24 -right-4 -bottom-4 text-white/10" />
+                   <Wallet className="absolute h-20 w-20 -right-4 -bottom-4 text-white/10" />
               </Card>
             </Link>
              <Link href="/refer" className="no-underline group col-span-2">
-                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-primary-foreground p-4 flex justify-between items-center transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-[88px] relative overflow-hidden">
-                     <div className="space-y-1">
-                        <p className="font-bold text-lg">Refer & Earn</p>
+                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-primary-foreground p-3 flex justify-between items-center transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-0.5 h-[72px] relative overflow-hidden">
+                     <div className="space-y-0">
+                        <p className="font-bold text-md">Refer & Earn</p>
                         <p className="text-xs opacity-90">Invite friends & get bonus!</p>
                     </div>
-                     <div className="flex items-center gap-2">
-                       <p className="text-sm opacity-80 group-hover:opacity-100">Share Now</p>
-                       <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                     <div className="flex items-center gap-1">
+                       <p className="text-xs opacity-80 group-hover:opacity-100">Share</p>
+                       <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                    </div>
-                   <Gift className="absolute h-24 w-24 -right-4 -bottom-4 text-white/10" />
+                   <Gift className="absolute h-20 w-20 -right-4 -bottom-4 text-white/10" />
                 </Card>
             </Link>
         </div>
 
 
         <Card>
-            <CardHeader><CardTitle className="text-primary">Game Stats</CardTitle></CardHeader>
-            <CardContent>
+            <CardHeader className="p-4 pb-2"><CardTitle className="text-primary text-lg">Game Stats</CardTitle></CardHeader>
+            <CardContent className="p-4 pt-0">
                <div className="flex justify-around gap-2 mb-2">
                  <MetricCard icon={Gamepad2} label="Played" value={userProfile.gamesPlayed} />
                  <MetricCard icon={CheckCircle2} label="Won" value={userProfile.gamesWon} color="text-green-500" />

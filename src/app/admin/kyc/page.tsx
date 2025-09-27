@@ -18,7 +18,7 @@ function KycDetailsModal({ user }: { user: UserProfile }) {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Eye className="h-4 w-4 mr-1"/> View Details
+          <Eye className="h-4 w-4 mr-1"/> View
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-4xl">
@@ -108,7 +108,7 @@ export default function KycPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <h1 className="text-3xl font-bold text-primary">KYC Management</h1>
       <Card>
         <CardHeader>
@@ -132,26 +132,26 @@ export default function KycPage() {
                       <TableRow>
                           <TableHead>User Name</TableHead>
                           <TableHead>Email</TableHead>
-                          <TableHead>Details & Documents</TableHead>
+                          <TableHead>Details</TableHead>
                           <TableHead>Actions</TableHead>
                       </TableRow>
                   </TableHeader>
                   <TableBody>
                       {users.map(user => (
                           <TableRow key={user.uid}>
-                              <TableCell>{user.name}</TableCell>
-                              <TableCell>{user.email}</TableCell>
-                              <TableCell>
+                              <TableCell className="p-2">{user.name}</TableCell>
+                              <TableCell className="p-2">{user.email}</TableCell>
+                              <TableCell className="p-2">
                                   <KycDetailsModal user={user} />
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="p-2">
                                   {user.kycStatus === 'Pending' && (
                                     <div className="flex gap-2">
-                                        <Button size="sm" onClick={() => handleKycUpdate(user.uid, 'Verified')} className="bg-green-600 hover:bg-green-700">
-                                            <Check className="h-4 w-4 mr-1"/> Approve
+                                        <Button size="sm" onClick={() => handleKycUpdate(user.uid, 'Verified')} className="bg-green-600 hover:bg-green-700 h-8">
+                                            <Check className="h-4 w-4"/>
                                         </Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleKycUpdate(user.uid, 'Rejected')}>
-                                            <X className="h-4 w-4 mr-1"/> Reject
+                                        <Button size="sm" variant="destructive" onClick={() => handleKycUpdate(user.uid, 'Rejected')} className="h-8">
+                                            <X className="h-4 w-4"/>
                                         </Button>
                                     </div>
                                   )}
