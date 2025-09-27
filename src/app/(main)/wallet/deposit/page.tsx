@@ -1,320 +1,159 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { IndianRupee, FileText, CheckCircle2, ArrowLeft, Upload, Loader2, TriangleAlert, Gift, Copy, Share } from "lucide-react";
-import Image from 'next/image';
-import { Input } from '@/components/ui/input';
+import { IndianRupee, Loader2, CreditCard, AlertTriangle, CheckCircle } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import QRCode from "qrcode.react";
-import type { PaymentUpi } from '@/models/payment-upi.model';
 import { useAuth } from '@/contexts/auth-context';
-import { getActiveUpi, createDepositRequest } from '@/services/transaction-service';
-import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { db } from '@/firebase/config';
+import { collection, query, where, getDocs, onSnapshot, addDoc, doc } from 'firebase/firestore';
+import { loadStripe } from '@stripe/stripe-js';
 
-const shortcutAmounts = [100, 200, 500, 1000, 2000, 5000];
-const MINIMUM_DEPOSIT = 100;
-const GST_RATE = 0.28; // 28% GST as per government norms
-
-
-function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="text-primary">{title}</DialogTitle>
-          <DialogDescription className="pt-4">
-            {message}
-          </DialogDescription>
-        </DialogHeader>
-         <DialogFooter>
-          <DialogClose asChild>
-            <Button onClick={onClose}>OK</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+// Define types for product and price for type safety
+interface Price {
+    id: string;
+    active: boolean;
+    currency: string;
+    unit_amount: number;
+    description: string;
 }
 
-
-function PaymentSummary({ amount }: { amount: number }) {
-    if (amount < MINIMUM_DEPOSIT) return null;
-    
-    const baseAmount = amount / (1 + GST_RATE);
-    const gstAmount = amount - baseAmount;
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg text-primary">Payment Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-2 text-sm">
-                 <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Deposit Amount</span>
-                    <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                </div>
-                 <div className="flex justify-between items-center text-red-500">
-                    <span className="text-muted-foreground">GST @ 28%</span>
-                    <span className="font-semibold">- ₹{gstAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Sub-Total</span>
-                    <span className="font-semibold">₹{baseAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center text-green-600">
-                    <span className="font-semibold flex items-center gap-1"><Gift size={14}/> GST Bonus (from us)</span>
-                    <span className="font-semibold">+ ₹{gstAmount.toFixed(2)}</span>
-                </div>
-                <div className="border-t border-dashed my-2"></div>
-                <div className="flex justify-between items-center font-bold text-lg text-primary">
-                    <span>Total You Get</span>
-                    <span>₹{amount.toFixed(2)}</span>
-                </div>
-            </CardContent>
-        </Card>
-    );
+interface Product {
+    id: string;
+    active: boolean;
+    name: string;
+    description: string;
+    prices: Price[];
 }
 
-function GstBonusCard() {
-    return (
-        <Card className="bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-700">
-            <CardContent className="p-3 text-center">
-                <p className="text-sm font-semibold text-green-700 dark:text-green-300">
-                    As per government rules, 28% GST applies on deposits. But don't worry, we pay it for you! You get 100% of what you deposit.
-                </p>
-            </CardContent>
-        </Card>
-    );
-}
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function DepositPage() {
     const router = useRouter();
-    const { user, loading: authLoading } = useAuth();
-    const [amount, setAmount] = useState(0);
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [activeUpi, setActiveUpi] = useState<PaymentUpi | null>(null);
-    const [loadingUpi, setLoadingUpi] = useState(true);
-    const [step, setStep] = useState(1);
-    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
-
-    const showDialog = (title: string, message: string) => {
-        setDialogState({ open: true, title, message });
-    };
+    const { user, userProfile, loading: authLoading } = useAuth();
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(true);
+    const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
-        const fetchUpi = async () => {
-            setLoadingUpi(true);
-            try {
-                const upi = await getActiveUpi();
-                setActiveUpi(upi);
-            } catch (error) {
-                console.error("Failed to fetch UPI details:", error);
-                setActiveUpi(null);
-            } finally {
-                setLoadingUpi(false);
-            }
-        }
-        fetchUpi();
-    }, []);
-    
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0];
-            if (file.size > 5 * 1024 * 1024) { // 5MB
-                showDialog("Error", "File size should be less than 5MB.");
-                return;
-            }
-            if (!file.type.startsWith('image/')) {
-                showDialog("Error", "Please upload an image file.");
-                return;
-            }
-            setImageFile(file);
-            setImagePreview(URL.createObjectURL(file));
-        }
-    };
+        if (!user) return;
 
-    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseInt(e.target.value, 10);
-        setAmount(isNaN(value) ? 0 : value);
-    };
+        const fetchProducts = async () => {
+            setLoadingProducts(true);
+            const productsQuery = query(collection(db, 'products'), where('active', '==', true));
+            const querySnapshot = await getDocs(productsQuery);
+            const productsData: Product[] = [];
 
-    const handleCopy = (text: string) => {
-        navigator.clipboard.writeText(text);
-        showDialog("Copied", "Copied to clipboard!");
-    };
-    
-    const baseAmount = amount / (1 + GST_RATE);
-    const gstAmount = amount - baseAmount;
-    const totalPayable = amount; 
-    const upiUri = activeUpi ? `upi://pay?pa=${activeUpi.upiId}&pn=${encodeURIComponent(activeUpi.payeeName)}&am=${totalPayable.toFixed(2)}&cu=INR` : '';
+            for (const productDoc of querySnapshot.docs) {
+                const product: Partial<Product> = { id: productDoc.id, ...productDoc.data() };
+                const pricesQuery = query(collection(db, 'products', productDoc.id, 'prices'), where('active', '==', true));
+                const pricesSnap = await getDocs(pricesQuery);
+                product.prices = pricesSnap.docs.map(priceDoc => ({ id: priceDoc.id, ...priceDoc.data() } as Price));
+                if (product.prices.length > 0) {
+                    productsData.push(product as Product);
+                }
+            }
+            setProducts(productsData);
+            setLoadingProducts(false);
+        };
 
-    const handleSubmit = async () => {
-        if (!user || !imageFile || amount < MINIMUM_DEPOSIT || !activeUpi) {
-            showDialog("Error", `Minimum deposit amount is ₹${MINIMUM_DEPOSIT}. Please also provide a screenshot and ensure a payment method is active.`);
-            return;
-        }
-        setIsSubmitting(true);
+        fetchProducts();
+    }, [user]);
+
+    const handleCheckout = async (priceId: string) => {
+        if (!user || isRedirecting) return;
+        
+        setSelectedPriceId(priceId);
+        setIsRedirecting(true);
+
         try {
-            await createDepositRequest(user.uid, amount, gstAmount, imageFile, activeUpi.id);
-            showDialog("Success", "Deposit request submitted successfully! It will be verified shortly.");
-            router.push('/wallet');
-        } catch (e) {
-            showDialog("Error", `Failed to submit deposit request: ${(e as Error).message}`);
-        } finally {
-            setIsSubmitting(false);
+            const checkoutSessionRef = await addDoc(
+                collection(db, 'users', user.uid, 'checkout_sessions'),
+                {
+                    price: priceId,
+                    success_url: `${window.location.origin}/wallet?session_id={CHECKOUT_SESSION_ID}`,
+                    cancel_url: window.location.origin + '/wallet/deposit',
+                }
+            );
+
+            onSnapshot(checkoutSessionRef, (snap) => {
+                const { error, url } = snap.data() || {};
+                if (error) {
+                    alert(`An error occurred: ${error.message}`);
+                    setIsRedirecting(false);
+                    setSelectedPriceId(null);
+                }
+                if (url) {
+                    window.location.assign(url);
+                }
+            });
+        } catch (error) {
+            console.error("Error creating checkout session:", error);
+            alert("Could not initiate payment. Please try again.");
+            setIsRedirecting(false);
+            setSelectedPriceId(null);
         }
     };
 
-    if (authLoading) {
+    if (authLoading || !userProfile) {
         return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
-    }
-    
-    const handleProceed = async () => {
-        if (amount < MINIMUM_DEPOSIT) {
-            showDialog("Error", `Minimum deposit is ₹${MINIMUM_DEPOSIT}.`);
-            return;
-        }
-        if (loadingUpi) {
-            showDialog("Info", "Loading payment methods, please wait.");
-            return;
-        }
-        if (!activeUpi) {
-            showDialog("Error", "No payment method is currently active. Please contact support.");
-            return;
-        }
-
-        setStep(2);
-        window.location.href = upiUri;
-    }
-
-    if (step === 2) {
-        return (
-            <div className="space-y-4">
-                 <InfoDialog 
-                    open={dialogState.open} 
-                    onClose={() => setDialogState({ ...dialogState, open: false })} 
-                    title={dialogState.title}
-                    message={dialogState.message} 
-                />
-                 <Button onClick={() => setStep(1)} variant="ghost" className="pl-0">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Change Amount or Method
-                </Button>
-                <Card className="shadow-lg border-primary/20">
-                    <CardHeader className="text-center">
-                        <CardTitle className='text-2xl text-primary'>Complete Your Payment</CardTitle>
-                        <CardDescription>Your UPI app has been opened. After paying, upload the screenshot below.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-4 text-center">
-                        <div className="text-center space-y-3">
-                            <p className="text-muted-foreground text-sm">If your app didn't open, pay <span className='font-bold text-primary'>₹{totalPayable.toFixed(2)}</span> to:</p>
-                            <div className="flex items-center justify-center gap-2 p-2 bg-muted rounded-md">
-                                <p className="font-mono text-primary flex-shrink-1 overflow-x-auto whitespace-nowrap">{activeUpi?.upiId}</p>
-                                <Button size="icon" variant="ghost" onClick={() => handleCopy(activeUpi?.upiId || '')}><Copy className="w-4 h-4"/></Button>
-                            </div>
-                        </div>
-                         <div className="border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg flex items-start gap-3 text-left">
-                            <TriangleAlert className="h-5 w-5 text-yellow-700 dark:text-yellow-300 flex-shrink-0 mt-1" />
-                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                Only deposit from the account with the same name as on your KYC documents, otherwise the payment will be put on hold.
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="text-primary">Upload Screenshot</CardTitle>
-                        <CardDescription>After payment, upload the confirmation screenshot to verify your deposit.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-4">
-                        <input id="payment-screenshot" ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                        <Card 
-                            className="mt-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-primary"
-                             onClick={() => fileInputRef.current?.click()}
-                        >
-                            {imagePreview ? (
-                                <div className="relative w-32 mx-auto">
-                                    <Image src={imagePreview} alt="Payment Screenshot" width={128} height={256} className="rounded-md object-contain h-64 w-32" />
-                                    <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full h-6 w-6 flex items-center justify-center">
-                                        <CheckCircle2 className="h-4 w-4" />
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="text-center p-8">
-                                    <Upload className="mx-auto h-10 w-10 text-muted-foreground" />
-                                    <p className="mt-2 text-muted-foreground">Click to upload</p>
-                                </div>
-                            )}
-                        </Card>
-                    </CardContent>
-                </Card>
-
-                <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 text-lg py-6" 
-                    disabled={amount < MINIMUM_DEPOSIT || !imageFile || isSubmitting}
-                    onClick={handleSubmit}
-                >
-                    {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                    Submit Deposit Request
-                </Button>
-            </div>
-        )
     }
 
     return (
-        <div className="space-y-4">
-             <InfoDialog 
-                open={dialogState.open} 
-                onClose={() => setDialogState({ ...dialogState, open: false })} 
-                title={dialogState.title}
-                message={dialogState.message} 
-            />
-            <GstBonusCard />
+        <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className='text-center text-primary'>Choose Deposit Amount</CardTitle>
-                    <CardDescription className='text-center'>Minimum deposit is ₹{MINIMUM_DEPOSIT}.</CardDescription>
+                    <CardTitle className='text-center text-primary'>Add Funds to Your Wallet</CardTitle>
+                    <CardDescription className='text-center'>Select an amount to deposit. Payments are processed securely by Stripe.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
-                    <Input 
-                        type="number"
-                        placeholder={`Enter amount (min ₹${MINIMUM_DEPOSIT})`}
-                        value={amount || ''}
-                        onChange={handleAmountChange}
-                        className="text-center text-lg font-bold mb-4"
-                    />
-                    <div className="grid grid-cols-3 gap-3">
-                        {shortcutAmounts.map((shortcut) => (
-                            <Button 
-                                key={shortcut}
-                                variant={amount === shortcut ? "default" : "outline"}
-                                className={cn("w-full h-auto py-3 flex flex-col", amount === shortcut && "ring-2 ring-primary")}
-                                onClick={() => setAmount(shortcut)}
-                            >
-                                <span className="text-lg font-bold">₹{shortcut}</span>
-                            </Button>
-                        ))}
-                    </div>
+                    {loadingProducts ? (
+                        <div className="flex justify-center items-center py-10">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                        </div>
+                    ) : products.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            {products.flatMap(p => p.prices).sort((a,b) => a.unit_amount - b.unit_amount).map((price) => (
+                                <Button
+                                    key={price.id}
+                                    variant={selectedPriceId === price.id ? "default" : "outline"}
+                                    className="h-auto py-4 flex flex-col items-center justify-center text-center"
+                                    onClick={() => handleCheckout(price.id)}
+                                    disabled={isRedirecting}
+                                >
+                                    {isRedirecting && selectedPriceId === price.id ? (
+                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <span className="text-2xl font-bold">₹{price.unit_amount / 100}</span>
+                                            <span className="text-xs text-muted-foreground">{price.description || 'One-time deposit'}</span>
+                                        </>
+                                    )}
+                                </Button>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 text-muted-foreground">
+                            <AlertTriangle className="mx-auto h-12 w-12" />
+                            <p className="mt-4">No deposit options are available at the moment.</p>
+                            <p>Please check back later or contact support.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
-            <PaymentSummary amount={amount} />
-
-            <Button 
-                className="w-full bg-primary text-primary-foreground text-lg py-6" 
-                onClick={handleProceed}
-                disabled={amount < MINIMUM_DEPOSIT || loadingUpi}
-            >
-                 {loadingUpi ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Share className="mr-2 h-5 w-5" />}
-                Proceed to Pay ₹{totalPayable.toFixed(2)}
-            </Button>
+             <Card className="border-green-500 bg-green-50">
+                <CardHeader>
+                    <CardTitle className="text-green-700 flex items-center gap-2"><CheckCircle className="h-5 w-5"/> Secure & Automated</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-green-600 space-y-2">
+                    <p>Your payments are processed by Stripe, a global leader in online payments.</p>
+                    <p>Your balance will be updated automatically as soon as the payment is successful. No need to upload screenshots!</p>
+                </CardContent>
+            </Card>
         </div>
     );
 }

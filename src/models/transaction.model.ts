@@ -8,8 +8,15 @@ export interface Transaction {
     amount: number;
     bonusAmount?: number; // For GST bonus on deposit
     status: 'pending' | 'completed' | 'rejected';
+    
+    // Stripe specific fields
+    stripeCheckoutSessionId?: string;
+    stripePaymentIntentId?: string;
+
+    // Manual deposit fields (deprecated but kept for history)
     screenshotUrl?: string; // For deposits
     upiId?: string; // To track which UPI ID was used for the deposit
+    
     withdrawalDetails?: {
         method: 'upi' | 'bank';
         address: string; // UPI ID or bank details string

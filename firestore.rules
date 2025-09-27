@@ -1,79 +1,83 @@
 
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-  
     // Helper functions
-    function isSignedIn() {
+    function isAuthenticated() {
       return request.auth != null;
     }
-    
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
-    
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Users Collection
+    // Admins can read/write all data for moderation
+    match /{path=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // User can read/write their own profile, but not change balances or roles.
     match /users/{userId} {
-      // Admins can read/write any user document.
-      // Users can create their own document.
-      // Users can update their own document.
-      // Any signed-in user can read public user profiles.
-      allow read: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin(); // Only admins can delete users
+      allow read: if isUser(userId);
+      allow write: if isUser(userId) && !(
+        'depositBalance' in request.resource.data ||
+        'winningsBalance' in request.resource.data ||
+        'isAdmin' in request.resource.data ||
+        'isAgent' in request.resource.data ||
+        'kycStatus' in request.resource.data
+      );
     }
     
-    // Battles Collection
-    match /battles/{battleId} {
-      // Any signed-in user can read battles (to see open/ongoing games).
-      allow read: if isSignedIn();
-      // Only signed-in users can create battles.
-      allow create: if isSignedIn();
-      // Only a player in the battle or an admin can update it.
-      allow update: if (isSignedIn() && (request.resource.data.creator.id == request.auth.uid || request.resource.data.opponent.id == request.auth.uid)) || isAdmin();
-      // Only admins can delete battles for cleanup.
-      allow delete: if isAdmin();
+    // Users can read and write to their own subcollections.
+    match /users/{userId}/{subcollection}/{docId} {
+       allow read, write: if isUser(userId);
     }
     
-    // Transactions Collection
-    match /transactions/{transactionId} {
-       // Users can only create and read their own transactions.
-      allow create, read: if isOwner(resource.data.userId);
-      // Admins can read, update and delete any transaction.
-      allow read, update, delete: if isAdmin();
+    // Stripe-related rules
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
     }
-    
-    // Referrals Collection
-    match /referrals/{referralId} {
-      // Logged in users can create referrals (when they sign up with a code)
-      allow create: if isSignedIn();
-      // Only admins should be able to read all referral data for analytics
-      // Users don't need to read this directly
-      allow read, update, delete: if isAdmin();
+    match /products/{productId}/prices/{priceId} {
+      allow read: if true;
+      allow write: if false;
     }
 
-    // Config collections (appSettings, landingPage, socialMedia) should be admin-only
-    match /config/{docId} {
-      // Any user can read the settings (e.g., for header banner text)
+    // Logged in users can create checkout sessions
+    match /users/{userId}/checkout_sessions/{sessionId} {
+      allow create: if isUser(userId);
+      allow read, update: if isUser(userId);
+      allow delete: if false;
+    }
+
+    // Users can only read their own subscriptions and payments
+    match /users/{userId}/subscriptions/{subscriptionId} {
+      allow read: if isUser(userId);
+    }
+     match /users/{userId}/payments/{paymentId} {
+      allow read: if isUser(userId);
+    }
+
+    // Battles can be read by anyone, created by authenticated users.
+    // Updates are handled by server-side logic (Cloud Functions / Admin SDK)
+    match /battles/{battleId} {
       allow read: if true;
-      // Only admins can change the settings
-      allow write: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isUser(battleId.split('_')[0]); // Basic protection, server is authority
     }
     
-    // Agents collection should be admin-only
-    match /agents/{agentId} {
-        allow read, write, create, delete: if isAdmin();
+    // Config documents (e.g. appSettings, socialMedia) are read-only for clients
+    match /config/{docId} {
+        allow read: if true;
+        allow write: if false;
     }
-    
-    // Payment UPIs collection should be admin-only
-    match /payment_upis/{upiId} {
-         allow read, write, create, delete: if isAdmin();
+
+    // Transactions can only be read by the user they belong to. Creation is handled by server logic.
+    match /transactions/{transactionId} {
+        allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+        allow create, update, delete: if false; // Creation/updates must be done via secure backend
     }
   }
 }
