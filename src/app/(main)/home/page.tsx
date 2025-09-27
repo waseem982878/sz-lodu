@@ -211,7 +211,7 @@ export default function HomePage() {
               animate="visible"
           >
               {disclaimerText.split("").map((char, index) => (
-                  <motion.span key={char + "-" + index} variants={letter}>
+                  <motion.span key={index} variants={letter}>
                       {char}
                   </motion.span>
               ))}
@@ -221,3 +221,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
