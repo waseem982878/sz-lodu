@@ -14,7 +14,7 @@ import type { Transaction } from "@/models/transaction.model";
 import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
 import { collection, query, where, orderBy, onSnapshot, Unsubscribe, or, Timestamp } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { db } from "@/lib/firebase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {

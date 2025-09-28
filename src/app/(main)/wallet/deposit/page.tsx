@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, AlertTriangle } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { db } from '@/firebase/config';
+import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, onSnapshot, addDoc, doc } from 'firebase/firestore';
 import { loadStripe } from '@stripe/stripe-js';
 

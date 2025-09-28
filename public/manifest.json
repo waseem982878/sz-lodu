@@ -1,22 +1,72 @@
-
 {
-    "name": "SZ LUDO",
-    "short_name": "SZ LUDO",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#B91C1C",
-    "description": "Win Real Cash on SZ LUDO",
-    "icons": [
-        {
-            "src": "/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "/icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
-    ]
+  "name": "SZ Ludo Challenge",
+  "short_name": "SZ Ludo",
+  "description": "Play Ludo & Earn Real Money",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#B91C1C",
+  "theme_color": "#B91C1C",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["entertainment", "games", "finance"],
+  
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home Screen"
+    },
+     {
+      "src": "/screenshots/play.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Play Screen"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "New Challenge",
+      "short_name": "Challenge",
+      "description": "Create new Ludo challenge",
+      "url": "/play",
+      "icons": [{ "src": "/icons/shortcut-challenge.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Wallet",
+      "short_name": "Wallet",
+      "description": "Check your balance and history",
+      "url": "/wallet",
+      "icons": [{ "src": "/icons/shortcut-wallet.png", "sizes": "96x96" }]
+    }
+  ],
+
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

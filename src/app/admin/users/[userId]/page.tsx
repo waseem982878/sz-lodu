@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, or, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { db } from "@/lib/firebase";
 import type { UserProfile } from "@/models/user.model";
 import type { Transaction } from "@/models/transaction.model";
 import type { Battle } from "@/models/battle.model";

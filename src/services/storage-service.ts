@@ -1,5 +1,5 @@
 
-import { storage } from '@/firebase/config';
+import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 /**
@@ -10,12 +10,17 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
  */
 export const uploadImage = async (file: File, path: string): Promise<string> => {
   try {
-    console.log('🚀 Starting upload for:', file.name);
-    console.log('📁 Target path:', path);
+    console.log('=== UPLOAD STARTED ===');
+    console.log('File:', file.name, 'Size:', file.size);
+    console.log('Path:', path);
 
-    // 1. File validation
-    if (!file || !file.type.startsWith('image/')) {
-      throw new Error('Please select a valid image file (JPEG, PNG, etc.)');
+    // 1. Basic validation
+    if (!file) {
+      throw new Error('No file provided');
+    }
+
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Please select an image file (JPEG, PNG, WebP)');
     }
 
     if (file.size > 5 * 1024 * 1024) {
@@ -24,36 +29,40 @@ export const uploadImage = async (file: File, path: string): Promise<string> => 
 
     // 2. Create unique filename
     const timestamp = Date.now();
-    // Use the provided path as a directory and create a unique name inside it
-    const fileName = `${path}/${timestamp}_${file.name.replace(/\s+/g, '_')}`;
-    
-    console.log('📄 Final filename:', fileName);
+    const safeFileName = file.name.replace(/\s+/g, '_');
+    const fullPath = `${path}/${timestamp}_${safeFileName}`;
 
-    // 3. Create storage reference
-    const storageRef = ref(storage, fileName);
-    
-    // 4. Upload file
-    console.log('⬆️ Uploading file...');
+    console.log('Final path:', fullPath);
+
+    // 3. Upload to Firebase Storage
+    if (!storage) {
+        throw new Error("Firebase Storage is not initialized. Check your Firebase config and environment variables.");
+    }
+    const storageRef = ref(storage, fullPath);
+    console.log('Storage ref created');
+
     const snapshot = await uploadBytes(storageRef, file);
-    console.log('✅ Upload successful');
+    console.log('Upload completed, snapshot:', snapshot);
 
-    // 5. Get download URL
-    console.log('🔗 Getting download URL...');
     const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log('🌐 Download URL:', downloadURL);
+    console.log('Download URL obtained:', downloadURL);
 
+    console.log('=== UPLOAD SUCCESSFUL ===');
     return downloadURL;
 
   } catch (error: any) {
-    console.error('❌ Upload failed:', error);
-    
-    // Specific error messages
+    console.error('=== UPLOAD FAILED ===');
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Full error:', error);
+
+    // Specific error handling
     if (error.code === 'storage/unauthorized') {
-      throw new Error('You do not have permission to upload files. Check your storage rules.');
+      throw new Error('Upload permission denied. Please check storage rules.');
     } else if (error.code === 'storage/canceled') {
       throw new Error('Upload was canceled');
     } else if (error.code === 'storage/unknown') {
-      throw new Error('An unknown error occurred during upload. Please try again.');
+      throw new Error('Network error. Please check your internet connection.');
     } else {
       throw new Error(`Upload failed: ${error.message}`);
     }

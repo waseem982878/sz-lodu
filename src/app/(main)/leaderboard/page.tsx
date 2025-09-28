@@ -9,7 +9,7 @@ import { Loader2, Trophy, Award, Medal, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import imagePaths from '@/lib/image-paths.json';
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { db } from "@/lib/firebase";
 
 const getRankIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="h-6 w-6 text-yellow-500" />;

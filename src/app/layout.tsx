@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   title: "SZ LUDO",
   description: "Win Real Cash on SZ LUDO",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SZ LUDO",
+  },
 };
 
 export const viewport: Viewport = {

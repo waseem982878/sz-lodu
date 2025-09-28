@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Crown } from "lucide-react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { db } from "@/lib/firebase";
 import type { Battle } from "@/models/battle.model";
 import { updateBattleStatus } from "@/services/battle-service";
 

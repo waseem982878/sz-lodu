@@ -1,5 +1,5 @@
 
-import { db } from '@/firebase/config';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, runTransaction, doc, getDoc, query, where, getDocs, orderBy, limit, increment, updateDoc, Timestamp } from 'firebase/firestore';
 import { uploadImage } from './storage-service';
 import type { UserProfile } from '@/models/user.model';
@@ -9,6 +9,7 @@ import type { Transaction } from '@/models/transaction.model';
 // This function is for creating a checkout session, not a direct deposit request.
 // The actual deposit confirmation will be handled by Stripe webhooks.
 export const createStripeCheckoutSession = async (userId: string, priceId: string): Promise<string> => {
+    if (!db) throw new Error("Database is not initialized.");
     if (!userId || !priceId) {
         throw new Error("User ID and Price ID are required.");
     }
@@ -23,6 +24,75 @@ export const createStripeCheckoutSession = async (userId: string, priceId: strin
     );
 
     return checkoutSessionRef.id;
+};
+
+
+export const createDepositRequest = async (
+  userId: string,
+  amount: number,
+  bonusAmount: number,
+  screenshotFile: File,
+  upiId: string
+): Promise<string> => {
+  if (!db) throw new Error("Database is not initialized.");
+  try {
+    console.log('=== DEPOSIT REQUEST STARTED ===');
+    
+    // 1. Validate inputs
+    if (!userId || !amount || !screenshotFile || !upiId) {
+      throw new Error('All fields are required');
+    }
+
+    // 2. Upload screenshot first
+    console.log('Uploading screenshot...');
+    const screenshotUrl = await uploadImage(screenshotFile, `deposits/${userId}`);
+    console.log('Screenshot uploaded:', screenshotUrl);
+
+    // 3. Verify UPI
+    console.log('Checking UPI...');
+    const upiRef = doc(db, 'payment_upis', upiId);
+    const upiDoc = await getDoc(upiRef);
+    
+    if (!upiDoc.exists()) {
+      throw new Error('Selected UPI not found');
+    }
+
+    const upiData = upiDoc.data();
+    if (!upiData.isActive) {
+      throw new Error('Selected UPI is not active');
+    }
+
+    if (upiData.currentReceived + amount > upiData.dailyLimit) {
+      throw new Error('UPI daily limit exceeded. Please try another UPI.');
+    }
+
+    // 4. Create transaction record
+    console.log('Creating transaction record...');
+    const transactionsCollection = collection(db, 'transactions');
+    
+    const transactionData = {
+      userId,
+      amount,
+      bonusAmount: bonusAmount || 0,
+      type: 'deposit' as const,
+      status: 'pending' as const,
+      screenshotUrl,
+      upiId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      isRead: false,
+    };
+
+    const docRef = await addDoc(transactionsCollection, transactionData);
+    console.log('Transaction created with ID:', docRef.id);
+
+    return docRef.id;
+
+  } catch (error: any) {
+    console.error('=== DEPOSIT REQUEST FAILED ===');
+    console.error('Error:', error);
+    throw new Error(`Deposit request failed: ${error.message}`);
+  }
 };
 
 
@@ -83,6 +153,7 @@ export const createWithdrawalRequest = async (
 
 
 export const handleApproveWithdrawal = async (transactionId: string) => {
+      if (!db) throw new Error("Database is not initialized.");
       try {
         await updateDoc(doc(db, 'transactions', transactionId), {
           status: 'completed',
@@ -95,6 +166,7 @@ export const handleApproveWithdrawal = async (transactionId: string) => {
   };
 
   export const handleRejectTransaction = async (transactionId: string, reason: string, transactionType: 'deposit' | 'withdrawal', userId: string, amount: number) => {
+    if (!db) throw new Error("Database is not initialized.");
     try {
       await runTransaction(db, async (t) => {
         const transRef = doc(db, 'transactions', transactionId);
@@ -120,6 +192,7 @@ export const handleApproveWithdrawal = async (transactionId: string) => {
 
 
   export const handleApproveDeposit = async (transactionRecord: Transaction) => {
+      if (!db) throw new Error("Database is not initialized.");
       if (transactionRecord.status !== 'pending' || transactionRecord.type !== 'deposit') return;
       
       const transRef = doc(db, 'transactions', transactionRecord.id);

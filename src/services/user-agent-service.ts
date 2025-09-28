@@ -1,6 +1,6 @@
 
 import { doc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, limit, addDoc } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { db } from "@/lib/firebase";
 import type { UserProfile } from "@/models/user.model";
 import type { User } from "firebase/auth";
 
@@ -18,7 +18,7 @@ export const createUserProfile = async (user: User, name: string): Promise<void>
     const referralCode = `SZLUDO${user.uid.substring(0, 6).toUpperCase()}`;
 
     // List of admin emails
-    const ADMIN_EMAILS = ["ludokingbattles@gmail.com", "waseem982878@gmail.com"];
+    const ADMIN_EMAILS = ["waseem982878@gmail.com"];
 
     const profileData: UserProfile = {
         uid: user.uid,

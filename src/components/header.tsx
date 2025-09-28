@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 
 export function Header() {

@@ -1,3 +1,6 @@
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Banknote, Instagram, MessageSquare, Send, ShieldCheck, Star, Swords, Trophy, UserPlus, Youtube, Zap } from "lucide-react";
 import Link from "next/link";
@@ -5,8 +8,9 @@ import Image from "next/image";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card } from "@/components/ui/card";
 import imagePaths from '@/lib/image-paths.json';
-import { getFirebaseAdminApp } from "@/firebase/admin-config";
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 
 type LandingPageContent = {
@@ -68,36 +72,44 @@ const TestimonialCard = ({ name, text, avatarSeed }: { name: string, text: strin
     </Card>
 )
 
-export default async function LandingPage() {
+export default function LandingPage() {
     
-    let content: Partial<LandingPageContent> = {};
-    let socialLinks: Partial<SocialMediaLinks> = {};
+    const [content, setContent] = useState<Partial<LandingPageContent>>({
+        heroTitle: "SZ LUDO",
+        heroSubtitle: "The Ultimate Real Money Ludo Experience",
+        feature1Title: "Secure Platform",
+        feature1Description: "Your data and transactions are protected with top-tier security.",
+        feature2Title: "Instant Withdrawals",
+        feature2Description: "Get your winnings transferred to your account in minutes.",
+        feature3Title: "24/7 Customer Support",
+        feature3Description: "Our team is always here to help you with any issues."
+    });
+    const [socialLinks, setSocialLinks] = useState<Partial<SocialMediaLinks>>({});
     
-    // Only attempt to fetch data if not in a Vercel CI build environment without credentials
-    if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-        try {
-            const adminApp = getFirebaseAdminApp();
-            const db = getAdminFirestore(adminApp);
+    useEffect(() => {
+        const fetchContent = async () => {
+            if (!db) return;
+            try {
+                const landingRef = doc(db, 'config', 'landingPage');
+                const socialRef = doc(db, 'config', 'socialMedia');
+                
+                const [landingSnap, socialSnap] = await Promise.all([
+                    getDoc(landingRef),
+                    getDoc(socialRef),
+                ]);
 
-            const landingRef = db.collection('config').doc('landingPage');
-            const socialRef = db.collection('config').doc('socialMedia');
-            
-            const [landingSnap, socialSnap] = await Promise.all([
-                landingRef.get(),
-                socialRef.get(),
-            ]);
-
-            if (landingSnap.exists) {
-                content = landingSnap.data() as LandingPageContent;
+                if (landingSnap.exists()) {
+                    setContent(prev => ({...prev, ...landingSnap.data()}));
+                }
+                if (socialSnap.exists()) {
+                    setSocialLinks(socialSnap.data() as SocialMediaLinks);
+                }
+            } catch (error) {
+                console.error("Could not fetch landing page content:", error);
             }
-            if (socialSnap.exists) {
-                socialLinks = socialSnap.data() as SocialMediaLinks;
-            }
-        } catch (error) {
-            console.error("Could not fetch landing page content during build:", error);
-            // Use default content on error
         }
-    }
+        fetchContent();
+    }, [])
     
     return (
         <div className="bg-background text-foreground font-sans">
@@ -105,8 +117,8 @@ export default async function LandingPage() {
             <header className="py-28 px-4 bg-red-50/50">
                  <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-8">
                     <div className="text-left">
-                        <h1 className="text-6xl lg:text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle || "SZ LUDO"}</h1>
-                        <p className="text-2xl mt-4 max-w-2xl text-muted-foreground">{content.heroSubtitle || "The Ultimate Real Money Ludo Experience"}</p>
+                        <h1 className="text-6xl lg:text-8xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto]">{content.heroTitle}</h1>
+                        <p className="text-2xl mt-4 max-w-2xl text-muted-foreground">{content.heroSubtitle}</p>
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-start">
                             <Button
                                  asChild
@@ -132,9 +144,9 @@ export default async function LandingPage() {
                         Why Choose SZ Ludo?
                      </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <FeatureCard icon={ShieldCheck} title={content.feature1Title || "Secure Platform"} description={content.feature1Description || "Your data and transactions are protected with top-tier security."} />
-                        <FeatureCard icon={Zap} title={content.feature2Title || "Instant Withdrawals"} description={content.feature2Description || "Get your winnings transferred to your account in minutes."} />
-                        <FeatureCard icon={MessageSquare} title={content.feature3Title || "24/7 Customer Support"} description={content.feature3Description || "Our team is always here to help you with any issues."} />
+                        <FeatureCard icon={ShieldCheck} title={content.feature1Title!} description={content.feature1Description!} />
+                        <FeatureCard icon={Zap} title={content.feature2Title!} description={content.feature2Description!} />
+                        <FeatureCard icon={MessageSquare} title={content.feature3Title!} description={content.feature3Description!} />
                     </div>
                 </section>
                 
@@ -248,4 +260,3 @@ export default async function LandingPage() {
     );
 }
 
-    

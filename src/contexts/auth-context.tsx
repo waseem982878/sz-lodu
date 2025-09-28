@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from "firebase/auth";
-import { auth, db } from '@/firebase/config';
+import { auth, db } from '@/lib/firebase';
 import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import type { UserProfile } from '@/models/user.model';
@@ -28,10 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // onAuthStateChanged is the listener for auth state changes.
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      // Don't set loading to true here, only at the start
       if (firebaseUser) {
         setUser(firebaseUser);
+        setLoading(false); // OPTIMIZATION: Stop loading as soon as auth is confirmed.
         
         const userRef = doc(db, 'users', firebaseUser.uid);
         
@@ -44,24 +45,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
              setUserProfile(null);
              setIsAdmin(false);
           }
-          setLoading(false); // Set loading to false after profile is fetched (or not found)
         }, (error) => {
           console.error("Error fetching user profile:", error);
           setUserProfile(null);
           setIsAdmin(false);
-          setLoading(false); // Also set loading to false on error
         });
         
         return () => unsubscribeProfile();
 
       } else {
+        // This block runs when the user is signed out or not logged in.
         setUser(null);
         setUserProfile(null);
         setIsAdmin(false);
-        setLoading(false); // Set loading to false if no user
+        setLoading(false);
       }
     });
 
+    // Cleanup the subscription when the component unmounts
     return () => unsubscribeAuth();
   }, []);
 
@@ -71,19 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const publicRoutes = ['/landing', '/terms', '/privacy', '/refund', '/gst'];
     const authRoutes = ['/login', '/signup/profile'];
 
-    // 1. User is NOT logged in
     if (!user) {
         const isPublicRoute = publicRoutes.some(p => pathname.startsWith(p));
         const isAuthRoute = authRoutes.some(p => pathname.startsWith(p));
-        // If the user is not on a public or auth route, and not on the root page (which handles its own redirect), force them to the landing page.
         if (!isPublicRoute && !isAuthRoute && pathname !== '/') {
             router.replace('/landing');
         }
         return;
     }
 
-    // 2. User IS logged in
-    // If a logged-in user is on a public page (like landing) or an auth page (like login), redirect them to their appropriate dashboard.
     const onPublicOrAuthRoute = publicRoutes.some(p => pathname.startsWith(p)) || authRoutes.some(p => pathname.startsWith(p)) || pathname === '/';
     if (onPublicOrAuthRoute) {
         if (isAdmin) {
@@ -91,33 +88,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else if (userProfile) {
             router.replace('/home');
         } else {
-            // This case handles the moment after signup but before profile creation is complete.
             router.replace('/signup/profile');
         }
         return;
     }
 
-    // 3. User is logged in and on a private route. Check for role mismatches.
     const isAdminRoute = pathname.startsWith('/admin');
     
-    if (isAdmin && !isAdminRoute) {
-       // An admin is on a user page. This is now ALLOWED. No forced redirect.
-    } else if (!isAdmin && isAdminRoute) {
-        // A non-admin is trying to access an admin route. Redirect them to the user home.
+    if (!isAdmin && isAdminRoute) {
         router.replace('/home');
     } else if (user && !userProfile && pathname !== '/signup/profile') {
-        // A user is logged in, but has no profile, and is not on the profile creation page. Force them there.
         router.replace('/signup/profile');
     }
 
   }, [user, userProfile, isAdmin, loading, pathname, router]);
 
   const logout = async () => {
-    if (user) {
-       // Only update lastSeen if there is a user.
+    if (user && auth && db) {
        await updateDoc(doc(db, 'users', user.uid), { lastSeen: serverTimestamp() }).catch(err => console.log("Failed to update lastSeen on logout"));
+       await signOut(auth);
     }
-    await signOut(auth);
+    setUser(null);
+    setUserProfile(null);
+    setIsAdmin(false);
     router.replace('/landing');
   };
   

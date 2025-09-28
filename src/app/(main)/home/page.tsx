@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import imagePaths from '@/lib/image-paths.json';
 import { useAuth } from "@/contexts/auth-context";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase/config";
+import { db } from "@/lib/firebase";
 import { motion } from "framer-motion";
 
 type GameCardProps = {

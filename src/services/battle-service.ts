@@ -1,5 +1,5 @@
 
-import { db } from '@/firebase/config';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit, writeBatch, Transaction as FirestoreTransaction } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 import type { UserProfile } from '@/models/user.model';
@@ -274,6 +274,7 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
 // Internal function to handle the logic of completing a battle
 // Can be called from a transaction in uploadResult or updateBattleStatus
 async function _completeBattle(transaction: FirestoreTransaction, battleId: string, winnerId: string, battleData: Battle) {
+    if (!db) throw new Error("Database not available.");
     const battleRef = doc(db, 'battles', battleId);
 
     if (battleData.status === 'completed') return; // Already completed
@@ -347,6 +348,7 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
 
 
 async function _awardReferralBonus(transaction: FirestoreTransaction, referredUserId: string, gamesPlayed: number) {
+    if (!db) return;
     if (gamesPlayed !== 0) return; // Only award for the very first game
 
     const referralQuery = query(collection(db, 'referrals'), where('referredId', '==', referredUserId), where('status', '==', 'pending'), limit(1));
