@@ -1,10 +1,8 @@
-
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp, query, where, onSnapshot, runTransaction, increment, getDocs, limit, writeBatch, Transaction as FirestoreTransaction } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc, getDocs, serverTimestamp, query, where, runTransaction, increment, limit } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 import type { UserProfile } from '@/models/user.model';
 import type { Battle, GameType, ResultSubmission } from '@/models/battle.model';
-import { Transaction } from '@/models/transaction.model';
 
 // Create a new battle
 export const createBattle = async (amount: number, gameType: GameType, user: User, userProfile: UserProfile): Promise<string> => {
@@ -258,7 +256,6 @@ export const uploadResult = async (battleId: string, userId: string, status: 'wo
 };
 
 
-
 // This function is for admins to manually set a winner
 export const updateBattleStatus = async (battleId: string, winnerId: string) => {
     if (!db) throw new Error("Database not available.");
@@ -273,7 +270,7 @@ export const updateBattleStatus = async (battleId: string, winnerId: string) => 
 
 // Internal function to handle the logic of completing a battle
 // Can be called from a transaction in uploadResult or updateBattleStatus
-async function _completeBattle(transaction: FirestoreTransaction, battleId: string, winnerId: string, battleData: Battle) {
+async function _completeBattle(transaction: any, battleId: string, winnerId: string, battleData: Battle) {
     if (!db) throw new Error("Database not available.");
     const battleRef = doc(db, 'battles', battleId);
 
@@ -285,7 +282,7 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
     const winnerRef = doc(db, 'users', winnerId);
     const loserRef = doc(db, 'users', loserId);
 
-    // Read documents outside the main transaction logic if they don't need to be transactional reads
+    // Read documents within the transaction
     const [winnerDoc, loserDoc] = await Promise.all([
         transaction.get(winnerRef),
         transaction.get(loserRef)
@@ -338,37 +335,41 @@ async function _completeBattle(transaction: FirestoreTransaction, battleId: stri
     transaction.update(winnerRef, winnerUpdate);
     transaction.update(loserRef, loserUpdate);
 
-    // 4. Handle Referral Bonus - run these checks after the main transaction logic for clarity
+    // 4. Handle Referral Bonus - schedule async updates after transaction completes
     if (!isPractice) {
-        // These are not awaited to prevent transaction issues. They will run in the background.
-        _awardReferralBonus(transaction, winnerId, winnerProfile.gamesPlayed);
-        _awardReferralBonus(transaction, loserId, loserProfile.gamesPlayed);
+        // Run as separate, non-transactional updates so they don't interfere with the main transaction
+        void awardReferralBonusAsync(winnerId, winnerProfile.gamesPlayed);
+        void awardReferralBonusAsync(loserId, loserProfile.gamesPlayed);
     }
 }
 
 
-async function _awardReferralBonus(transaction: FirestoreTransaction, referredUserId: string, gamesPlayed: number) {
+async function awardReferralBonusAsync(referredUserId: string, gamesPlayed: number) {
     if (!db) return;
     if (gamesPlayed !== 0) return; // Only award for the very first game
 
     const referralQuery = query(collection(db, 'referrals'), where('referredId', '==', referredUserId), where('status', '==', 'pending'), limit(1));
     const settingsRef = doc(db, 'config', 'appSettings');
     
-    // We get docs outside of the main transaction path to avoid contention.
-    const [referralSnap, settingsSnap] = await Promise.all([
-        getDocs(referralQuery),
-        getDoc(settingsRef)
-    ]);
+    try {
+        const [referralSnap, settingsSnap] = await Promise.all([
+            getDocs(referralQuery),
+            getDoc(settingsRef)
+        ]);
 
-    if (!referralSnap.empty) {
-        const referralDoc = referralSnap.docs[0];
-        const referrerId = referralDoc.data().referrerId;
-        const referralBonus = settingsSnap.exists() ? settingsSnap.data().referralBonus || 25 : 25;
+        if (!referralSnap.empty) {
+            const referralDoc = referralSnap.docs[0];
+            const referrerId = referralDoc.data().referrerId;
+            const referralBonus = settingsSnap.exists() ? settingsSnap.data().referralBonus || 25 : 25;
 
-        const referrerRef = doc(db, 'users', referrerId);
-        const referralRef = referralDoc.ref;
-        
-        transaction.update(referrerRef, { winningsBalance: increment(referralBonus) });
-        transaction.update(referralRef, { status: 'completed' });
+            const referrerRef = doc(db, 'users', referrerId);
+            const referralRef = referralDoc.ref;
+
+            // Award bonus and mark referral as completed (non-transactional)
+            await updateDoc(referrerRef, { winningsBalance: increment(referralBonus) });
+            await updateDoc(referralRef, { status: 'completed' });
+        }
+    } catch (err) {
+        console.error('Error awarding referral bonus:', err);
     }
 }
