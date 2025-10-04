@@ -1,6 +1,8 @@
-export interface PaymentUpi {
-    id: string;
-    name: string;
-    upiId: string;
-    isActive: boolean;
+export interface UpiPayment {
+  id: string;
+  name: string;
+  upiId: string;
+  isEnabled: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

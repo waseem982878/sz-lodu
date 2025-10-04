@@ -2,35 +2,31 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // Function to check if the user is the owner of the path
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+
+    // Allow users to upload result images into a specific path for a battle they are part of.
+    // The file name must be in the format: results/{battleId}/{userId}_<timestamp>
+    match /results/{battleId}/{fileName} {
+        allow write: if request.auth != null &&
+                      // Check if the user is part of the battle (creator or opponent)
+                      (exists(/databases/$(database)/documents/battles/$(battleId)) && 
+                      (request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.creator.id ||
+                       request.auth.uid == get(/databases/$(database)/documents/battles/$(battleId)).data.opponent.id)) &&
+                      // Ensure the filename starts with the user's UID
+                      fileName.matches(request.auth.uid + '_.*') &&
+                      // Limit file size to 5MB
+                      request.resource.size < 5 * 1024 * 1024 &&
+                      // Allow only image types
+                      request.resource.contentType.matches('image/.*');
+
+        allow read: if request.auth != null; // Allow logged-in users to read images.
     }
 
-    // KYC documents: Users can only upload to their own folder.
-    match /kyc/{userId}/{fileName} {
-      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
-      allow read: if isOwner(userId); // Or admins, which needs a more complex setup or cloud function
-    }
+    // Add rules for other paths like KYC, payment proofs etc. as needed.
+    // For example, for KYC:
+    // match /kyc/{userId}/{fileName} {
+    //   allow write: if request.auth.uid == userId;
+    //   allow read: if request.auth.uid == userId; // Or only admins
+    // }
 
-    // Battle results: Players can only upload to their specific battle folder.
-    match /results/{battleId}/{userId}/{fileName} {
-      // This rule is a bit permissive. A better rule would check if the user is a player in the battle.
-      // However, that requires a Firestore read, which isn't available here directly.
-      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
-      allow read: if isOwner(userId); // Same admin limitation as above
-    }
-
-    // User profile pictures
-    match /profile-pictures/{userId}/{fileName} {
-        allow write: if isOwner(userId) && request.resource.size < 2 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
-        allow read: if request.auth != null; // Allow all authenticated users to see profile pics
-    }
-    
-    // Deny all other read/write operations by default for security
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
   }
 }

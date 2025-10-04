@@ -1,35 +1,49 @@
-import { collection, doc, addDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-// Basic Order Service Structure
-export class OrderService {
-
-    static ordersCollection = collection(db, 'orders');
-
-    static async createOrder(userId: string, items: any[], total: number) {
-        const orderData = {
-            userId,
-            items,
-            total,
-            status: 'pending',
-            createdAt: serverTimestamp(),
-        };
-        
-        const docRef = await addDoc(this.ordersCollection, orderData);
-        return { id: docRef.id, ...orderData };
-    }
-
-    static async getOrder(orderId: string) {
-        const docRef = doc(this.ordersCollection, orderId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() };
-        }
-        return null;
-    }
-
-    static async updateOrderStatus(orderId: string, status: string) {
-        const docRef = doc(this.ordersCollection, orderId);
-        await updateDoc(docRef, { status });
-    }
+export interface Order {
+    id: string;
+    userId: string;
+    amount: number;
+    status: 'pending' | 'completed' | 'failed';
+    paymentGateway: string;
+    gatewayOrderId?: string;
+    createdAt: any; // Firestore ServerTimestamp
+    updatedAt: any; // Firestore ServerTimestamp
 }
+
+const ordersCollection = collection(db, 'orders');
+
+export const createOrder = async (userId: string, amount: number, paymentGateway: string): Promise<Order> => {
+    const newOrder = {
+        userId,
+        amount,
+        paymentGateway,
+        status: 'pending' as const,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    };
+    const docRef = await addDoc(ordersCollection, newOrder);
+    return { id: docRef.id, ...newOrder } as Order;
+};
+
+export const getOrder = async (orderId: string): Promise<Order | null> => {
+    const docRef = doc(db, 'orders', orderId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Order;
+    }
+    return null;
+};
+
+export const updateOrderStatus = async (orderId: string, status: 'completed' | 'failed', gatewayOrderId?: string) => {
+    const orderRef = doc(db, 'orders', orderId);
+    const updates: any = {
+        status,
+        updatedAt: serverTimestamp(),
+    };
+    if (gatewayOrderId) {
+        updates.gatewayOrderId = gatewayOrderId;
+    }
+    await updateDoc(orderRef, updates);
+};
