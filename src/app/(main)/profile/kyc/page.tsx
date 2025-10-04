@@ -10,10 +10,9 @@ import { Loader2, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { uploadImage } from "@/services/image-upload.service";
-import { UserService } from "@/services/user-service"; // FINAL CORRECTED IMPORT
+import { updateUserProfile } from "@/services/user-service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
-// Dialog component remains the same
 function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -55,8 +54,9 @@ export default function KycPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
 
-  const showDialog = (title: string, message: string) => {
+  const showDialog = (title: string, message: string, onOk?: () => void) => {
     setDialogState({ open: true, title, message });
+    // If onOk is provided, use it in the dialog
   };
 
   if (loading) {
@@ -81,9 +81,12 @@ export default function KycPage() {
     if (!user) return;
     
     setIsSubmitting(true);
-    console.log('📸 Starting KYC document upload...');
 
     try {
+        // Stricter validation
+        if (!name.trim() || !dob || !panNumber.trim() || !aadhaarNumber.trim() || !upiId.trim()) {
+            throw new Error("All fields are required.");
+        }
         if (!panFile && !userProfile.panCardUrl) {
             throw new Error('Please upload your PAN card photo.');
         }
@@ -95,18 +98,14 @@ export default function KycPage() {
         let aadhaarCardUrl = userProfile.aadhaarCardUrl;
 
         if (panFile) {
-            console.log('Uploading PAN card...');
             panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/pan`);
-            console.log('PAN card uploaded:', panCardUrl);
         }
 
         if (aadhaarFile) {
-            console.log('Uploading Aadhaar card...');
             aadhaarCardUrl = await uploadImage(aadhaarFile, `kyc/${user.uid}/aadhaar`);
-            console.log('Aadhaar card uploaded:', aadhaarCardUrl);
         }
         
-        await UserService.updateUserProfile(user.uid, {
+        await updateUserProfile(user.uid, {
             name,
             dob,
             panNumber,
@@ -117,25 +116,30 @@ export default function KycPage() {
             kycStatus: 'Pending',
         });
         
-        console.log('✅ KYC submitted successfully');
-        showDialog("Success", "KYC details submitted successfully! Our team will review them shortly.");
-        router.push('/profile');
+        showDialog("Success", "KYC details submitted successfully! Our team will review them shortly.", () => {
+            router.push('/profile');
+        });
 
     } catch (error: any) {
-        console.error('❌ KYC submission error:', error);
+        console.error('KYC submission error:', error);
         showDialog("Error", `KYC submission failed: ${error.message}`);
     } finally {
         setIsSubmitting(false);
     }
   };
   
-  const isPendingOrVerified = userProfile.kycStatus === 'Pending' || userProfile.kycStatus === 'Verified';
+  const isPendingOrVerified = userProfile.kycStatus === 'Pending' || userProfile.kycStatus === 'Verified' || userProfile.kycStatus === 'approved';
 
   return (
     <div className="space-y-6 pb-10">
        <InfoDialog 
             open={dialogState.open} 
-            onClose={() => setDialogState({ ...dialogState, open: false })} 
+            onClose={() => {
+                setDialogState({ ...dialogState, open: false });
+                if (dialogState.title === "Success") {
+                    router.push('/profile');
+                }
+            }} 
             title={dialogState.title}
             message={dialogState.message} 
         />
@@ -214,7 +218,7 @@ export default function KycPage() {
                 Submit for Verification
               </Button>
             )}
-            {userProfile.kycStatus === 'Verified' && (
+            {(userProfile.kycStatus === 'Verified' || userProfile.kycStatus === 'approved') && (
               <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-700 dark:text-green-300 flex items-center justify-center gap-2">
                 <CheckCircle2 className="h-5 w-5"/>
                 <p className="font-semibold">Your KYC is verified. You can now make withdrawals.</p>

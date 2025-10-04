@@ -2,39 +2,66 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for admin privileges
+    // Helper function to check if a user is an admin
     function isAdmin() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Users can read their own user document
-    match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
 
-    // UPI accounts - admin only
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Admins can read/write any user document
+      allow read, write: if isAdmin();
+      // Users can read their own document
+      allow read: if isOwner(userId);
+      // Users can update their own profile, but cannot change their balance or admin status
+      allow update: if isOwner(userId) && 
+                      !('isAdmin' in request.resource.data) &&
+                      !('depositBalance' in request.resource.data) &&
+                      !('winningsBalance' in request.resource.data);
+    }
+
+    // Rules for the 'transactions' collection
+    match /transactions/{transactionId} {
+        // Admins have full access
+        allow read, write: if isAdmin();
+        // Users can read their own transactions
+        allow read: if request.auth != null && get(/databases/$(database)/documents/transactions/$(transactionId)).data.userId == request.auth.uid;
+        // Users can create new transactions (deposits/withdrawals)
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Rules for the 'battles' collection
+    match /battles/{battleId} {
+        // Admins have full access
+        allow read, write: if isAdmin();
+        // All authenticated users can read battle data
+        allow read: if request.auth != null;
+        // Authenticated users can create new battles
+        allow create: if request.auth != null;
+        // Users can update battle results, typically by submitting a screenshot URL
+        allow update: if request.auth != null;
+    }
+
+    // Rules for 'payment_upis' (Admin only)
     match /payment_upis/{document} {
       allow read, write: if isAdmin();
     }
 
-    // Payment requests
-    // - Users can create for themselves
-    // - Users can read their own
-    // - Admins can read/write all
+    // Legacy rules - can be reviewed or removed if not needed
     match /payment_requests/{paymentId} {
       allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
-    // Orders
-    // - Users can create for themselves
-    // - Users can read their own
-    // - Admins can read/write all
     match /orders/{orderId} {
       allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // Only allow users to update if the order is still pending
       allow update: if (request.auth != null && request.resource.data.userId == request.auth.uid && resource.data.status == 'pending') || isAdmin();
       allow delete: if isAdmin();
     }
