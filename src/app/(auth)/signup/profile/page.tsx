@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, User } from "lucide-react";
-import { createUserProfile } from '@/services/user-agent-service';
+import { createUserProfile, UserProfile } from '@/services/user-service';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
@@ -54,7 +54,21 @@ export default function CreateProfilePage() {
 
         setLoading(true);
         try {
-            await createUserProfile(user, name);
+            const profile: Omit<UserProfile, 'createdAt' | 'updatedAt'> = {
+                uid: user.uid,
+                displayName: name.trim(),
+                email: user.email || '',
+                photoURL: user.photoURL || '',
+                depositBalance: 0,
+                winningsBalance: 0,
+                gamesPlayed: 0,
+                gamesWon: 0,
+                winStreak: 0,
+                losingStreak: 0,
+                biggestWin: 0,
+                kycStatus: 'none'
+            };
+            await createUserProfile(profile);
             // The AuthProvider will detect the profile and redirect automatically.
         } catch (error) {
             console.error("Error creating profile:", error);

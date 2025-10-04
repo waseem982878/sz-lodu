@@ -1,15 +1,5 @@
 /** @type {import('next').NextConfig} */
 
-import withPWAInit from "next-pwa";
-
-const withPWA = withPWAInit({
-  dest: "public",
-  // disable: process.env.NODE_ENV === "development",
-  register: true,
-  skipWaiting: true,
-  sw: 'sw.js',
-});
-
 const nextConfig = {
   reactStrictMode: true,
   images: {
@@ -34,6 +24,16 @@ const nextConfig = {
       }
     ],
   },
+  webpack: (config, { isServer }) => {
+    // Fixes npm packages that depend on `fs` module
+    if (!isServer) {
+      config.resolve.fallback = {
+        fs: false,
+      };
+    }
+
+    return config;
+  },
 };
 
-export default withPWA(nextConfig);
+export default nextConfig;

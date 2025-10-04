@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import type { UserProfile } from "@/models/user.model";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { updateUserProfile } from "@/services/user-agent-service";
+import { updateUserProfile } from "@/services/user-service";
 
 
 type MetricProps = {
@@ -73,7 +73,7 @@ export default function ProfilePage() {
   
   useEffect(() => {
     if (userProfile) {
-        setDisplayName(userProfile.name);
+        setDisplayName(userProfile.displayName || "");
     }
   }, [userProfile]);
 
@@ -87,7 +87,7 @@ export default function ProfilePage() {
 
   const handleEditToggle = () => {
     if(isEditing) {
-       setDisplayName(userProfile.name);
+       setDisplayName(userProfile.displayName || "");
     }
     setIsEditing(!isEditing);
   };
@@ -95,14 +95,14 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!user || !displayName.trim()) return;
 
-    if (displayName.trim() === userProfile.name) {
+    if (displayName.trim() === userProfile.displayName) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-        await updateUserProfile(user.uid, { name: displayName.trim() });
+        await updateUserProfile(user.uid, { displayName: displayName.trim() });
         setIsEditing(false);
     } catch (e) {
         alert("Could not save profile. Please try again.");
