@@ -1,69 +1,43 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
 
-    // Helper function to check if a user is an admin
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return request.auth != null && getUserRole(request.auth.uid) == 'admin';
     }
 
-    // Helper function to check if the user is the owner of the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Rules for the 'users' collection
+    // Users can read/write their own profile. Admins have full access.
     match /users/{userId} {
-      // Admins can read/write any user document
-      allow read, write: if isAdmin();
-      // Users can read their own document
-      allow read: if isOwner(userId);
-      // Users can update their own profile, but cannot change their balance or admin status
-      allow update: if isOwner(userId) && 
-                      !('isAdmin' in request.resource.data) &&
-                      !('depositBalance' in request.resource.data) &&
-                      !('winningsBalance' in request.resource.data);
+      allow read, write: if request.auth.uid == userId || isAdmin();
     }
-
-    // Rules for the 'transactions' collection
+    
+    // Users can create transactions and read their own. Admins have full access.
     match /transactions/{transactionId} {
-        // Admins have full access
-        allow read, write: if isAdmin();
-        // Users can read their own transactions
-        allow read: if request.auth != null && get(/databases/$(database)/documents/transactions/$(transactionId)).data.userId == request.auth.uid;
-        // Users can create new transactions (deposits/withdrawals)
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-    }
-
-    // Rules for the 'battles' collection
-    match /battles/{battleId} {
-        // Admins have full access
-        allow read, write: if isAdmin();
-        // All authenticated users can read battle data
-        allow read: if request.auth != null;
-        // Authenticated users can create new battles
-        allow create: if request.auth != null;
-        // Users can update battle results, typically by submitting a screenshot URL
-        allow update: if request.auth != null;
-    }
-
-    // Rules for 'payment_upis' (Admin only)
-    match /payment_upis/{document} {
-      allow read, write: if isAdmin();
-    }
-
-    // Legacy rules - can be reviewed or removed if not needed
-    match /payment_requests/{paymentId} {
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow create: if request.auth.uid != null;
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
       allow update, delete: if isAdmin();
     }
+    
+    // Players in a battle can read/update it. Admins have full access.
+    match /battles/{battleId} {
+        allow read, update: if request.auth.uid in resource.data.players || isAdmin();
+        allow create: if request.auth.uid != null;
+        allow delete: if isAdmin();
+    }
+    
+    // Admins have full control over payment UPIs.
+    match /payment_upis/{upiId} {
+        allow read, write, create, delete: if isAdmin();
+    }
 
-    match /orders/{orderId} {
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if (request.auth != null && request.resource.data.userId == request.auth.uid && resource.data.status == 'pending') || isAdmin();
-      allow delete: if isAdmin();
+    // Default deny all other collections to prevent unauthorized access.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

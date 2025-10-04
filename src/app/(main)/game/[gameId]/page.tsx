@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,13 +8,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { getBattle, cancelBattle, uploadResult, markPlayerAsReady, setRoomCode as setBattleRoomCode } from "@/services/battle-service";
-import { uploadImage } from "@/services/storage-service";
+import { BattleService } from "@/services/battle.service"; // Corrected import
+import { uploadImage } from "@/services/image-upload.service";
 import type { Battle } from "@/models/battle.model";
 import LudoLaunchButton from "@/components/LudoLaunchButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 
 function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
   return (
@@ -181,9 +179,8 @@ function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: '
                 setIsSubmitting(false);
                 return;
             }
-            const timestamp = Date.now();
-            const uniqueFileName = `result_${timestamp}_${image.name}`;
-            const imageUrl = await uploadImage(image, `results/${battle.id}/${user.uid}/${uniqueFileName}`);
+            const imagePath = `results/${battle.id}/${user.uid}_${Date.now()}`;
+            const imageUrl = await uploadImage(image, imagePath);
             onResultSubmitted(status, imageUrl);
         } else if (status === 'lost') {
             onResultSubmitted(status);
@@ -274,14 +271,20 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     setDialogState({ open: true, title, message });
   };
 
-
   useEffect(() => {
     if (!gameId || !user) {
+        setLoading(false);
+        setError("Invalid battle or user.");
         return;
     };
-    const unsubscribe = getBattle(gameId, (battleData) => {
+
+    const unsubscribe = BattleService.getBattleStream(gameId, (battleData) => {
         if (battleData) {
             setBattle(battleData);
+            if (battleData.status === 'cancelled') {
+                showDialog("Battle Cancelled", "This battle has been cancelled.");
+                setTimeout(() => router.push('/play'), 3000);
+            }
         } else {
             setError("Battle not found or has been cancelled.");
             setTimeout(() => router.push('/play'), 3000);
@@ -303,7 +306,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     if (!battle || !user) return;
     if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
       try {
-        await cancelBattle(battle.id, user.uid);
+        await BattleService.cancelBattle(battle.id, user.uid);
         showDialog("Success", "Battle cancelled.");
         router.push('/play');
       } catch (err) {
@@ -316,7 +319,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
     if (!battle || !user) return;
     setIsMarkingReady(true);
     try {
-        await markPlayerAsReady(battle.id, user.uid);
+        await BattleService.markPlayerAsReady(battle.id, user.uid);
     } catch (err) {
         showDialog("Error", "Could not mark as ready.");
     } finally {
@@ -331,8 +334,8 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
       if(codeToUse && battleIdToUse) {
           setIsSubmittingCode(true);
           try {
-            await setBattleRoomCode(battleIdToUse, codeToUse);
-            setRoomCodeForInput(""); // Clear input after successful submission
+            await BattleService.setRoomCode(battleIdToUse, codeToUse);
+            setRoomCodeForInput("");
           } catch(err) {
               showDialog("Error", "Failed to set room code.");
           } finally {
@@ -344,7 +347,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
   const onResultSubmitted = async (status: 'won' | 'lost', screenshotUrl?: string) => {
     if (!user || !battle) return;
     try {
-        await uploadResult(battle.id, user.uid, status, screenshotUrl);
+        await BattleService.uploadResult(battle.id, user.uid, status, screenshotUrl);
         showDialog("Success", "Result submitted for verification.");
         setResultStatus(null);
     } catch (error) {
@@ -384,7 +387,7 @@ export default function GameRoomPage({ params }: { params: { gameId: string } })
          return "After your game ends, post the result below. Dishonesty will result in a ban.";
       }
       if (battle.status === 'waiting_for_players_ready' && !isPlayerReady) {
-          return `Join the room in Ludo King and click 'I'm Ready'.`
+          return `Join the room in Ludo King and click \'I\'m Ready\'.`
       }
       if (battle.status === 'waiting_for_players_ready' && isPlayerReady && !isOpponentReady) {
           return `You are ready! Waiting for ${opponent?.name || 'opponent'} to confirm.`

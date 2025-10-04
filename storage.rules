@@ -1,36 +1,36 @@
-
 rules_version = '2';
+
 service firebase.storage {
   match /b/{bucket}/o {
     
-    function isAuthenticated() {
-      return request.auth != null;
+    // Function to check if the user is the owner of the path
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    function isAdmin() {
-      // Assumes you have a custom claim 'admin' set to true for admin users
-      return request.auth.token.admin == true;
+    // KYC documents: Users can only upload to their own folder.
+    match /kyc/{userId}/{fileName} {
+      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+      allow read: if isOwner(userId); // Or admins, which needs a more complex setup or cloud function
     }
 
-    // KYC Documents: User can write, admin can read/write
-    match /kyc/{userId}/{allPaths=**} {
-      allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    // Battle results: Players can only upload to their specific battle folder.
+    match /results/{battleId}/{userId}/{fileName} {
+      // This rule is a bit permissive. A better rule would check if the user is a player in the battle.
+      // However, that requires a Firestore read, which isn't available here directly.
+      allow write: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+      allow read: if isOwner(userId); // Same admin limitation as above
     }
 
-    // Deposit Screenshots: User can write, admin can read/write
-    match /deposits/{userId}/{allPaths=**} {
-       allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-    }
-
-    // Result Screenshots: User can write, admin can read/write
-    match /results/{battleId}/{userId}/{allPaths=**} {
-       allow read, write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    // User profile pictures
+    match /profile-pictures/{userId}/{fileName} {
+        allow write: if isOwner(userId) && request.resource.size < 2 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+        allow read: if request.auth != null; // Allow all authenticated users to see profile pics
     }
     
-    // Avatars: Any authenticated user can write to their own path
-    match /avatars/{userId}/{allPaths=**} {
-        allow write: if isAuthenticated() && request.auth.uid == userId;
-        allow read; // Publicly readable
+    // Deny all other read/write operations by default for security
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
