@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
     </p>
     <h2 class="text-xl font-semibold text-gray-800 mt-6">3. Sharing of Your Information</h2>
     <p class="mt-2 text-gray-600">
-      We will not rent or sell your information to third parties outside SZ LUDO without your consent, except as noted in this Policy.
+      We will not rent or sell your information to third parties outside SDF Battles without your consent, except as noted in this Policy.
     </p>
     <h2 class="text-xl font-semibold text-gray-800 mt-6">4. Security</h2>
     <p class="mt-2 text-gray-600">

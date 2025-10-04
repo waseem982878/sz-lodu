@@ -15,7 +15,7 @@ export function Header() {
     const { openSidebar } = useSidebar();
     const { userProfile } = useAuth();
     const [bannerLines, setBannerLines] = useState<string[]>([
-        "🎉 Welcome to SZ LUDO! Play & Win Big! 🎉",
+        "🎉 Welcome to SDF Battles! Play & Win Big! 🎉",
         "Instant Withdrawals - Get Your Winnings in Minutes! ⚡",
         "Refer a Friend & Earn ₹25 Bonus Cash! 🎁",
         "Daily Leaderboard Prizes! Climb to the Top! 🏆",
@@ -75,7 +75,7 @@ export function Header() {
                         <Menu className="h-6 w-6" />
                     </Button>
                     <Link href="/home" className="flex items-center">
-                        <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto] font-heading">SZ LUDO</span>
+                        <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-card-foreground to-primary bg-clip-text text-transparent animate-animate-shine bg-[length:200%_auto] font-heading">SDF Battles</span>
                     </Link>
                 </div>
                 <div className="flex items-center gap-2">

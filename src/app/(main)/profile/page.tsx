@@ -13,7 +13,6 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { updateUserProfile } from "@/services/user-service";
 
-
 type MetricProps = {
   icon: React.ElementType;
   label: string;
@@ -39,12 +38,17 @@ function KycSection({ kycStatus }: { kycStatus: UserProfile['kycStatus'] }) {
 
     const statusMap = {
         'Verified': { text: 'KYC Verified', color: 'text-green-600 dark:text-green-400', icon: <CheckCircle2 className="h-4 w-4" /> },
+        'approved': { text: 'KYC Verified', color: 'text-green-600 dark:text-green-400', icon: <CheckCircle2 className="h-4 w-4" /> },
         'Pending': { text: 'KYC Pending', color: 'text-yellow-600 dark:text-yellow-400', icon: <Loader2 className="h-4 w-4 animate-spin" /> },
-        'Not Verified': { text: 'Verify Your KYC', color: 'text-red-600 dark:text-red-400', icon: <ShieldQuestion className="h-4 w-4"/> },
+        'pending': { text: 'KYC Pending', color: 'text-yellow-600 dark:text-yellow-400', icon: <Loader2 className="h-4 w-4 animate-spin" /> },
         'Rejected': { text: 'KYC Rejected', color: 'text-red-600 dark:text-red-400', icon: <ShieldQuestion className="h-4 w-4"/> },
-    }
+        'rejected': { text: 'KYC Rejected', color: 'text-red-600 dark:text-red-400', icon: <ShieldQuestion className="h-4 w-4"/> },
+        'Not Verified': { text: 'Verify Your KYC', color: 'text-red-600 dark:text-red-400', icon: <ShieldQuestion className="h-4 w-4"/> },
+        'none': { text: 'Verify Your KYC', color: 'text-red-600 dark:text-red-400', icon: <ShieldQuestion className="h-4 w-4"/> },
+    };
     
-    const currentStatus = statusMap[kycStatus];
+    // Fallback for any unexpected or nullish status
+    const currentStatus = statusMap[kycStatus as keyof typeof statusMap] || statusMap['none'];
 
     return (
         <div className={`border border-current p-3 rounded-lg flex justify-between items-center ${currentStatus.color}`}>
@@ -57,7 +61,7 @@ function KycSection({ kycStatus }: { kycStatus: UserProfile['kycStatus'] }) {
             </div>
             <Button variant="outline" className="border-current hover:bg-current/10 h-8" onClick={handleKycClick}>
               <UserCheck className="mr-2 h-4 w-4" />
-              {kycStatus === 'Verified' ? 'View' : kycStatus === 'Pending' ? 'Status' : 'Start'}
+              {(kycStatus === 'Verified' || kycStatus === 'approved') ? 'View' : kycStatus === 'Pending' ? 'Status' : 'Start'}
             </Button>
         </div>
     )
@@ -93,7 +97,10 @@ export default function ProfilePage() {
   };
 
   const handleSaveProfile = async () => {
-    if (!user || !displayName.trim()) return;
+    if (!user || !displayName.trim()) {
+        alert("Display name cannot be empty.");
+        return;
+    }
 
     if (displayName.trim() === userProfile.displayName) {
       setIsEditing(false);
@@ -105,6 +112,7 @@ export default function ProfilePage() {
         await updateUserProfile(user.uid, { displayName: displayName.trim() });
         setIsEditing(false);
     } catch (e) {
+        console.error("Error saving profile:", e);
         alert("Could not save profile. Please try again.");
     } finally {
         setIsSaving(false);
@@ -112,7 +120,6 @@ export default function ProfilePage() {
   };
 
   const winRate = userProfile.gamesPlayed > 0 ? Math.round((userProfile.gamesWon / userProfile.gamesPlayed) * 100) : 0;
-
 
   return (
     <div className="space-y-4 pb-10">
@@ -142,7 +149,7 @@ export default function ProfilePage() {
               </p>
             </div>
           ) : (
-            <CardTitle className="mt-2 text-xl">{displayName}</CardTitle>
+            <CardTitle className="mt-2 text-xl">{displayName || "User"}</CardTitle>
           )}
           
           <CardDescription className="text-xs">{user.phoneNumber || user.email}</CardDescription>

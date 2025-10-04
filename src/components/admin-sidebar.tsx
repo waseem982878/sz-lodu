@@ -52,7 +52,7 @@ export function AdminSidebar() {
       )}>
       <div className="flex items-center justify-between p-4 border-b">
         <div className="text-2xl font-bold text-center text-gray-800 font-heading">
-          SZ LUDO <span className="text-primary">Admin</span>
+          SDF Battles <span className="text-primary">Admin</span>
         </div>
          <Button variant="ghost" size="icon" className="lg:hidden" onClick={closeSidebar}>
             <X className="h-6 w-6" />

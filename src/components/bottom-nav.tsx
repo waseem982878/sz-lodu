@@ -1,9 +1,8 @@
-
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, User, MessageCircle, Trophy, Swords, Shield } from "lucide-react";
+import { Home, Wallet, User, MessageCircle, Trophy, Swords, Shield, UploadCloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -11,8 +10,8 @@ const userNavItems = [
     { href: "/leaderboard", label: "Leaders", icon: Trophy },
     { href: "/wallet", label: "Wallet", icon: Wallet },
     { href: "/home", label: "Play", icon: Swords },
+    { href: "/dashboard/battle-result", label: "Upload", icon: UploadCloud }, // NEW LINK
     { href: "/profile", label: "Profile", icon: User },
-    { href: "/support", label: "Support", icon: MessageCircle },
 ];
 
 const adminNavItem = { href: "/admin/dashboard", label: "Admin", icon: Shield };
@@ -45,12 +44,12 @@ export function BottomNav() {
 
     const itemsToDisplay = [...userNavItems];
     if (isAdmin) {
-        // Replace support with admin link for admins
-        const supportIndex = itemsToDisplay.findIndex(item => item.label === 'Support');
-        if (supportIndex !== -1) {
-            itemsToDisplay[supportIndex] = adminNavItem;
-        } else {
-            itemsToDisplay.push(adminNavItem);
+        // Replace the new 'Upload' link with 'Admin' link for admins
+        const uploadIndex = itemsToDisplay.findIndex(item => item.label === 'Upload');
+        if (uploadIndex !== -1) {
+            itemsToDisplay[uploadIndex] = adminNavItem;
+        } else { // Fallback if it wasn't found
+            itemsToDisplay.splice(3, 0, adminNavItem); // Add it in a reasonable position
         }
     }
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef } from "react";
@@ -10,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
-import { uploadImage } from "@/services/storage-service";
-import { submitKycDetails } from "@/services/user-agent-service";
+import { uploadImage } from "@/services/image-upload.service";
+import { UserService } from "@/services/user-service"; // FINAL CORRECTED IMPORT
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
+// Dialog component remains the same
 function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -34,19 +34,16 @@ function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose:
   );
 }
 
-
 export default function KycPage() {
   const router = useRouter();
   const { user, userProfile, loading } = useAuth();
   
-  // Form state
   const [name, setName] = useState(userProfile?.name || "");
   const [dob, setDob] = useState(userProfile?.dob || "");
   const [panNumber, setPanNumber] = useState(userProfile?.panNumber || "");
   const [aadhaarNumber, setAadhaarNumber] = useState(userProfile?.aadhaarNumber || "");
   const [upiId, setUpiId] = useState(userProfile?.upiId || "");
   
-  // File state
   const [panFile, setPanFile] = useState<File | null>(null);
   const [aadhaarFile, setAadhaarFile] = useState<File | null>(null);
   const [panPreview, setPanPreview] = useState(userProfile?.panCardUrl || null);
@@ -62,7 +59,6 @@ export default function KycPage() {
     setDialogState({ open: true, title, message });
   };
 
-
   if (loading) {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
   }
@@ -75,14 +71,6 @@ export default function KycPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setFile: React.Dispatch<React.SetStateAction<File | null>>, setPreview: React.Dispatch<React.SetStateAction<string | null>>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-       if (file.size > 5 * 1024 * 1024) {
-          showDialog("Error", "File size should not exceed 5MB.");
-          return;
-      }
-      if (!file.type.startsWith('image/')) {
-          showDialog("Error", "Please upload a valid image file.");
-          return;
-      }
       setFile(file);
       setPreview(URL.createObjectURL(file));
     }
@@ -96,7 +84,6 @@ export default function KycPage() {
     console.log('📸 Starting KYC document upload...');
 
     try {
-        // 1. Validate files
         if (!panFile && !userProfile.panCardUrl) {
             throw new Error('Please upload your PAN card photo.');
         }
@@ -107,7 +94,6 @@ export default function KycPage() {
         let panCardUrl = userProfile.panCardUrl;
         let aadhaarCardUrl = userProfile.aadhaarCardUrl;
 
-        // 2. Upload new files if provided
         if (panFile) {
             console.log('Uploading PAN card...');
             panCardUrl = await uploadImage(panFile, `kyc/${user.uid}/pan`);
@@ -120,8 +106,7 @@ export default function KycPage() {
             console.log('Aadhaar card uploaded:', aadhaarCardUrl);
         }
         
-        // 3. Submit KYC details
-        await submitKycDetails(user.uid, {
+        await UserService.updateUserProfile(user.uid, {
             name,
             dob,
             panNumber,
@@ -129,6 +114,7 @@ export default function KycPage() {
             upiId,
             panCardUrl,
             aadhaarCardUrl,
+            kycStatus: 'Pending',
         });
         
         console.log('✅ KYC submitted successfully');
@@ -181,7 +167,6 @@ export default function KycPage() {
                 <Input id="dob" type="date" value={dob} onChange={e => setDob(e.target.value)} required disabled={isPendingOrVerified} />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="aadhaarNumber">Aadhaar Number (12 digits)</Label>
               <Input id="aadhaarNumber" value={aadhaarNumber} onChange={e => setAadhaarNumber(e.target.value)} required pattern="\d{12}" title="Must be 12 digits" disabled={isPendingOrVerified} />
@@ -194,7 +179,6 @@ export default function KycPage() {
               <Label htmlFor="upiId">UPI ID (for receiving payments)</Label>
               <Input id="upiId" value={upiId} onChange={e => setUpiId(e.target.value)} required placeholder="yourname@upi" disabled={isPendingOrVerified} />
             </div>
-
             <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label>Aadhaar Card Photo</Label>
@@ -230,7 +214,7 @@ export default function KycPage() {
                 Submit for Verification
               </Button>
             )}
-             {userProfile.kycStatus === 'Verified' && (
+            {userProfile.kycStatus === 'Verified' && (
               <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-700 dark:text-green-300 flex items-center justify-center gap-2">
                 <CheckCircle2 className="h-5 w-5"/>
                 <p className="font-semibold">Your KYC is verified. You can now make withdrawals.</p>
@@ -242,7 +226,6 @@ export default function KycPage() {
                 <p className="font-semibold">Your KYC is under review. This usually takes 24 hours.</p>
               </div>
             )}
-
           </form>
         </CardContent>
       </Card>

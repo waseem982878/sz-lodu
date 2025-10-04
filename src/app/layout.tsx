@@ -18,18 +18,18 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: "SZ LUDO",
-  description: "Win Real Cash on SZ LUDO",
+  title: "SDF Battles",
+  description: "Play Games & Earn Real Money",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SZ LUDO",
+    title: "SDF Battles",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#B91C1C", // Red color
+  themeColor: "#16A34A",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

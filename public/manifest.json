@@ -1,11 +1,11 @@
 {
-  "name": "SZ Ludo Challenge",
-  "short_name": "SZ Ludo",
-  "description": "Play Ludo & Earn Real Money",
+  "name": "SDF Battles",
+  "short_name": "SDF Battles",
+  "description": "Play Games & Earn Real Money",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#B91C1C",
-  "theme_color": "#B91C1C",
+  "background_color": "#16A34A",
+  "theme_color": "#16A34A",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
@@ -53,7 +53,7 @@
     {
       "name": "New Challenge",
       "short_name": "Challenge",
-      "description": "Create new Ludo challenge",
+      "description": "Create new challenge",
       "url": "/play",
       "icons": [{ "src": "/icons/shortcut-challenge.png", "sizes": "96x96" }]
     },

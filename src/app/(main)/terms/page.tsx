@@ -7,7 +7,7 @@ export default function TermsPage() {
   const content = `
     <h2 class="text-xl font-semibold text-gray-800">1. Introduction</h2>
     <p class="mt-2 text-gray-600">
-      Welcome to SZ LUDO. By using our services, you agree to be bound by these Terms & Conditions. Please read them carefully. You must be 18 years or older to use this service.
+      Welcome to SDF Battles. By using our services, you agree to be bound by these Terms & Conditions. Please read them carefully. You must be 18 years or older to use this service.
     </p>
     <h2 class="text-xl font-semibold text-gray-800 mt-6">2. User Account</h2>
     <p class="mt-2 text-gray-600">
@@ -19,7 +19,7 @@ export default function TermsPage() {
     </p>
     <h2 class="text-xl font-semibold text-gray-800 mt-6">4. Financial Risk</h2>
     <p class="mt-2 text-gray-600">
-      This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk. SZ LUDO is not responsible for any financial losses incurred while using the platform.
+      This game involves an element of financial risk and may be addictive. Please play responsibly and at your own risk. SDF Battles is not responsible for any financial losses incurred while using the platform.
     </p>
   `;
 

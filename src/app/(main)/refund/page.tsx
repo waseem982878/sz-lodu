@@ -7,7 +7,7 @@ export default function RefundPolicyPage() {
   const content = `
     <h2 class="text-xl font-semibold text-gray-800">1. General Policy</h2>
     <p class="mt-2 text-gray-600">
-      At SZ LUDO, we strive to provide a fair and exciting gaming experience. All funds added to your deposit wallet are used for participating in games. Winnings are credited to your winnings wallet.
+      At SDF Battles, we strive to provide a fair and exciting gaming experience. All funds added to your deposit wallet are used for participating in games. Winnings are credited to your winnings wallet.
     </p>
     <h2 class="text-xl font-semibold text-gray-800 mt-6">2. No Refunds on Deposits</h2>
     <p class="mt-2 text-gray-600">

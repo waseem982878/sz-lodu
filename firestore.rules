@@ -1,83 +1,42 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    function isUser(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
+
+    // Helper function to check for admin privileges
     function isAdmin() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // Admins can read/write all data for moderation
-    match /{path=**} {
+    // Users can read their own user document
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // UPI accounts - admin only
+    match /payment_upis/{document} {
       allow read, write: if isAdmin();
     }
-    
-    // User can read/write their own profile, but not change balances or roles.
-    match /users/{userId} {
-      allow read: if isUser(userId);
-      allow write: if isUser(userId) && !(
-        'depositBalance' in request.resource.data ||
-        'winningsBalance' in request.resource.data ||
-        'isAdmin' in request.resource.data ||
-        'isAgent' in request.resource.data ||
-        'kycStatus' in request.resource.data
-      );
-    }
-    
-    // Users can read and write to their own subcollections.
-    match /users/{userId}/{subcollection}/{docId} {
-       allow read, write: if isUser(userId);
-    }
-    
-    // Stripe-related rules
-    match /products/{productId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /products/{productId}/prices/{priceId} {
-      allow read: if true;
-      allow write: if false;
+
+    // Payment requests
+    // - Users can create for themselves
+    // - Users can read their own
+    // - Admins can read/write all
+    match /payment_requests/{paymentId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
-    // Logged in users can create checkout sessions
-    match /users/{userId}/checkout_sessions/{sessionId} {
-      allow create: if isUser(userId);
-      allow read, update: if isUser(userId);
-      allow delete: if false;
-    }
-
-    // Users can only read their own subscriptions and payments
-    match /users/{userId}/subscriptions/{subscriptionId} {
-      allow read: if isUser(userId);
-    }
-     match /users/{userId}/payments/{paymentId} {
-      allow read: if isUser(userId);
-    }
-
-    // Battles can be read by anyone, created by authenticated users.
-    // Updates are handled by server-side logic (Cloud Functions / Admin SDK)
-    match /battles/{battleId} {
-      allow read: if true;
-      allow create: if isAuthenticated();
-      allow update, delete: if isUser(battleId.split('_')[0]); // Basic protection, server is authority
-    }
-    
-    // Config documents (e.g. appSettings, socialMedia) are read-only for clients
-    match /config/{docId} {
-        allow read: if true;
-        allow write: if false;
-    }
-
-    // Transactions can only be read by the user they belong to. Creation is handled by server logic.
-    match /transactions/{transactionId} {
-        allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
-        allow create, update, delete: if false; // Creation/updates must be done via secure backend
+    // Orders
+    // - Users can create for themselves
+    // - Users can read their own
+    // - Admins can read/write all
+    match /orders/{orderId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // Only allow users to update if the order is still pending
+      allow update: if (request.auth != null && request.resource.data.userId == request.auth.uid && resource.data.status == 'pending') || isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

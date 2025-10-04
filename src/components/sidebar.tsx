@@ -66,7 +66,7 @@ export function Sidebar() {
       )}>
           <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
             <Link href="/home" onClick={closeSidebar} className="flex items-center">
-              <span className="text-xl font-bold">SZ LUDO</span>
+              <span className="text-xl font-bold">SDF Battles</span>
             </Link>
               <Button variant="ghost" size="icon" onClick={closeSidebar}>
                   <X className="h-6 w-6" />
