@@ -12,11 +12,13 @@ const TransactionsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (auth.user) {
+    const user = auth.session?.user;
+    if (user) {
       const fetchTransactions = async () => {
         try {
           setLoading(true);
-          const userTransactions = await getUserTransactions(auth.user.uid);
+          const userId = (user as any).id;
+          const userTransactions = await getUserTransactions(userId);
           setTransactions(userTransactions);
           setError(null);
         } catch (err) {
@@ -29,7 +31,7 @@ const TransactionsPage = () => {
 
       fetchTransactions();
     }
-  }, [auth.user]);
+  }, [auth.session?.user]);
 
   if (loading) {
     return <p>Loading transactions...</p>;

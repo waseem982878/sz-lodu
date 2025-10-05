@@ -6,10 +6,13 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   return prisma.user.findUnique({ where: { email } });
 }
 
-export async function updateUserKycStatus(userId: string, status: string): Promise<User> {
+export async function updateUserKycStatus(userId: string, status: string, kycDocumentUrl?: string): Promise<User> {
     return prisma.user.update({
         where: { id: userId },
-        data: { kycStatus: status },
+        data: { 
+            kycStatus: status,
+            kycDocumentUrl: kycDocumentUrl,
+        },
     });
 }
 

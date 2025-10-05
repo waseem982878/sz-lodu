@@ -17,3 +17,7 @@ export async function createNotification(userId: string, message: string) {
         },
     });
 }
+
+export async function getUserNotifications(userId: string) {
+    return getNotifications(userId);
+}

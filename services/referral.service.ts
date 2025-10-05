@@ -10,3 +10,9 @@ export async function createReferral(referrerId: string, referredId: string) {
         },
     });
 }
+
+export async function getReferrer(userId: string) {
+    return prisma.referral.findFirst({
+        where: { referredId: userId },
+    });
+}

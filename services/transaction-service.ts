@@ -8,3 +8,7 @@ export async function getTransactionsByUserId(userId: string) {
         orderBy: { createdAt: 'desc' },
     });
 }
+
+export async function getUserTransactions(userId: string) {
+    return getTransactionsByUserId(userId);
+}

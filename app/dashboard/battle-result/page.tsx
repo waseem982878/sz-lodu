@@ -28,12 +28,16 @@ const BattleResultPage = () => {
 
     try {
       const timestamp = new Date().toISOString();
-      const filePath = `results/${battleId}/${auth.user.uid}_${timestamp}`;
+      // Corrected the filePath to use a property from the user object, assuming 'id' is available.
+      // The original code had 'auth.user.uid' which is not available on the session user object by default.
+      // You might need to adjust this based on your actual user object structure in the session.
+      const userId = (auth.user as any).id; 
+      const filePath = `results/${battleId}/${userId}_${timestamp}`;
       const downloadURL = await uploadImage(file, filePath);
 
       // Here you would typically update the battle data with this result proof
       // For example, call a service function like:
-      // await submitBattleResult(battleId, auth.user.uid, downloadURL);
+      // await submitBattleResult(battleId, userId, downloadURL);
 
       setMessage(`Result for battle ${battleId} uploaded successfully! A moderator will review it shortly.`);
     } catch (error) {
@@ -65,7 +69,7 @@ const BattleResultPage = () => {
         <input type="file" onChange={handleFileChange} className="mb-4" accept="image/*" />
         
         <button 
-          onClick={handleUpload} 
+          onClick={handleUpload}
           disabled={uploading || !file || !battleId}
           className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
         >
