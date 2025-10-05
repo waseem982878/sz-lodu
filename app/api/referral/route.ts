@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Adjust path
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
-import { createReferral, getReferrer } from "@/services/referral.service"; // You'll create this
+import { createReferral, getReferrer } from "@/services/referral.service";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     // Create a referral record
-    await createReferral(referrer.id, session.user.id);
+    await createReferral(referrer.id, (session.user as any).id);
 
     // You might also credit the referrer here or after the new user completes an action
 

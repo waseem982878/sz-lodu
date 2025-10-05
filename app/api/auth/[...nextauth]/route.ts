@@ -1,9 +1,10 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { verifyPassword } from "@/lib/auth"; // You'll need to create this helper
-import { findUserByEmail } from "@/services/user.service"; // You'll need to create this
+import { verifyPassword } from "@/lib/auth";
+import { findUserByEmail } from "@/services/user.service";
+import { AuthOptions } from "next-auth";
 
-export default NextAuth({
+export const authOptions: AuthOptions = {
   session: {
     strategy: "jwt",
   },
@@ -25,13 +26,12 @@ export default NextAuth({
           throw new Error('No user found!');
         }
 
-        const isValid = await verifyPassword(credentials.password, user.passwordHash); // Assumes you store a hashed password
+        const isValid = await verifyPassword(credentials.password, user.passwordHash);
 
         if (!isValid) {
           throw new Error('Could not log you in!');
         }
 
-        // Return a user object for the session
         return { id: user.id, email: user.email, name: user.username, role: user.role };
       }
     })
@@ -46,14 +46,19 @@ export default NextAuth({
     },
     async session({ session, token }) {
         if (session.user) {
-            session.user.id = token.id as string;
-            session.user.role = token.role as string;
+            // The type definition for session.user in next-auth might not have id and role by default
+            (session.user as any).id = token.id as string;
+            (session.user as any).role = token.role as string;
         }
         return session;
     }
   },
   pages: {
-    signIn: '/auth/signin', // A custom sign-in page
+    signIn: '/auth/signin',
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

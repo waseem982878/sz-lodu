@@ -1,5 +1,5 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Adjust path if needed
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 
 // A simple GET handler to demonstrate admin-only access
@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
 
   // Check if the user is authenticated and has the 'admin' role
-  if (!session || session.user?.role !== 'admin') {
+  if (!session || (session.user as any)?.role !== 'admin') {
     return new NextResponse(
       JSON.stringify({ error: "Forbidden: You do not have access to this resource." }),
       { status: 403, headers: { 'Content-Type': 'application/json' } }
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 // For example, an admin might use a POST request to approve a KYC submission.
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    if (!session || (session.user as any)?.role !== 'admin') {
         return new NextResponse(JSON.stringify({ error: "Forbidden" }), { status: 403 });
     }
 

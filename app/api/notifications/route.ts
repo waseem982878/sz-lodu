@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]"; // Adjust path if needed
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
-import { getUserNotifications } from "@/services/notification.service"; // You'll create this
+import { getUserNotifications } from "@/services/notification.service";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const notifications = await getUserNotifications(session.user.id);
+    const notifications = await getUserNotifications((session.user as any).id);
     return new NextResponse(JSON.stringify(notifications), { status: 200 });
   } catch (error) {
     return new NextResponse(JSON.stringify({ error: "Failed to fetch notifications" }), { status: 500 });
