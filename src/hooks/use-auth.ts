@@ -1,45 +1,61 @@
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { UserProfile, UserRole } from '@/models/user.model';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { User } from '@/models/user.model'; 
 
-export const useAuth = () => {
-    const [user, setUser] = useState<User | null>(null);
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState(true);
+interface AuthState {
+  firebaseUser: FirebaseUser | null;
+  currentUser: User | null; // Your custom user data
+  loading: boolean;
+  error: Error | null;
+}
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            setLoading(true);
-            setUser(user);
-            if (user) {
-                // Fetch user profile from Firestore
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    setUserProfile(userDoc.data() as UserProfile);
-                } else {
-                    // Handle case where user exists in Auth but not in Firestore
-                    // You might want to create a new user profile here
-                    const newUserProfile: UserProfile = {
-                        uid: user.uid,
-                        email: user.email,
-                        role: 'user',
-                        walletBalance: 0,
-                        kycStatus: 'not_started',
-                    };
-                    setUserProfile(newUserProfile);
-                }
-            } else {
-                setUserProfile(null);
-            }
-            setLoading(false);
+export function useAuth(): AuthState {
+  const [authState, setAuthState] = useState<AuthState>({ 
+    firebaseUser: null,
+    currentUser: null,
+    loading: true,
+    error: null, 
+  });
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setAuthState(prev => ({ ...prev, firebaseUser: user, loading: true }));
+        
+        // Now, listen for changes to the user's document in Firestore
+        const userDocRef = doc(db, 'users', user.uid);
+        const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+          if (doc.exists()) {
+            setAuthState(prev => ({ 
+              ...prev, 
+              currentUser: { uid: doc.id, ...doc.data() } as User,
+              loading: false 
+            }));
+          } else {
+            // This case can happen if a user is authenticated but doesn't have a Firestore document yet.
+            // You might want to create one here.
+            setAuthState(prev => ({ ...prev, currentUser: null, loading: false }));
+          }
+        }, (error) => {
+          console.error("Error fetching user data:", error);
+          setAuthState(prev => ({ ...prev, error, loading: false }));
         });
 
-        return () => unsubscribe();
-    }, []);
+        return () => unsubscribeSnapshot(); // Unsubscribe from Firestore listener on cleanup
 
-    return { user, userProfile, loading };
-};
+      } else {
+        // User is signed out
+        setAuthState({ firebaseUser: null, currentUser: null, loading: false, error: null });
+      }
+    }, (error) => {
+      console.error("Auth state error:", error);
+      setAuthState(prev => ({ ...prev, error, loading: false }));
+    });
+
+    return () => unsubscribeAuth(); // Unsubscribe from auth listener on cleanup
+  }, []);
+
+  return authState;
+}

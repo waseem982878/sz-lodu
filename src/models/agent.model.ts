@@ -1,11 +1,18 @@
-import { UserProfile } from './user.model';
+export interface Agent {
+  id: string;         // Corresponds to the User UID
+  name: string;
+  email: string;
 
-export interface Agent extends UserProfile {
-  id: string;
-  assignedUsers: string[]; // Array of user UIDs
-  commissionRate: number; // Percentage
-  floatBalance: number;
-  usedAmount: number;
-  isActive: boolean;
-  remainingBalance: number;
+  // Commission and earnings
+  commissionRate: number; // e.g., 0.02 for 2%
+  totalCommissionEarned: number;
+  unpaidCommission: number;
+
+  // Player management
+  referredPlayerCount: number;
+  totalPlayerWagered: number; // Total amount wagered by their referred players
+
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
 }

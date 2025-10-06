@@ -1,3 +1,4 @@
+
 import { UpiPayment } from '@/models/payment-upi.model';
 import { createOrder, updateOrderStatus } from './order.service';
 import { createTransaction } from './transaction-service';
@@ -17,42 +18,36 @@ class PaymentService {
     // 1. Create an internal order record
     const order = await createOrder(userId, amount, 'UPI');
 
-    // 2. "Call" the payment gateway API
-    const paymentResult = await FAKE_PAYMENT_GATEWAY_API.initiatePayment(amount, paymentMethod.upiId, order.id);
+    // 2. (Optional) Initiate payment with a real gateway
+    // const gatewayResponse = await FAKE_PAYMENT_GATEWAY_API.initiatePayment(amount, paymentMethod.upiId, order.id);
 
-    if (paymentResult.success) {
-      // 3. Update our order with the gateway's ID
-      await updateOrderStatus(order.id, 'pending', paymentResult.gatewayOrderId);
-      
-      // 4. Create a pending transaction record
-      await createTransaction({
-        userId,
-        amount,
-        type: 'deposit',
-        status: 'pending',
-        description: `Deposit via UPI from ${paymentMethod.upiId}`,
-        orderId: order.id
-      });
-
-      // In a real app, you would return a URL for the user to complete the payment
-      return { orderId: order.id };
-    } else {
-      await updateOrderStatus(order.id, 'failed');
-      throw new Error("Payment initiation failed");
-    }
+    // 3. Create a pending transaction record
+    await createTransaction({
+      userId: userId,
+      orderId: order.id,
+      amount: amount,
+      type: 'DEPOSIT',
+      status: 'PENDING',
+      paymentMethod: 'UPI',
+      upiId: paymentMethod.upiId,
+    });
+    
+    // In a real scenario, you might return a URL from the payment gateway
+    return { orderId: order.id };
   }
 
-  // In a real app, you would have a webhook handler to receive payment status updates from the gateway
-  async handlePaymentWebhook(gatewayOrderId: string, status: 'completed' | 'failed') {
-      // 1. Find the order associated with this gateway order ID
-      // (Requires querying your orders collection)
-      const orderId = "... find orderId from gatewayOrderId ...";
+  async confirmDeposit(orderId: string, gatewayTransactionId: string): Promise<boolean> {
+    // 1. Update internal order status
+    await updateOrderStatus(orderId, 'COMPLETED');
 
-      // 2. Update the order status
-      await updateOrderStatus(orderId, status);
+    // 2. Update the corresponding transaction to 'completed'
+    // (This logic might be more complex, e.g., finding the transaction by orderId)
+    
+    // 3. Credit the user's account
+    // (This would involve another service, e.g., UserService.updateBalance)
 
-      // 3. Update the corresponding transaction
-      // (Requires finding the transaction by orderId and updating its status)
+    console.log(`Confirmed deposit for order ${orderId} with gateway tx ${gatewayTransactionId}`);
+    return true;
   }
 }
 
