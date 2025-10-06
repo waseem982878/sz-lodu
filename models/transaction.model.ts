@@ -1,7 +1,14 @@
 export interface Transaction {
   id: string;
-  type: string;
-  description?: string;
+  userId: string;
+  userName?: string;
+  type: 'deposit' | 'withdrawal';
   amount: number;
-  status: string;
+  status: 'pending' | 'completed' | 'rejected';
+  upiId?: string;
+  screenshotUrl?: string;
+  adminNotes?: string;
+  createdAt: any; // Firestore Timestamp
+  completedAt?: any; // Firestore Timestamp
+  transactionId?: string;
 }
