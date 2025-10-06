@@ -1,10 +1,12 @@
-export interface PaymentUpi {
+import { Timestamp } from 'firebase/firestore';
+
+export interface UpiPayment {
   id: string;
-  upiId: string;
-  payeeName: string;
-  dailyLimit: number;
-  currentReceived: number;
-  isActive: boolean;
-  createdAt: any;
-  updatedAt: any;
+  orderId: string;
+  userId: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'failed';
+  transactionId?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
