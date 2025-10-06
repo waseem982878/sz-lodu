@@ -1,8 +1,27 @@
-export interface UpiPayment {
+export interface PaymentUpi {
   id: string;
-  name: string;       // e.g., "Primary UPI", "Google Pay"
-  upiId: string;      // The actual VPA, e.g., user@oksbi
-  isEnabled: boolean; // To allow admins to toggle it on/off
+  upiId: string;
+  payeeName: string;
+  dailyLimit: number;
+  currentReceived: number;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PaymentRequest {
+  id: string;
+  orderId: string;
+  amount: number;
+  upiId: string;
+  payeeName: string;
+  payerName?: string;
+  payerUpi?: string;
+  status: 'pending' | 'completed' | 'failed' | 'expired';
+  description?: string;
+  createdAt: Date;
+  expiresAt: Date;
+  completedAt?: Date;
+  transactionId?: string;
+  screenshotUrl?: string;
 }

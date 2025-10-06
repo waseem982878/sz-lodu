@@ -2,160 +2,130 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { UpiPayment } from "@/models/payment-upi.model";
+import type { PaymentUpi } from "@/models/payment-upi.model";
 
 export default function PaymentsAdminPage() {
-    const [upis, setUpis] = useState<UpiPayment[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    
-    // Form state for new UPI
-    const [newUpiId, setNewUpiId] = useState("");
-    const [newPayeeName, setNewPayeeName] = useState("");
-    const [newDailyLimit, setNewDailyLimit] = useState(100000);
+    const [upis, setUpis] = useState<PaymentUpi[]>([]);
+    const [newUpi, setNewUpi] = useState({ upiId: '', payeeName: '', dailyLimit: '10000' });
 
     useEffect(() => {
-        const q = collection(db, "payment_upis");
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const upiData: UpiPayment[] = [];
-            snapshot.forEach(doc => upiData.push({ id: doc.id, ...doc.data() } as UpiPayment));
-            setUpis(upiData);
-            setLoading(false);
+        const unsubscribe = onSnapshot(collection(db, 'payment_upis'), (snapshot) => {
+            const upisData: PaymentUpi[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentUpi));
+            setUpis(upisData);
         });
         return () => unsubscribe();
     }, []);
 
-    const handleAddUpi = async () => {
-        if (!newUpiId || !newPayeeName || newDailyLimit <= 0) {
-            alert("Please fill all fields correctly.");
+    const handleUpiToggle = async (id: string, currentStatus: boolean) => {
+        const upiRef = doc(db, 'payment_upis', id);
+        try {
+            await updateDoc(upiRef, { isActive: !currentStatus });
+        } catch (error) {
+            console.error("Error updating UPI status: ", error);
+            alert("Failed to update status");
+        }
+    };
+
+    const handleAddUpi = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newUpi.upiId || !newUpi.payeeName) {
+            alert("Please fill in all fields");
             return;
         }
-        setIsSaving(true);
+
         try {
-            await addDoc(collection(db, "payment_upis"), {
-                upiId: newUpiId,
-                payeeName: newPayeeName,
-                dailyLimit: newDailyLimit,
+            await addDoc(collection(db, 'payment_upis'), {
+                ...newUpi,
+                dailyLimit: parseFloat(newUpi.dailyLimit),
                 currentReceived: 0,
                 isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
             });
-            // Clear form
-            setNewUpiId("");
-            setNewPayeeName("");
-            setNewDailyLimit(100000);
+            setNewUpi({ upiId: '', payeeName: '', dailyLimit: '10000' }); // Reset form
         } catch (error) {
-            alert("Failed to add UPI ID.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleToggleActive = async (upi: UpiPayment) => {
-        const upiRef = doc(db, 'payment_upis', upi.id);
-        await updateDoc(upiRef, { isActive: !upi.isActive });
-    };
-
-    const handleDelete = async (id: string) => {
-        if (confirm("Are you sure you want to delete this UPI ID? This cannot be undone.")) {
-            await deleteDoc(doc(db, 'payment_upis', id));
+            console.error("Error adding new UPI: ", error);
+            alert("Failed to add new UPI");
         }
     };
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-primary">Payment UPI Management</h1>
+            <h1 className="text-3xl font-bold text-primary">Payment Gateway Management</h1>
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-primary">Add New UPI ID</CardTitle>
-                    <CardDescription>Add a new UPI for receiving payments. It will be active by default.</CardDescription>
+                    <CardTitle className="text-primary">Add New UPI</CardTitle>
+                    <CardDescription>Add a new UPI ID to receive payments.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="new-upi-id">UPI ID</Label>
-                        <Input id="new-upi-id" value={newUpiId} onChange={(e) => setNewUpiId(e.target.value)} placeholder="yourname@okhdfc" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="new-payee-name">Payee Name</Label>
-                        <Input id="new-payee-name" value={newPayeeName} onChange={(e) => setNewPayeeName(e.target.value)} placeholder="John Doe" />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="new-daily-limit">Daily Limit (₹)</Label>
-                        <Input id="new-daily-limit" type="number" value={newDailyLimit} onChange={(e) => setNewDailyLimit(Number(e.target.value))} />
-                    </div>
+                <CardContent>
+                    <form onSubmit={handleAddUpi} className="flex flex-wrap items-end gap-4">
+                        <div className="flex-grow">
+                            <label htmlFor="upiId" className="text-sm font-medium">UPI ID</label>
+                            <Input id="upiId" value={newUpi.upiId} onChange={e => setNewUpi({ ...newUpi, upiId: e.target.value })} placeholder="e.g., yourname@okhdfcbank" />
+                        </div>
+                        <div className="flex-grow">
+                            <label htmlFor="payeeName" className="text-sm font-medium">Payee Name</label>
+                             <Input id="payeeName" value={newUpi.payeeName} onChange={e => setNewUpi({ ...newUpi, payeeName: e.target.value })} placeholder="e.g., John Doe" />
+                        </div>
+                        <div className="flex-grow">
+                             <label htmlFor="dailyLimit" className="text-sm font-medium">Daily Limit</label>
+                             <Input id="dailyLimit" type="number" value={newUpi.dailyLimit} onChange={e => setNewUpi({ ...newUpi, dailyLimit: e.target.value })} />
+                        </div>
+                        <Button type="submit">Add UPI</Button>
+                    </form>
                 </CardContent>
-                <CardFooter>
-                    <Button onClick={handleAddUpi} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-                        Add UPI
-                    </Button>
-                </CardFooter>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-primary">Manage Existing UPIs</CardTitle>
+                    <CardTitle className="text-primary">Manage UPI IDs</CardTitle>
+                    <CardDescription>Monitor and manage the active UPI IDs for payments.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {loading ? (
-                        <div className="flex justify-center items-center py-10">
-                            <Loader2 className="h-8 w-8 animate-spin" />
-                        </div>
-                    ) : (
-                       <div className="overflow-x-auto">
-                         <Table>
+                    <div className="overflow-x-auto">
+                        <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>UPI ID</TableHead>
                                     <TableHead>Payee Name</TableHead>
-                                    <TableHead>Limit</TableHead>
+                                    <TableHead>Today's Collection</TableHead>
+                                    <TableHead>Daily Limit</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead>Actions</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {upis.map(upi => {
-                                    const progress = upi.dailyLimit > 0 ? (upi.currentReceived / upi.dailyLimit) * 100 : 0;
-                                    return (
-                                        <TableRow key={upi.id}>
-                                            <TableCell className="font-medium">{upi.upiId}</TableCell>
-                                            <TableCell>{upi.payeeName}</TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col w-40">
-                                                    <span className="text-xs whitespace-nowrap">₹{upi.currentReceived.toLocaleString()} / ₹{upi.dailyLimit.toLocaleString()}</span>
-                                                    <div className="w-full bg-muted rounded-full h-2.5 mt-1">
-                                                        <div className="bg-primary h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={upi.isActive ? 'default' : 'secondary'}>
-                                                    {upi.isActive ? 'Active' : 'Inactive'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="flex gap-2 items-center">
-                                                <Switch checked={upi.isActive} onCheckedChange={() => handleToggleActive(upi)} />
-                                                <Button variant="destructive" size="icon" onClick={() => handleDelete(upi.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                })}
+                                {upis.map((upi) => (
+                                    <TableRow key={upi.id}>
+                                        <TableCell className="font-medium">{upi.upiId}</TableCell>
+                                        <TableCell>{upi.payeeName}</TableCell>
+                                        <TableCell>₹{upi.currentReceived.toLocaleString()}</TableCell>
+                                        <TableCell>₹{upi.dailyLimit.toLocaleString()}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={upi.isActive ? "default" : "destructive"}>
+                                                {upi.isActive ? 'Active' : 'Inactive'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Switch
+                                                checked={upi.isActive}
+                                                onCheckedChange={() => handleUpiToggle(upi.id, upi.isActive)}
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
                             </TableBody>
                         </Table>
-                       </div>
-                    )}
+                    </div>
                 </CardContent>
             </Card>
         </div>

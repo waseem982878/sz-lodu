@@ -145,7 +145,7 @@ export default function KycPage() {
                                   <KycDetailsModal user={user} />
                               </TableCell>
                               <TableCell className="p-2">
-                                  {user.kycStatus === 'pending' && (
+                                  {user.kycStatus === 'Pending' && (
                                     <div className="flex gap-2">
                                         <Button size="sm" onClick={() => handleKycUpdate(user.uid, 'approved')} className="bg-green-600 hover:bg-green-700 h-8">
                                             <Check className="h-4 w-4"/>

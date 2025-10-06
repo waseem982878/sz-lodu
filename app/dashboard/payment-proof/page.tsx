@@ -18,7 +18,7 @@ const PaymentProofPage = () => {
   };
 
   const handleUpload = async () => {
-    if (!file || !orderId || !auth.user) {
+    if (!file || !orderId || !auth.firebaseUser) {
       setMessage('Please select a file, enter an Order ID, and make sure you are logged in.');
       return;
     }
@@ -27,7 +27,7 @@ const PaymentProofPage = () => {
     setMessage('Uploading proof...');
 
     try {
-      const userId = (auth.user as any).id;
+      const userId = auth.firebaseUser.uid;
       const filePath = `payment-proofs/${userId}/${orderId}_${file.name}`;
       const downloadURL = await uploadImage(file, filePath);
 

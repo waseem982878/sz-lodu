@@ -180,7 +180,7 @@ export default function TransactionsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs whitespace-nowrap p-2">
-                      {transaction.createdAt?.toDate().toLocaleString()}
+                      {new Date(transaction.createdAt).toLocaleString()}
                     </TableCell>
                     <TableCell className="flex gap-1 p-2">
                       {transaction.status === 'pending' && (

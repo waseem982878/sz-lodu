@@ -13,7 +13,7 @@ export default function BattleUploadPage() {
     const { user } = useAuth();
     const router = useRouter();
     const params = useParams(); // Get URL params
-    const battleId = params.id as string; // Get battleId from URL
+    const battleId = params?.id as string; // Get battleId from URL
 
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -53,7 +53,7 @@ export default function BattleUploadPage() {
 
         try {
             // Use the new BattleService to upload the result
-            await BattleService.uploadBattleResult(battleId, user.uid, file);
+            await BattleService.uploadResult(battleId, user.uid, 'won', file);
 
             alert("Screenshot uploaded successfully! An admin will verify the result shortly.");
             router.push(`/battle/${battleId}`);

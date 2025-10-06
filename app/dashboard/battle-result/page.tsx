@@ -18,7 +18,7 @@ const BattleResultPage = () => {
   };
 
   const handleUpload = async () => {
-    if (!file || !battleId || !auth.user) {
+    if (!file || !battleId || !auth.firebaseUser) {
       setMessage('Please select a file, enter a Battle ID, and make sure you are logged in.');
       return;
     }
@@ -28,10 +28,7 @@ const BattleResultPage = () => {
 
     try {
       const timestamp = new Date().toISOString();
-      // Corrected the filePath to use a property from the user object, assuming 'id' is available.
-      // The original code had 'auth.user.uid' which is not available on the session user object by default.
-      // You might need to adjust this based on your actual user object structure in the session.
-      const userId = (auth.user as any).id; 
+      const userId = auth.firebaseUser.uid; 
       const filePath = `results/${battleId}/${userId}_${timestamp}`;
       const downloadURL = await uploadImage(file, filePath);
 

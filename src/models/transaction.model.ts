@@ -14,4 +14,5 @@ export interface Transaction {
   paymentMethod?: string;
   bankAccount?: string;
   ifscCode?: string;
+  details?: string;
 }

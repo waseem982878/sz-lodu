@@ -12,12 +12,12 @@ const TransactionsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const user = auth.user;
+    const user = auth.currentUser;
     if (user) {
       const fetchTransactions = async () => {
         try {
           setLoading(true);
-          const userId = (user as any).id;
+          const userId = user.id;
           const userTransactions = await getUserTransactions(userId);
           setTransactions(userTransactions);
           setError(null);
@@ -31,7 +31,7 @@ const TransactionsPage = () => {
 
       fetchTransactions();
     }
-  }, [auth.user]);
+  }, [auth.currentUser]);
 
   if (loading) {
     return <p>Loading transactions...</p>;
@@ -54,7 +54,7 @@ const TransactionsPage = () => {
                 <div className="flex justify-between">
                   <div>
                     <p className="font-semibold capitalize">{tx.type.replace('_', ' ')}</p>
-                    <p className="text-sm text-gray-500">{tx.description}</p>
+                    <p className="text-sm text-gray-500">{tx.details}</p>
                   </div>
                   <div className="text-right">
                     <p className={`font-bold ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
