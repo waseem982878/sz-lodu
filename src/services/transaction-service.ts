@@ -1,4 +1,4 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Transaction } from '@/models/transaction.model';
 
@@ -13,6 +13,19 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
   } catch (error) {
     console.error('Error creating transaction:', error);
     throw new Error('Failed to create transaction');
+  }
+};
+
+export const getUserTransactions = async (userId: string): Promise<Transaction[]> => {
+  try {
+    const transactionsCollection = collection(db, 'transactions');
+    const q = query(transactionsCollection, where('userId', '==', userId), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Transaction));
+    return transactions;
+  } catch (error) {
+    console.error('Error fetching user transactions:', error);
+    throw new Error('Failed to fetch user transactions');
   }
 };
 
