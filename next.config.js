@@ -17,12 +17,6 @@ const nextConfig = {
       },
     ];
   },
-  // Add this for development
-  allowedDevOrigins: [
-    "3002-firebase-sdf-battles-1759558441500.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev",
-    "localhost",
-    "127.0.0.1"
-  ],
 }
 
 module.exports = nextConfig
