@@ -18,7 +18,7 @@ const KycPage = () => {
   };
 
   const handleUpload = async () => {
-    if (!file || !auth.session?.user) {
+    if (!file || !auth.user) {
       setMessage('Please select a file and make sure you are logged in.');
       return;
     }
@@ -27,7 +27,7 @@ const KycPage = () => {
     setMessage('Uploading...');
 
     try {
-      const userId = (auth.session.user as any).id;
+      const userId = (auth.user as any).id;
       const filePath = `kyc/${userId}/${file.name}`;
       const downloadURL = await uploadImage(file, filePath);
 
@@ -63,9 +63,9 @@ const KycPage = () => {
         {message && <p className="mt-4 text-sm text-gray-600">{message}</p>}
 
         {/* You would fetch and display the user's current KYC status here */}
-        {auth.session?.user && (
+        {auth.user && (
             <div className="mt-6">
-                <p>Current Status: <span className="font-semibold">{(auth.session.user as any).kycStatus || 'Not Submitted'}</span></p>
+                <p>Current Status: <span className="font-semibold">{(auth.user as any).kycStatus || 'Not Submitted'}</span></p>
             </div>
         )}
       </div>

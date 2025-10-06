@@ -9,4 +9,10 @@ export interface UserProfile {
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt?: Date;
+  aadhaarNumber?: string;
+  panNumber?: string;
+  dob?: string;
+  upiId?: string;
+  aadhaarCardUrl?: string;
+  panCardUrl?: string;
 }

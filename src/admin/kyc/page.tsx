@@ -64,7 +64,7 @@ function KycDetailsModal({ user }: { user: UserProfile }) {
 export default function KycPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("Pending");
+  const [filter, setFilter] = useState("pending");
 
   useEffect(() => {
     setLoading(true);
@@ -84,9 +84,9 @@ export default function KycPage() {
     return () => unsubscribe();
   }, [filter]);
 
-  const handleKycUpdate = async (userId: string, status: 'Verified' | 'Rejected') => {
+  const handleKycUpdate = async (userId: string, status: 'approved' | 'rejected') => {
       let reasonForRejection: string | null = '';
-      if (status === 'Rejected') {
+      if (status === 'rejected') {
           reasonForRejection = prompt("Reason for rejection (optional):");
           if (reasonForRejection === null) { // User clicked cancel
             return;
@@ -98,7 +98,7 @@ export default function KycPage() {
           try {
             await updateDoc(userRef, {
                 kycStatus: status,
-                kycNotes: status === 'Rejected' ? reasonForRejection : '',
+                kycNotes: status === 'rejected' ? reasonForRejection : '',
             });
             alert(`User KYC has been successfully ${status.toLowerCase()}.`);
           } catch (e) {
@@ -145,12 +145,12 @@ export default function KycPage() {
                                   <KycDetailsModal user={user} />
                               </TableCell>
                               <TableCell className="p-2">
-                                  {user.kycStatus === 'Pending' && (
+                                  {user.kycStatus === 'pending' && (
                                     <div className="flex gap-2">
-                                        <Button size="sm" onClick={() => handleKycUpdate(user.uid, 'Verified')} className="bg-green-600 hover:bg-green-700 h-8">
+                                        <Button size="sm" onClick={() => handleKycUpdate(user.uid, 'approved')} className="bg-green-600 hover:bg-green-700 h-8">
                                             <Check className="h-4 w-4"/>
                                         </Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleKycUpdate(user.uid, 'Rejected')} className="h-8">
+                                        <Button size="sm" variant="destructive" onClick={() => handleKycUpdate(user.uid, 'rejected')} className="h-8">
                                             <X className="h-4 w-4"/>
                                         </Button>
                                     </div>

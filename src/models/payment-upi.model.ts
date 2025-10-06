@@ -1,8 +1,10 @@
 export interface UpiPayment {
   id: string;
-  name: string;
+  payeeName: string;
   upiId: string;
-  isEnabled: boolean;
+  isActive: boolean;
+  dailyLimit: number;
+  currentReceived: number;
   createdAt: Date;
   updatedAt: Date;
 }

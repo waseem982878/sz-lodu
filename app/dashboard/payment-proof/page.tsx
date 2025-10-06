@@ -18,7 +18,7 @@ const PaymentProofPage = () => {
   };
 
   const handleUpload = async () => {
-    if (!file || !orderId || !auth.session?.user) {
+    if (!file || !orderId || !auth.user) {
       setMessage('Please select a file, enter an Order ID, and make sure you are logged in.');
       return;
     }
@@ -27,7 +27,7 @@ const PaymentProofPage = () => {
     setMessage('Uploading proof...');
 
     try {
-      const userId = (auth.session.user as any).id;
+      const userId = (auth.user as any).id;
       const filePath = `payment-proofs/${userId}/${orderId}_${file.name}`;
       const downloadURL = await uploadImage(file, filePath);
 

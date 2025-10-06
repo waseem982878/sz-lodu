@@ -12,10 +12,10 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { PaymentUpi } from "@/models/payment-upi.model";
+import type { UpiPayment } from "@/models/payment-upi.model";
 
 export default function PaymentsAdminPage() {
-    const [upis, setUpis] = useState<PaymentUpi[]>([]);
+    const [upis, setUpis] = useState<UpiPayment[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     
@@ -27,8 +27,8 @@ export default function PaymentsAdminPage() {
     useEffect(() => {
         const q = collection(db, "payment_upis");
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const upiData: PaymentUpi[] = [];
-            snapshot.forEach(doc => upiData.push({ id: doc.id, ...doc.data() } as PaymentUpi));
+            const upiData: UpiPayment[] = [];
+            snapshot.forEach(doc => upiData.push({ id: doc.id, ...doc.data() } as UpiPayment));
             setUpis(upiData);
             setLoading(false);
         });
@@ -60,7 +60,7 @@ export default function PaymentsAdminPage() {
         }
     };
 
-    const handleToggleActive = async (upi: PaymentUpi) => {
+    const handleToggleActive = async (upi: UpiPayment) => {
         const upiRef = doc(db, 'payment_upis', upi.id);
         await updateDoc(upiRef, { isActive: !upi.isActive });
     };
