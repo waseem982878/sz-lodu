@@ -117,7 +117,7 @@ function ConfirmationDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="pt-4">{message}</DialogDescription>
-        </Header>
+        </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" onClick={onClose}>Cancel</Button>

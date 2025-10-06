@@ -1,62 +1,25 @@
-import { updateDoc, doc, runTransaction, collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Transaction } from '@/models/transaction.model';
 
-// Temporary interface until models are fixed
-interface Transaction {
-  id: string;
-  userId: string;
-  type: 'deposit' | 'withdrawal';
-  amount: number;
-  status: string;
+class TransactionService {
+  async createTransaction(transaction: Omit<Transaction, 'id' | 'createdAt'>): Promise<string> {
+    try {
+      const transactionCollection = collection(db, 'transactions');
+      const docRef = await addDoc(transactionCollection, {
+        ...transaction,
+        createdAt: serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+      throw new Error('Failed to create transaction');
+    }
+  }
+
+  async createWithdrawalRequest(request: any): Promise<void> {
+    // Placeholder for creating a withdrawal request
+  }
 }
 
-export const handleApproveDeposit = async (transaction: Transaction) => {
-  try {
-    const txRef = doc(db, 'transactions', transaction.id);
-    await updateDoc(txRef, {
-      status: 'completed',
-      completedAt: new Date()
-    });
-    
-    // Add user balance update logic here later
-    return { success: true };
-  } catch (error) {
-    console.error('Approve deposit error:', error);
-    throw error;
-  }
-};
-
-export const handleApproveWithdrawal = async (transactionId: string) => {
-  try {
-    const txRef = doc(db, 'transactions', transactionId);
-    await updateDoc(txRef, {
-      status: 'completed', 
-      completedAt: new Date()
-    });
-    return { success: true };
-  } catch (error) {
-    console.error('Approve withdrawal error:', error);
-    throw error;
-  }
-};
-
-export const handleRejectTransaction = async (
-  transactionId: string, 
-  reason: string, 
-  type: string,
-  userId: string,
-  amount: number
-) => {
-  try {
-    const txRef = doc(db, 'transactions', transactionId);
-    await updateDoc(txRef, {
-      status: 'rejected',
-      adminNotes: reason,
-      completedAt: new Date()
-    });
-    return { success: true };
-  } catch (error) {
-    console.error('Reject transaction error:', error);
-    throw error;
-  }
-};
+export default new TransactionService();
