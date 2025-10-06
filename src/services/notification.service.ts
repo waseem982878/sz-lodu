@@ -1,21 +1,23 @@
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Notification } from '@/models/notification.model'; // You need to create this model
+import { PrismaClient } from '@prisma/client';
 
-export const getUserNotifications = async (userId: string): Promise<Notification[]> => {
-    const notificationsRef = collection(db, 'notifications');
-    const q = query(
-        notificationsRef, 
-        where('userId', '==', userId), 
-        orderBy('createdAt', 'desc'),
-        limit(50) // Get the 50 most recent notifications
-    );
-    
-    const querySnapshot = await getDocs(q);
+const prisma = new PrismaClient();
 
-    if (querySnapshot.empty) {
-        return [];
-    }
+export async function getNotifications(userId: string) {
+    return prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+    });
+}
 
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
-};
+export async function createNotification(userId: string, message: string) {
+    return prisma.notification.create({
+        data: {
+            userId,
+            message,
+        },
+    });
+}
+
+export async function getUserNotifications(userId: string) {
+    return getNotifications(userId);
+}

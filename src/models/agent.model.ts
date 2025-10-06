@@ -6,6 +6,6 @@ export interface Agent {
   usedAmount: number;
   remainingBalance: number;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: any;
+  updatedAt: any;
 }

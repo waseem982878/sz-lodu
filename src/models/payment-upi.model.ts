@@ -1,27 +1,12 @@
-export interface PaymentUpi {
-  id: string;
-  upiId: string;
-  payeeName: string;
-  dailyLimit: number;
-  currentReceived: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Timestamp } from 'firebase/firestore';
 
-export interface PaymentRequest {
+export interface UpiPayment {
   id: string;
   orderId: string;
+  userId: string;
   amount: number;
-  upiId: string;
-  payeeName: string;
-  payerName?: string;
-  payerUpi?: string;
-  status: 'pending' | 'completed' | 'failed' | 'expired';
-  description?: string;
-  createdAt: Date;
-  expiresAt: Date;
-  completedAt?: Date;
+  status: 'pending' | 'completed' | 'failed';
   transactionId?: string;
-  screenshotUrl?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }

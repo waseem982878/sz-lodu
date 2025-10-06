@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { User } from '@/models/user.model'; 
+import { UserProfile } from '@/models/user.model'; 
 
 interface AuthState {
   firebaseUser: FirebaseUser | null;
-  currentUser: User | null; // Your custom user data
+  currentUser: UserProfile | null; // Your custom user data
   loading: boolean;
   error: Error | null;
 }
@@ -30,7 +30,7 @@ export function useAuth(): AuthState {
           if (doc.exists()) {
             setAuthState(prev => ({ 
               ...prev, 
-              currentUser: { uid: doc.id, ...doc.data() } as User,
+              currentUser: { uid: doc.id, ...doc.data() } as UserProfile,
               loading: false 
             }));
           } else {

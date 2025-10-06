@@ -1,37 +1,24 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db } from '@/lib/firebase'; // Assuming db is initialized and exported from here
+import { v4 as uuidv4 } from 'uuid';
 
-const storage = getStorage();
+const UPLOAD_PRESET = 'your_upload_preset'; // Replace with your Cloudinary upload preset
+const CLOUD_NAME = 'your_cloud_name'; // Replace with your Cloudinary cloud name
 
-// Centralized function for uploading images to Firebase Storage.
-export const uploadImage = async (file: File, path: string): Promise<string> => {
-    if (!file) {
-        throw new Error("No file provided for upload.");
-    }
+export async function uploadImage(file: File, publicId?: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', UPLOAD_PRESET);
+  formData.append('public_id', publicId || uuidv4());
 
-    // Validate file type (only allow images)
-    if (!file.type.startsWith('image/')) {
-        throw new Error("Invalid file type. Only images are allowed.");
-    }
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
 
-    // Validate file size (max 5MB)
-    const maxSizeInBytes = 5 * 1024 * 1024;
-    if (file.size > maxSizeInBytes) {
-        throw new Error("File is too large. Maximum size is 5MB.");
-    }
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Image upload failed');
+  }
 
-    console.log(`Attempting to upload ${file.name} to path: ${path}`);
-
-    try {
-        const storageRef = ref(storage, path);
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        
-        console.log(`Successfully uploaded file and got download URL: ${downloadURL}`);
-        return downloadURL;
-    } catch (error) {
-        console.error("Error during image upload:", error);
-        // It's often helpful to re-throw the error to let the caller handle it
-        throw new Error("Failed to upload image. Please try again later.");
-    }
-};
+  const data = await response.json();
+  return data.secure_url;
+}
