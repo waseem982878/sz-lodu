@@ -1,42 +1,25 @@
 import { Timestamp } from 'firebase/firestore';
 
-export interface User {
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-    photoURL: string | null;
-    emailVerified: boolean;
-    isAnonymous: boolean;
-    phoneNumber: string | null;
-    createdAt: Timestamp;
-    lastLoginAt: Timestamp;
-}
+export type KycStatus = 'none' | 'pending' | 'approved' | 'rejected';
 
 export interface UserProfile {
-    uid: string;
-    displayName?: string;
-    email?: string;
-    photoURL?: string;
-    phoneNumber?: string;
-    isAdmin?: boolean;
-    depositBalance?: number;
-    winningsBalance?: number;
-    createdAt?: Timestamp;
-    lastActive?: Timestamp;
-    kycStatus?: 'not_submitted' | 'pending' | 'verified' | 'rejected' | 'Not Submitted' | 'Pending' | 'Verified' | 'Rejected' | 'approved' | 'none';
-    isActive?: boolean;
-    blockedAt?: Timestamp;
-    gamesPlayed?: number;
-    gamesWon?: number;
-    winStreak?: number;
-    losingStreak?: number;
-    biggestWin?: number;
-    referralCode?: string;
-    aadhaarNumber?: string;
-    panNumber?: string;
-    dob?: string;
-    upiId?: string;
-    aadhaarCardUrl?: string;
-    panCardUrl?: string;
-    kycNotes?: string;
+  uid: string;
+  displayName?: string;
+  email?: string;
+  photoURL?: string;
+  phoneNumber?: string;
+  depositBalance?: number;
+  winningsBalance?: number;
+  kycStatus?: KycStatus;
+  kycNotes?: string; // For rejection reasons etc.
+  aadhaarNumber?: string;
+  panNumber?: string;
+  aadhaarCardUrl?: string;
+  panCardUrl?: string;
+  gamesPlayed?: number;
+  gamesWon?: number;
+  isActive?: boolean;
+  createdAt: Timestamp;
+  lastLogin: Timestamp;
+  dob?: string;
 }
