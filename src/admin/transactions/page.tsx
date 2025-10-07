@@ -174,13 +174,13 @@ export default function TransactionsPage() {
                     <TableCell className="p-2">
                       <Badge variant={
                         transaction.status === 'completed' ? 'default' :
-                        transaction.status === 'rejected' ? 'destructive' : 'secondary'
+                        transaction.status === 'rejected' || transaction.status === 'failed' ? 'destructive' : 'secondary'
                       }>
                         {transaction.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs whitespace-nowrap p-2">
-                      {new Date(transaction.createdAt).toLocaleString()}
+                      {transaction.createdAt.toDate().toLocaleString()}
                     </TableCell>
                     <TableCell className="flex gap-1 p-2">
                       {transaction.status === 'pending' && (

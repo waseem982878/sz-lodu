@@ -13,36 +13,35 @@ export type BattleStatus =
   | 'completed'            
   | 'cancelled';
 
+export interface BattlePlayer {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+}
+
 export interface Battle {
   id: string;
   gameType: GameType;
   amount: number;
   status: BattleStatus;
   
-  creator: string; 
-  creatorName?: string;
-  creatorPhotoURL?: string;
+  creator: BattlePlayer; 
 
-  opponent?: string; 
-  opponentName?: string;
-  opponentPhotoURL?: string;
+  opponent?: BattlePlayer; 
   
-  players: string[]; 
-  readyPlayers?: string[];
+  players: BattlePlayer[]; 
+  readyPlayers?: { [key: string]: boolean };
 
   roomCode?: string;
   
-  winner?: string; 
-  loser?: string;  
+  winner?: BattlePlayer; 
+  loser?: BattlePlayer;  
 
   result?: {
-    winner: {
-      uid: string;
-      screenshotURL: string;
-    };
-    loser: {
-      uid: string;
-      screenshotURL?: string;
+    [key: string]: { 
+      status: 'won' | 'lost';
+      screenshotUrl?: string;
+      submittedAt: Timestamp;
     };
   };
 
@@ -54,4 +53,5 @@ export interface Battle {
 
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  cancelledBy?: string;
 }

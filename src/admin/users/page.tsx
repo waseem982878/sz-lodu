@@ -54,7 +54,7 @@ export default function UsersPage() {
   const filteredUsers = useMemo(() => {
     if (!searchTerm) return users;
     return users.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.phoneNumber?.includes(searchTerm)
     );
@@ -97,7 +97,7 @@ export default function UsersPage() {
                       <div className="flex items-center gap-2">
                           <CircleUserRound className="h-6 w-6 text-muted-foreground" />
                           <div>
-                            <p className="font-semibold text-sm">{user.name}</p>
+                            <p className="font-semibold text-sm">{user.name ?? 'N/A'}</p>
                             <p className="text-xs text-muted-foreground font-mono">{user.uid}</p>
                           </div>
                       </div>
@@ -110,7 +110,7 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell className="p-2">
                       <p className="text-xs font-semibold">
-                          ₹{user.depositBalance.toFixed(0)} / <span className="text-green-600">₹{user.winningsBalance.toFixed(0)}</span>
+                          ₹{(user.depositBalance ?? 0).toFixed(0)} / <span className="text-green-600">₹{(user.winningsBalance ?? 0).toFixed(0)}</span>
                       </p>
                     </TableCell>
                     <TableCell className="p-2">

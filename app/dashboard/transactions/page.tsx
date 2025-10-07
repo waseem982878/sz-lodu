@@ -17,7 +17,7 @@ const TransactionsPage = () => {
       const fetchTransactions = async () => {
         try {
           setLoading(true);
-          const userId = user.id;
+          const userId = user.uid;
           const userTransactions = await getUserTransactions(userId);
           setTransactions(userTransactions);
           setError(null);
@@ -54,7 +54,7 @@ const TransactionsPage = () => {
                 <div className="flex justify-between">
                   <div>
                     <p className="font-semibold capitalize">{tx.type.replace('_', ' ')}</p>
-                    <p className="text-sm text-gray-500">{tx.details}</p>
+                    {/* <p className="text-sm text-gray-500">{tx.details}</p> */}
                   </div>
                   <div className="text-right">
                     <p className={`font-bold ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>

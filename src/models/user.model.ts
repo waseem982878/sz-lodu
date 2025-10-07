@@ -32,4 +32,10 @@ export interface UserProfile {
     losingStreak?: number;
     biggestWin?: number;
     referralCode?: string;
+    aadhaarNumber?: string;
+    panNumber?: string;
+    dob?: string;
+    upiId?: string;
+    aadhaarCardUrl?: string;
+    panCardUrl?: string;
 }

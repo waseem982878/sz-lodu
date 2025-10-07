@@ -1,78 +1,94 @@
-
-import { Battle, BattleStatus, GameType } from "@/models/battle.model";
-import { db } from "@/lib/firebase";
 import {
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  getDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+    collection,
+    doc,
+    addDoc,
+    getDoc,
+    updateDoc,
+    query,
+    where,
+    getDocs,
+    onSnapshot,
+    serverTimestamp,
+    FieldValue
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Battle } from '@/models/battle.model';
+import { uploadFile } from './storage-service'; // Import uploadFile
 
-export const createBattle = async (
-  userId: string,
-  amount: number,
-  gameType: GameType
-): Promise<string> => {
-  const battlesRef = collection(db, "battles");
-  const newBattle: Partial<Battle> = {
-    creator: userId,
-    amount,
-    gameType,
-    status: 'open',
-    players: [userId],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  const docRef = await addDoc(battlesRef, newBattle);
-  return docRef.id;
-};
+export class BattleService {
 
-export const joinBattle = async (
-  battleId: string,
-  userId: string
-): Promise<void> => {
-  const battleRef = doc(db, "battles", battleId);
-  const battleDoc = await getDoc(battleRef);
-  if (!battleDoc.exists()) {
-    throw new Error("Battle not found");
-  }
-  const battleData = battleDoc.data() as Battle;
+    static battlesCollection = collection(db, 'battles');
 
-  await updateDoc(battleRef, {
-    opponent: userId,
-    status: "pending",
-    players: [ battleData.creator, userId],
-    updatedAt: serverTimestamp(),
-  });
-};
+    static async createBattle(playerIds: string[]): Promise<Battle> {
+        const newBattleData = {
+            players: playerIds,
+            status: 'pending' as const,
+            createdAt: serverTimestamp() as FieldValue,
+            updatedAt: serverTimestamp() as FieldValue,
+        };
+        const docRef = await addDoc(this.battlesCollection, newBattleData);
+        const docSnap = await getDoc(docRef);
+        return { id: docRef.id, ...docSnap.data() } as Battle;
+    }
 
-export const updateBattleStatus = async (
-  battleId: string,
-  status: BattleStatus
-): Promise<void> => {
-  const battleRef = doc(db, "battles", battleId);
-  await updateDoc(battleRef, {
-    status,
-    updatedAt: serverTimestamp(),
-  });
-};
+    static getBattleStream(battleId: string, onUpdate: (battle: Battle | null) => void): () => void {
+        const docRef = doc(this.battlesCollection, battleId);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                onUpdate({ id: docSnap.id, ...docSnap.data() } as Battle);
+            } else {
+                onUpdate(null);
+            }
+        }, (error) => {
+            console.error("Error streaming battle:", error);
+            onUpdate(null);
+        });
+        return unsubscribe;
+    }
 
-export const setRoomCode = async (
-  battleId: string,
-  roomCode: string
-): Promise<void> => {
-  const battleRef = doc(db, "battles", battleId);
-  await updateDoc(battleRef, {
-    roomCode,
-    status: "active",
-    updatedAt: serverTimestamp(),
-  });
-};
+    static async cancelBattle(battleId: string, userId: string): Promise<void> {
+        const battleRef = doc(this.battlesCollection, battleId);
+        await updateDoc(battleRef, {
+            status: 'cancelled',
+            updatedAt: serverTimestamp(),
+            cancelledBy: userId,
+        });
+    }
 
-export const uploadBattleResult = async (battleId: string, userId: string, screenshotUrl: string) => {
-    // Implementation needed
-};
+    static async markPlayerAsReady(battleId: string, userId: string): Promise<void> {
+        const battleRef = doc(this.battlesCollection, battleId);
+        await updateDoc(battleRef, {
+            [`readyPlayers.${userId}`]: true,
+            updatedAt: serverTimestamp(),
+        });
+    }
 
-// Add other battle-related functions here
+    static async setRoomCode(battleId: string, roomCode: string): Promise<void> {
+        const battleRef = doc(this.battlesCollection, battleId);
+        await updateDoc(battleRef, {
+            roomCode: roomCode,
+            status: 'waiting_for_players_ready',
+            updatedAt: serverTimestamp(),
+        });
+    }
+
+    static async uploadResult(battleId: string, userId: string, status: 'won' | 'lost', screenshotFile: File): Promise<void> {
+        const screenshotUrl = await uploadFile(screenshotFile, `battle-results/${battleId}`);
+        const battleRef = doc(this.battlesCollection, battleId);
+        await updateDoc(battleRef, {
+            status: 'result_pending',
+            updatedAt: serverTimestamp(),
+            [`result.${userId}`]: {
+                status: status,
+                screenshotUrl: screenshotUrl,
+                submittedAt: serverTimestamp(),
+            },
+        });
+    }
+
+    static async getUserBattles(userId: string): Promise<Battle[]> {
+        const q = query(this.battlesCollection, where("players", "array-contains", userId));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Battle));
+    }
+}

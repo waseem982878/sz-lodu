@@ -5,8 +5,11 @@ export interface Transaction {
   userId: string;
   amount: number;
   type: 'deposit' | 'withdrawal' | 'battle-fee' | 'battle-win';
-  status: 'pending' | 'completed' | 'failed';
+  status: 'pending' | 'completed' | 'failed' | 'rejected';
   createdAt: Timestamp;
   updatedAt: Timestamp;
   description?: string;
+  upiId?: string;
+  screenshotUrl?: string;
+  userName?: string;
 }

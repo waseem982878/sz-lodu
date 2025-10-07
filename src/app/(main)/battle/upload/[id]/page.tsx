@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Loader2, UploadCloud } from "lucide-react";
 import { useRouter, useParams } from "next/navigation"; // Import useParams
-import { BattleService } from "@/services/battle.service"; 
+import { BattleService } from "@/services/battle-service"; 
 
 export default function BattleUploadPage() {
     const { user } = useAuth();

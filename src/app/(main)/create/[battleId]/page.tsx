@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
-import { getBattle, setRoomCode as setBattleRoomCode, cancelBattle, markPlayerAsReady } from "@/services/battle-service";
+import { BattleService } from "@/services/battle-service";
 import type { Battle } from "@/models/battle.model";
 import { Label } from "@/components/ui/label";
 import LudoLaunchButton from "@/components/LudoLaunchButton";
@@ -165,7 +165,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     if (!battleId || !user) {
         return;
     };
-    const unsubscribe = getBattle(battleId, (battleData) => {
+    const unsubscribe = BattleService.getBattleStream(battleId, (battleData) => {
         if (battleData) {
              if (battleData.creator.id === user.uid) {
                 setBattle(battleData);
@@ -197,7 +197,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
       if(codeToUse && battleIdToUse) {
           setIsSubmittingCode(true);
           try {
-            await setBattleRoomCode(battleIdToUse, codeToUse);
+            await BattleService.setRoomCode(battleIdToUse, codeToUse);
             setRoomCode(""); // Clear input after successful submission
           } catch(err) {
               showDialog("Error", "Failed to set room code.");
@@ -211,7 +211,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     if (!battle || !user) return;
     setIsMarkingReady(true);
     try {
-        await markPlayerAsReady(battle.id, user.uid);
+        await BattleService.markPlayerAsReady(battle.id, user.uid);
     } catch (err) {
         showDialog("Error", "Could not mark as ready.");
     } finally {
@@ -230,7 +230,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
     if (!battle || !user) return;
     if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
       try {
-        await cancelBattle(battle.id, user.uid);
+        await BattleService.cancelBattle(battle.id, user.uid);
         showDialog("Success", "Battle cancelled.");
         router.push('/play');
       } catch (err) {
@@ -331,7 +331,7 @@ export default function CreateBattlePage({ params }: { params: { battleId: strin
             open={dialogState.open} 
             onClose={() => setDialogState({ ...dialogState, open: false })} 
             title={dialogState.title}
-            message={dialogState.message} 
+            message={dialog.message} 
         />
       <div className="flex justify-end items-center">
         <RulesDialog />
