@@ -14,7 +14,7 @@ export interface User {
 
 export interface UserProfile {
     uid: string;
-    name?: string;
+    displayName?: string;
     email?: string;
     photoURL?: string;
     phoneNumber?: string;
@@ -38,4 +38,5 @@ export interface UserProfile {
     upiId?: string;
     aadhaarCardUrl?: string;
     panCardUrl?: string;
+    kycNotes?: string;
 }

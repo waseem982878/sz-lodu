@@ -119,7 +119,7 @@ export default function ProfilePage() {
     }
   };
 
-  const winRate = userProfile.gamesPlayed > 0 ? Math.round((userProfile.gamesWon / userProfile.gamesPlayed) * 100) : 0;
+  const winRate = (userProfile.gamesPlayed || 0) > 0 ? Math.round(((userProfile.gamesWon || 0) / (userProfile.gamesPlayed || 1)) * 100) : 0;
 
   return (
     <div className="space-y-4 pb-10">
@@ -165,7 +165,7 @@ export default function ProfilePage() {
                 <Card className="bg-gradient-to-br from-red-500 to-primary text-primary-foreground p-3 flex justify-between items-center transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-0.5 h-[72px] relative overflow-hidden">
                     <div className="space-y-0">
                         <p className="font-bold text-md">My Wallet</p>
-                        <p className="text-xl font-bold tracking-wider">₹{(userProfile.depositBalance + userProfile.winningsBalance).toFixed(2)}</p>
+                        <p className="text-xl font-bold tracking-wider">₹{((userProfile.depositBalance || 0) + (userProfile.winningsBalance || 0)).toFixed(2)}</p>
                     </div>
                      <div className="flex items-center gap-1">
                        <p className="text-xs opacity-80 group-hover:opacity-100">History</p>
@@ -194,8 +194,8 @@ export default function ProfilePage() {
             <CardHeader className="p-4 pb-2"><CardTitle className="text-primary text-lg">Game Stats</CardTitle></CardHeader>
             <CardContent className="p-4 pt-0">
                <div className="flex justify-around gap-2 mb-2">
-                 <MetricCard icon={Gamepad2} label="Played" value={userProfile.gamesPlayed} />
-                 <MetricCard icon={CheckCircle2} label="Won" value={userProfile.gamesWon} color="text-green-500" />
+                 <MetricCard icon={Gamepad2} label="Played" value={userProfile.gamesPlayed || 0} />
+                 <MetricCard icon={CheckCircle2} label="Won" value={userProfile.gamesWon || 0} color="text-green-500" />
                  <MetricCard icon={TrendingUp} label="Win Rate" value={`${winRate}%`} color="text-yellow-500" />
                </div>
                 <div className="flex justify-around gap-2">

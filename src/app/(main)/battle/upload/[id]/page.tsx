@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, UploadCloud } from "lucide-react";
-import { useRouter, useParams } from "next/navigation"; // Import useParams
-import { BattleService } from "@/services/battle-service"; 
+import { useRouter, useParams } from "next/navigation";
+import { BattleService } from "@/services/battle.service";
+import { uploadImage } from "@/services/image-upload.service";
 
 export default function BattleUploadPage() {
     const { user } = useAuth();
     const router = useRouter();
-    const params = useParams(); // Get URL params
-    const battleId = params?.id as string; // Get battleId from URL
+    const params = useParams();
+    const battleId = params ? params.id as string : null;
 
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -23,9 +24,15 @@ export default function BattleUploadPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
+            if (selectedFile.size > 5 * 1024 * 1024) { // 5MB size limit
+                setError("File size must be less than 5MB.");
+                setFile(null);
+                setPreview(null);
+                return;
+            }
             setFile(selectedFile);
             setError(null);
-            
+
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreview(reader.result as string);
@@ -52,15 +59,16 @@ export default function BattleUploadPage() {
         setError(null);
 
         try {
-            // Use the new BattleService to upload the result
-            await BattleService.uploadResult(battleId, user.uid, 'won', file);
+            const imagePath = `results/${battleId}/${user.uid}_${Date.now()}`;
+            const imageUrl = await uploadImage(file, imagePath);
+            
+            await BattleService.uploadResult(battleId, user.uid, 'won', imageUrl);
 
             alert("Screenshot uploaded successfully! An admin will verify the result shortly.");
-            router.push(`/battle/${battleId}`);
+            router.push(`/game/${battleId}`);
 
         } catch (err) {
             console.error("Upload failed:", err);
-            // The error from the service (e.g., file size, battle status) will be shown
             setError(err instanceof Error ? err.message : "An unknown error occurred during upload.");
         } finally {
             setIsUploading(false);
@@ -73,7 +81,7 @@ export default function BattleUploadPage() {
                 <CardHeader>
                     <CardTitle className="text-primary">Upload Battle Result</CardTitle>
                     <CardDescription>
-                        Upload the winning screenshot for your battle ({battleId}). Please make sure the result is clearly visible.
+                        Upload the winning screenshot for your battle. Please make sure the result is clearly visible.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

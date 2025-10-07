@@ -37,7 +37,7 @@ export default function KycPage() {
   const router = useRouter();
   const { user, userProfile, loading } = useAuth();
   
-  const [name, setName] = useState(userProfile?.name || "");
+  const [displayName, setDisplayName] = useState(userProfile?.displayName || "");
   const [dob, setDob] = useState(userProfile?.dob || "");
   const [panNumber, setPanNumber] = useState(userProfile?.panNumber || "");
   const [aadhaarNumber, setAadhaarNumber] = useState(userProfile?.aadhaarNumber || "");
@@ -84,7 +84,7 @@ export default function KycPage() {
 
     try {
         // Stricter validation
-        if (!name.trim() || !dob || !panNumber.trim() || !aadhaarNumber.trim() || !upiId.trim()) {
+        if (!displayName.trim() || !dob || !panNumber.trim() || !aadhaarNumber.trim() || !upiId.trim()) {
             throw new Error("All fields are required.");
         }
         if (!panFile && !userProfile.panCardUrl) {
@@ -106,14 +106,14 @@ export default function KycPage() {
         }
         
         await updateUserProfile(user.uid, {
-            name,
+            displayName,
             dob,
             panNumber,
             aadhaarNumber,
             upiId,
             panCardUrl,
             aadhaarCardUrl,
-            kycStatus: 'Pending',
+            kycStatus: 'pending',
         });
         
         showDialog("Success", "KYC details submitted successfully! Our team will review them shortly.", () => {
@@ -128,7 +128,7 @@ export default function KycPage() {
     }
   };
   
-  const isPendingOrVerified = userProfile.kycStatus === 'Pending' || userProfile.kycStatus === 'Verified' || userProfile.kycStatus === 'approved';
+  const isPendingOrVerified = userProfile.kycStatus === 'pending' || userProfile.kycStatus === 'approved';
 
   return (
     <div className="space-y-6 pb-10">
@@ -152,7 +152,7 @@ export default function KycPage() {
                 : "Please provide your details for verification. This is required for withdrawals."
             }
           </CardDescription>
-          {userProfile.kycStatus === 'Rejected' && (
+          {userProfile.kycStatus === 'rejected' && (
               <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300">
                 <p className="font-bold flex items-center gap-2"><AlertTriangle size={16} /> Rejection Reason:</p>
                 <p className="text-sm">{userProfile.kycNotes || "No reason provided."}</p>
@@ -163,8 +163,8 @@ export default function KycPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name (as per documents)</Label>
-                <Input id="name" value={name} onChange={e => setName(e.target.value)} required disabled={isPendingOrVerified} />
+                <Label htmlFor="displayName">Full Name (as per documents)</Label>
+                <Input id="displayName" value={displayName} onChange={e => setDisplayName(e.target.value)} required disabled={isPendingOrVerified} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dob">Date of Birth</Label>
@@ -218,13 +218,13 @@ export default function KycPage() {
                 Submit for Verification
               </Button>
             )}
-            {(userProfile.kycStatus === 'Verified' || userProfile.kycStatus === 'approved') && (
+            {(userProfile.kycStatus === 'approved') && (
               <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-700 dark:text-green-300 flex items-center justify-center gap-2">
                 <CheckCircle2 className="h-5 w-5"/>
                 <p className="font-semibold">Your KYC is verified. You can now make withdrawals.</p>
               </div>
             )}
-             {userProfile.kycStatus === 'Pending' && (
+             {userProfile.kycStatus === 'pending' && (
               <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg text-yellow-700 dark:text-yellow-300 flex items-center justify-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin"/>
                 <p className="font-semibold">Your KYC is under review. This usually takes 24 hours.</p>

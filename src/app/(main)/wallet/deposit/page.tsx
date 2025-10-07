@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, IndianRupee } from "lucide-react";
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
-import { OrderService } from '@/services/order.service';
-import { OrderItem } from '@/models/order.model';
+import OrderService from '@/services/order.service';
 
 const PRESET_AMOUNTS = [100, 250, 500, 1000, 2500, 5000];
 
@@ -51,19 +50,15 @@ export default function DepositPage() {
         setError('');
 
         try {
-            // Create a single item for the order
-            const depositItem: OrderItem = {
-                id: 'wallet-deposit',
-                name: 'Wallet Deposit',
-                price: depositAmount,
-                quantity: 1,
-            };
-
             // Create an order using the OrderService
-            const newOrder = await OrderService.createOrder(user.uid, [depositItem]);
+            const orderId = await OrderService.createOrder({ 
+                userId: user.uid, 
+                amount: depositAmount,
+                status: 'pending',
+            });
 
             // Redirect to the new UPI payment page
-            router.push(`/payment/${newOrder.id}`);
+            router.push(`/payment/${orderId}`);
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";

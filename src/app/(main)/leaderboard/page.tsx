@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Trophy, Award, Medal, CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import imagePaths from '@/lib/image-paths.json';
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const getRankIcon = (rank: number) => {
@@ -19,11 +19,11 @@ const getRankIcon = (rank: number) => {
 }
 
 const mockTopPlayers: UserProfile[] = [
-    { uid: '1', name: 'Rohan Sharma', avatarUrl: '', gamesPlayed: 150, gamesWon: 120, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 10, losingStreak: 0, biggestWin: 5000 },
-    { uid: '2', name: 'Priya Singh', avatarUrl: '', gamesPlayed: 140, gamesWon: 110, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 5, losingStreak: 0, biggestWin: 2500 },
-    { uid: '3', name: 'Amit Kumar', avatarUrl: '', gamesPlayed: 130, gamesWon: 95, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 2, losingStreak: 0, biggestWin: 1000 },
-    { uid: '4', name: 'Sneha Patel', avatarUrl: '', gamesPlayed: 125, gamesWon: 90, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 0, losingStreak: 1, biggestWin: 1000 },
-    { uid: '5', name: 'Vikas Gupta', avatarUrl: '', gamesPlayed: 110, gamesWon: 85, depositBalance: 0, winningsBalance: 0, kycStatus: 'Verified', email: null, phoneNumber: null, referralCode: '', penaltyTotal: 0, createdAt: new Date(), winStreak: 4, losingStreak: 0, biggestWin: 500 },
+    { uid: '1', displayName: 'Rohan Sharma', gamesPlayed: 150, gamesWon: 120, depositBalance: 0, winningsBalance: 0, kycStatus: 'approved', email: undefined, phoneNumber: undefined, referralCode: '', createdAt: Timestamp.now(), winStreak: 10, losingStreak: 0, biggestWin: 5000 },
+    { uid: '2', displayName: 'Priya Singh', gamesPlayed: 140, gamesWon: 110, depositBalance: 0, winningsBalance: 0, kycStatus: 'approved', email: undefined, phoneNumber: undefined, referralCode: '', createdAt: Timestamp.now(), winStreak: 5, losingStreak: 0, biggestWin: 2500 },
+    { uid: '3', displayName: 'Amit Kumar', gamesPlayed: 130, gamesWon: 95, depositBalance: 0, winningsBalance: 0, kycStatus: 'approved', email: undefined, phoneNumber: undefined, referralCode: '', createdAt: Timestamp.now(), winStreak: 2, losingStreak: 0, biggestWin: 1000 },
+    { uid: '4', displayName: 'Sneha Patel', gamesPlayed: 125, gamesWon: 90, depositBalance: 0, winningsBalance: 0, kycStatus: 'approved', email: undefined, phoneNumber: undefined, referralCode: '', createdAt: Timestamp.now(), winStreak: 0, losingStreak: 1, biggestWin: 1000 },
+    { uid: '5', displayName: 'Vikas Gupta', gamesPlayed: 110, gamesWon: 85, depositBalance: 0, winningsBalance: 0, kycStatus: 'approved', email: undefined, phoneNumber: undefined, referralCode: '', createdAt: Timestamp.now(), winStreak: 4, losingStreak: 0, biggestWin: 500 },
 ];
 
 
@@ -91,7 +91,9 @@ export default function LeaderboardPage() {
                             </TableHeader>
                             <TableBody>
                                 {topPlayers.map((player, index) => {
-                                    const winRate = player.gamesPlayed > 0 ? ((player.gamesWon / player.gamesPlayed) * 100).toFixed(0) : 0;
+                                    const gamesPlayed = player.gamesPlayed ?? 0;
+                                    const gamesWon = player.gamesWon ?? 0;
+                                    const winRate = gamesPlayed > 0 ? ((gamesWon / gamesPlayed) * 100).toFixed(0) : 0;
                                     return (
                                         <TableRow key={player.uid} className={index < 3 ? 'bg-muted/50' : ''}>
                                             <TableCell className="font-bold text-center flex justify-center items-center h-full p-2">
@@ -102,10 +104,10 @@ export default function LeaderboardPage() {
                                                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center border">
                                                         <CircleUserRound className="w-5 h-5 text-muted-foreground" />
                                                     </div>
-                                                    <span className="font-medium text-sm">{player.name}</span>
+                                                    <span className="font-medium text-sm">{player.displayName}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="font-semibold text-center p-2">{player.gamesWon}</TableCell>
+                                            <TableCell className="font-semibold text-center p-2">{gamesWon}</TableCell>
                                             <TableCell className="text-center p-2">{winRate}%</TableCell>
                                         </TableRow>
                                     )

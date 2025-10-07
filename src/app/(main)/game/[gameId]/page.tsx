@@ -1,562 +1,163 @@
-'use client';
+"use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Info, Copy, Trash2, Upload, Crown, TriangleAlert, Loader2, CheckCircle, X, CircleHelp, Edit, CircleUserRound } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { doc, onSnapshot, updateDoc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/auth-context";
-import { BattleService } from "@/services/battle.service"; // Corrected import
-import { uploadImage } from "@/services/image-upload.service";
+import { useRouter, useParams } from "next/navigation";
 import type { Battle } from "@/models/battle.model";
-import LudoLaunchButton from "@/components/LudoLaunchButton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Loader2, User, Swords, Shield, Copy, Check, Info } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import TicTacToeGame from "@/components/games/tic-tac-toe";
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
 
-function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="text-primary">{title}</DialogTitle>
-          <DialogDescription className="pt-4">
-            {message}
-          </DialogDescription>
-        </DialogHeader>
-         <DialogFooter>
-          <DialogClose asChild>
-            <Button onClick={onClose}>OK</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: string, newCode: string) => Promise<void> }) {
-    const [newCode, setNewCode] = useState(battle.roomCode || "");
-    const [isSaving, setIsSaving] = useState(false);
-    const [open, setOpen] = useState(false);
-    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
-
-    const showDialog = (title: string, message: string) => {
-        setDialogState({ open: true, title, message });
-    };
-
-    const handleSave = async () => {
-        if (!newCode.trim() || newCode.trim().length > 9) {
-            showDialog("Error", "Room code must be 9 characters or less.");
-            return;
-        }
-        setIsSaving(true);
-        try {
-            await onSave(battle.id, newCode.trim());
-            setOpen(false);
-        } catch (error) {
-             showDialog("Error", "Failed to update room code.");
-        } finally {
-            setIsSaving(false);
-        }
-    }
-
-    return (
-        <>
-        <InfoDialog 
-            open={dialogState.open} 
-            onClose={() => setDialogState({ ...dialogState, open: false })} 
-            title={dialogState.title}
-            message={dialogState.message} 
-        />
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon"><Edit className="h-5 w-5 text-muted-foreground" /></Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle className="text-primary">Edit Room Code</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <Label htmlFor="room-code-edit">New Ludo King Room Code</Label>
-                    <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" maxLength={9} />
+const GameRenderer = ({ gameId, gameType, battle }: { gameId: string, gameType: Battle['gameType'], battle: Battle }) => {
+    switch (gameType) {
+        case 'tic_tac_toe':
+            return <TicTacToeGame gameId={gameId} battle={battle} />;
+        // Add other game components here
+        default:
+            return (
+                <div className="text-center p-8 bg-muted rounded-lg">
+                     <Info className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <p className="mt-4 font-semibold">Coming Soon!</p>
+                    <p className="text-sm text-muted-foreground">This game is not yet implemented. Check back later!</p>
                 </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                         <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={handleSave} disabled={isSaving}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Code
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-        </>
-    )
-}
-
-function RulesDialog() {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="text-red-500 border-red-500">
-            <Info className="mr-2 h-4 w-4" /> Rules
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle className="text-primary">Game Rules</DialogTitle>
-          <DialogDescription>
-            Follow these rules to ensure a fair and enjoyable game.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="prose dark:prose-invert max-w-none text-foreground">
-            <ul className="space-y-3 text-sm list-disc list-inside">
-                <li>
-                    <strong>Room Code:</strong> After joining a battle, the creator will enter a Ludo King room code. You must join the room in the Ludo King app using this code.
-                </li>
-                <li>
-                    <strong>Gameplay:</strong> The game must be played according to standard Ludo King classic rules.
-                </li>
-                <li>
-                    <strong>Winning Proof:</strong> After winning the game, you MUST take a screenshot of the final win screen in Ludo King.
-                </li>
-                <li>
-                    <strong>Uploading Result:</strong> Upload the winning screenshot in the "Game Result" section of the app. The result will be reviewed by an admin to declare the winner.
-                </li>
-                 <li>
-                    <strong>Cheating:</strong> Any form of cheating, including using mods or teaming up, will result in an immediate ban and forfeiture of all wallet funds.
-                </li>
-                <li>
-                    <strong>Disputes:</strong> If there is any issue, contact support immediately. Any attempt at fraud will result in a permanent ban.
-                </li>
-                 <li>
-                    <strong>Cancellation:</strong> You can cancel a battle after an opponent has joined, but a small penalty fee will be deducted from your wallet for doing so.
-                </li>
-            </ul>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function ResultModal({ status, onClose, battle, onResultSubmitted }: { status: 'won' | 'lost' | null, onClose: () => void, battle: Battle, onResultSubmitted: (status: 'won' | 'lost', screenshotUrl?: string) => void }) {
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
-  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
-
-  const showDialog = (title: string, message: string) => {
-    setDialogState({ open: true, title, message });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-          const file = e.target.files[0];
-          if (file.size > 5 * 1024 * 1024) {
-              showDialog("Error", "File size should be less than 5MB.");
-              return;
-          }
-          if (!file.type.startsWith('image/')) {
-              showDialog("Error", "Please select an image file.");
-              return;
-          }
-          setImage(file);
-          setImagePreview(URL.createObjectURL(file));
-      }
-  }
-
-  const handleSubmit = async () => {
-    if (!user || !status) return;
-    setIsSubmitting(true);
-    try {
-        if (status === 'won') {
-            if (!image) {
-                showDialog("Error", "Please upload a screenshot of the win screen.");
-                setIsSubmitting(false);
-                return;
-            }
-            const imagePath = `results/${battle.id}/${user.uid}_${Date.now()}`;
-            const imageUrl = await uploadImage(image, imagePath);
-            onResultSubmitted(status, imageUrl);
-        } else if (status === 'lost') {
-            onResultSubmitted(status);
-        }
-    } catch (error: any) {
-        showDialog("Error", `Failed to submit result: ${error.message}`);
-    } finally {
-        setIsSubmitting(false);
+            );
     }
-  }
+};
 
-  if (!status) return null;
 
-  return (
-    <>
-    <InfoDialog 
-        open={dialogState.open} 
-        onClose={() => setDialogState({ ...dialogState, open: false })} 
-        title={dialogState.title}
-        message={dialogState.message} 
-    />
-    <Dialog open={!!status} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="text-center text-2xl text-primary">
-            {status === 'won' ? 'You Won! 🎉' : 'You Lost 😔'}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-            {status === 'won' && (
-                <>
-                <p className="text-center text-muted-foreground">Upload a screenshot of the win screen as proof.</p>
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-                <Card 
-                    className="border-dashed border-2 hover:border-primary cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <CardContent className="p-6 flex flex-col items-center justify-center">
-                        {imagePreview ? (
-                           <Image src={imagePreview} alt="Screenshot preview" width={200} height={200} className="rounded-md max-h-48 w-auto" />
-                        ) : (
-                            <div className="text-center">
-                                <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <p className="mt-2 text-sm text-muted-foreground">Click to upload screenshot</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-                </>
-            )}
-            {status === 'lost' && (
-                 <p className="text-center text-muted-foreground">Better luck next time! Confirming your loss will conclude the battle after admin review.</p>
-            )}
-          
-          <Button 
-            className={`w-full ${status === 'won' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
-            disabled={(status === 'won' && !image) || isSubmitting}
-            onClick={handleSubmit}
-          >
-            {isSubmitting ? <Loader2 className="animate-spin h-5 w-5 mr-2" /> : null}
-            {status === 'won' ? 'Submit Proof' : 'Confirm Loss'}
-          </Button>
-          <DialogClose asChild>
-              <Button variant="outline" className="w-full" onClick={onClose}>Cancel</Button>
-          </DialogClose>
-        </div>
-      </DialogContent>
-    </Dialog>
-    </>
-  )
-}
-
-export default function GameRoomPage({ params }: { params: { gameId: string } }) {
-  const router = useRouter();
-  const { gameId } = params;
+export default function GamePage() {
   const { user, userProfile } = useAuth();
-  
+  const router = useRouter();
+  const params = useParams();
+  const gameId = params.gameId as string;
+
   const [battle, setBattle] = useState<Battle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resultStatus, setResultStatus] = useState<'won' | 'lost' | null>(null);
-  const [isMarkingReady, setIsMarkingReady] = useState(false);
-  const [roomCodeForInput, setRoomCodeForInput] = useState("");
-  const [isSubmittingCode, setIsSubmittingCode] = useState(false);
-  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
-
-  const showDialog = (title: string, message: string) => {
-    setDialogState({ open: true, title, message });
-  };
+  const { width, height } = useWindowSize();
 
   useEffect(() => {
-    if (!gameId || !user) {
-        setLoading(false);
-        setError("Invalid battle or user.");
-        return;
-    };
+    if (!gameId) return;
 
-    const unsubscribe = BattleService.getBattleStream(gameId, (battleData) => {
-        if (battleData) {
-            setBattle(battleData);
-            if (battleData.status === 'cancelled') {
-                showDialog("Battle Cancelled", "This battle has been cancelled.");
-                setTimeout(() => router.push('/play'), 3000);
-            }
-        } else {
-            setError("Battle not found or has been cancelled.");
-            setTimeout(() => router.push('/play'), 3000);
+    const battleRef = doc(db, "battles", gameId);
+
+    const unsubscribe = onSnapshot(battleRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const battleData = { id: docSnap.id, ...docSnap.data() } as Battle;
+        setBattle(battleData);
+
+        if (battleData.status === 'completed') {
+            // Maybe show a toast that the game has ended
         }
-        setLoading(false);
+
+      } else {
+        setError("Battle not found. It might have been cancelled or never existed.");
+        toast.error("Battle not found!");
+        router.push('/');
+      }
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [gameId, user, router]);
+  }, [gameId, router]);
 
-  const handleCopy = () => {
-    if (battle?.roomCode) {
-      navigator.clipboard.writeText(battle.roomCode);
-      showDialog("Copied", "Room code copied to clipboard!");
-    }
-  };
-  
-  const handleCancel = async () => {
+  const handleRematch = async () => {
     if (!battle || !user) return;
-    if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
-      try {
-        await BattleService.cancelBattle(battle.id, user.uid);
-        showDialog("Success", "Battle cancelled.");
-        router.push('/play');
-      } catch (err) {
-        showDialog("Error", `Failed to cancel battle: ${(err as Error).message}`);
-      }
-    }
+
+    // Logic for rematch
+    toast.info('Rematch functionality to be implemented.');
   };
-  
-  const handleReady = async () => {
-    if (!battle || !user) return;
-    setIsMarkingReady(true);
-    try {
-        await BattleService.markPlayerAsReady(battle.id, user.uid);
-    } catch (err) {
-        showDialog("Error", "Could not mark as ready.");
-    } finally {
-        setIsMarkingReady(false);
-    }
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
-  const handleCodeSubmit = async (id?: string, code?: string) => {
-      const battleIdToUse = id || battle?.id;
-      const codeToUse = code || roomCodeForInput.trim();
-
-      if(codeToUse && battleIdToUse) {
-          setIsSubmittingCode(true);
-          try {
-            await BattleService.setRoomCode(battleIdToUse, codeToUse);
-            setRoomCodeForInput("");
-          } catch(err) {
-              showDialog("Error", "Failed to set room code.");
-          } finally {
-              setIsSubmittingCode(false);
-          }
-      }
-  }
-
-  const onResultSubmitted = async (status: 'won' | 'lost', screenshotUrl?: string) => {
-    if (!user || !battle) return;
-    try {
-        await BattleService.uploadResult(battle.id, user.uid, status, screenshotUrl);
-        showDialog("Success", "Result submitted for verification.");
-        setResultStatus(null);
-    } catch (error) {
-        showDialog("Error", `Failed to submit result: ${(error as Error).message}`);
-    }
-  }
-
-  if (loading || !userProfile) {
-    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
-  }
-
-  if (error || !battle || !user) {
-    return <div className="text-center py-10 text-red-500">{error || "Could not load battle details."}</div>;
-  }
-
-  const isCreator = battle.creator.id === user.uid;
-  const isOpponentJoined = !!battle.opponent;
-  const opponent = isCreator ? battle.opponent : battle.creator;
-  const me = isCreator ? battle.creator : battle.opponent;
-
-  const hasUserSubmittedResult = user && battle.result && battle.result[user.uid];
-  const isPlayerReady = user && battle.readyPlayers && battle.readyPlayers[user.uid];
-  const isOpponentReady = opponent && battle.readyPlayers && battle.readyPlayers[opponent.id];
-
-  const getStatusMessage = () => {
-      if (battle.status === 'completed') {
-          const winnerName = battle.winnerId === me?.id ? "You" : (opponent?.name || 'N/A');
-          return `Battle completed. Winner: ${winnerName}`;
-      }
-      if (hasUserSubmittedResult) {
-           return "Your result has been submitted for admin verification.";
-      }
-      if (battle.status === 'result_pending') {
-          return "Opponent may have submitted their result. Please submit yours.";
-      }
-      if (battle.status === 'inprogress') {
-         return "After your game ends, post the result below. Dishonesty will result in a ban.";
-      }
-      if (battle.status === 'waiting_for_players_ready' && !isPlayerReady) {
-          return `Join the room in Ludo King and click \'I\'m Ready\'.`
-      }
-      if (battle.status === 'waiting_for_players_ready' && isPlayerReady && !isOpponentReady) {
-          return `You are ready! Waiting for ${opponent?.name || 'opponent'} to confirm.`
-      }
-      return "Game is about to start. Get ready!";
-  }
-  
-   const renderGameControl = () => {
-        if (!isOpponentJoined) {
-             return (
-                <div className='text-center py-4'>
-                    <p className="text-lg font-semibold my-2">Waiting for an opponent...</p>
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                </div>
-            )
-        }
-        if (!battle.roomCode) {
-            if (isCreator) {
-                return (
-                     <>
-                        <p className="text-sm text-muted-foreground">Enter Ludo King Room Code</p>
-                        <div className="flex items-center gap-2 my-2">
-                            <Input 
-                                type="text" 
-                                placeholder="Enter room code" 
-                                value={roomCodeForInput}
-                                onChange={(e) => setRoomCodeForInput(e.target.value)}
-                                className="text-center tracking-widest"
-                                disabled={isSubmittingCode}
-                                maxLength={9}
-                            />
-                            <Button onClick={() => handleCodeSubmit()} disabled={isSubmittingCode || !roomCodeForInput}>
-                                {isSubmittingCode ? <Loader2 className="animate-spin" /> : "Set"}
-                            </Button>
-                        </div>
-                         <p className="text-xs text-muted-foreground my-4">After getting the code from Ludo King, enter it here.</p>
-                    </>
-                )
-            }
-             return (
-                <div className='text-center py-4'>
-                    <p className="text-lg font-semibold my-2">Waiting for creator to share code...</p>
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                </div>
-            )
-        }
-
-        if (battle.status === 'waiting_for_players_ready' || battle.status === 'open') {
-            return (
-                 <div className="text-center py-4 space-y-4">
-                    <p className="text-sm text-muted-foreground">Room Code</p>
-                    <div className="flex justify-center items-center gap-2 my-2">
-                        <p className="text-4xl font-bold tracking-widest text-primary">{battle.roomCode}</p>
-                        <Button variant="ghost" size="icon" onClick={handleCopy}>
-                            <Copy className="w-5 h-5" />
-                        </Button>
-                        {isCreator && <EditCodeModal battle={battle} onSave={handleCodeSubmit} />}
-                    </div>
-                    {isPlayerReady ? (
-                        <div className='text-center py-4'>
-                            <p className="text-lg font-semibold my-2 text-green-600">You are ready!</p>
-                            <p>Waiting for {opponent?.name || 'opponent'} to confirm...</p>
-                        </div>
-                    ) : (
-                         <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={handleReady} disabled={isMarkingReady}>
-                            {isMarkingReady ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                             I'm Ready
-                         </Button>
-                    )}
-                </div>
-            )
-        }
-
-        if (battle.status === 'inprogress') {
-            return <LudoLaunchButton roomCode={battle.roomCode}/>
-        }
-        
-        if (battle.status === 'completed' || battle.status === 'result_pending') {
-            return <p className="text-center text-muted-foreground p-4">This battle is under review or has been completed.</p>
-        }
-
-        return <p className="text-center text-muted-foreground">The game will begin shortly.</p>
-    }
-
-
-  return (
-    <div className="space-y-4">
-       <InfoDialog 
-            open={dialogState.open} 
-            onClose={() => setDialogState({ ...dialogState, open: false })} 
-            title={dialogState.title}
-            message={dialogState.message} 
-        />
-      <div className="flex justify-end items-center">
-        <RulesDialog />
-      </div>
-
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center text-center mb-4">
-              <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary">
-                    <CircleUserRound className="w-6 h-6 text-primary" />
-                  </div>
-                  <span className="font-semibold text-sm">You</span>
-              </div>
-              <div className="text-center">
-                  <p className="text-orange-500 font-bold text-xl">VS</p>
-                  <p className="font-bold text-green-600">₹ {battle.amount}</p>
-              </div>
-               <div className={`flex flex-col items-center gap-1 transition-opacity duration-500 ${isOpponentJoined ? 'opacity-100' : 'opacity-50'}`}>
-                    {isOpponentJoined && opponent ? (
-                        <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center ring-2 ring-muted">
-                            <CircleUserRound className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                    ) : (
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                            <CircleHelp className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                    )}
-                  <span className="font-semibold text-sm">{isOpponentJoined && opponent ? opponent.name : 'Waiting...'}</span>
-              </div>
-          </div>
-
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
-              {renderGameControl()}
-          </div>
-        </CardContent>
-      </Card>
-      
-       {(battle.status === 'inprogress' || battle.status === 'result_pending') && (
-            <Card>
+  if (error) {
+    return (
+        <div className="flex flex-col items-center justify-center h-screen text-center">
+            <Card className="p-8">
                 <CardHeader>
-                  <CardTitle className="text-center text-lg text-primary">Game Result</CardTitle>
+                    <CardTitle className="text-2xl text-destructive">Error</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                    <p className="text-center text-sm text-muted-foreground">{getStatusMessage()}</p>
-                    <Button onClick={() => setResultStatus('won')} className="w-full bg-green-600 hover:bg-green-700" disabled={!!hasUserSubmittedResult}>
-                        <Crown className="mr-2 h-4 w-4" /> I WON
-                    </Button>
-                    <Button onClick={() => setResultStatus('lost')} className="w-full bg-red-600 hover:bg-red-700" disabled={!!hasUserSubmittedResult}>
-                       <X className="mr-2 h-4 w-4" /> I LOST
-                    </Button>
+                <CardContent>
+                    <p>{error}</p>
+                    <Button onClick={() => router.push('/')} className="mt-4">Go Home</Button>
                 </CardContent>
             </Card>
-       )}
+        </div>
+    );
+  }
 
-       {battle.status === 'completed' && (
-           <Card className="bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-700">
-               <CardHeader>
-                   <CardTitle className="text-center text-green-700">{getStatusMessage()}</CardTitle>
-               </CardHeader>
-           </Card>
-       )}
-      
-      <div className="border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg space-y-2">
-        <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2"><TriangleAlert className="h-5 w-5"/> Important Note</h3>
-        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 pl-2">
-            <li>A penalty will be applied for submitting a wrong or edited screenshot.</li>
-            <li>Any abusive language or fraudulent activity will result in a permanent ban.</li>
-            <li>If you cancel, your bet amount will be refunded after a small penalty.</li>
-        </ul>
-      </div>
-      
-      <Button variant="destructive" className="w-full" onClick={handleCancel}>
-        <Trash2 className="mr-2 h-4 w-4" /> Cancel Battle
-      </Button>
+  if (!battle) return null;
 
-      <ResultModal status={resultStatus} onClose={() => setResultStatus(null)} battle={battle} onResultSubmitted={onResultSubmitted} />
+  const isPlayer = user && (battle.creator.id === user.uid || battle.opponent?.id === user.uid);
+  const winner = battle.winner;
+  const isWinner = typeof winner === 'object' && winner !== null && 'id' in winner && winner.id === user?.uid;
+
+  return (
+    <div className="p-4 max-w-4xl mx-auto space-y-4">
+        {isWinner && <Confetti width={width} height={height} recycle={false} />}
+        
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <Avatar className="w-10 h-10 border-2">
+                            <AvatarImage src={battle.creator.avatarUrl} />
+                            <AvatarFallback><User /></AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-bold">{battle.creator.name}</p>
+                            <p className="text-xs text-muted-foreground">Creator</p>
+                        </div>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-2xl font-bold">vs</p>
+                        <p className="text-sm text-primary">₹{battle.amount}</p>
+                    </div>
+                     <div className="flex items-center gap-2">
+                         <div>
+                            <p className="font-bold text-right">{battle.opponent?.name || '??'}</p>
+                            <p className="text-xs text-muted-foreground text-right">Opponent</p>
+                        </div>
+                        <Avatar className="w-10 h-10 border-2">
+                            <AvatarImage src={battle.opponent?.avatarUrl} />
+                            <AvatarFallback><User /></AvatarFallback>
+                        </Avatar>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {battle.status === 'active' || battle.status === 'inprogress' ? (
+                     <GameRenderer gameId={gameId} gameType={battle.gameType} battle={battle} />
+                ) : battle.status === 'completed' ? (
+                     <div className="text-center p-8">
+                        <h2 className="text-2xl font-bold mb-4">
+                            {isWinner ? `🎉 You Won ₹${(battle.amount * 1.9).toFixed(2)}! 🎉` : "😔 You Lost 😔"}
+                        </h2>
+                        <p className="text-muted-foreground">The game has ended.</p>
+                        <div className="mt-6 flex justify-center gap-4">
+                            <Button onClick={() => router.push('/')}>Go Home</Button>
+                            {/* <Button variant="outline" onClick={handleRematch}>Request Rematch</Button> */}
+                        </div>
+                    </div>
+                ) : (
+                     <div className="text-center p-8">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                        <p className="mt-4 font-semibold">Waiting for game to start...</p>
+                        <p className="text-sm text-muted-foreground">Current status: {battle.status}</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     </div>
   );
 }

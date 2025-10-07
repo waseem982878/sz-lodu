@@ -1,392 +1,238 @@
-
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Info, CircleHelp, Copy, Trash2, TriangleAlert, Loader2, CheckCircle, Edit, CircleUserRound } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { useEffect, useState, useMemo } from "react";
+import { doc, onSnapshot, updateDoc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/auth-context";
-import { BattleService } from "@/services/battle-service";
+import { useRouter, useParams } from "next/navigation";
 import type { Battle } from "@/models/battle.model";
-import { Label } from "@/components/ui/label";
-import LudoLaunchButton from "@/components/LudoLaunchButton";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Loader2, User, Swords, Shield, Copy, Check } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
 
-
-function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose: () => void, title: string, message: string }) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="text-primary">{title}</DialogTitle>
-          <DialogDescription className="pt-4">
-            {message}
-          </DialogDescription>
-        </DialogHeader>
-         <DialogFooter>
-          <DialogClose asChild>
-            <Button onClick={onClose}>OK</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
-function EditCodeModal({ battle, onSave }: { battle: Battle, onSave: (battleId: string, newCode: string) => Promise<void> }) {
-    const [newCode, setNewCode] = useState(battle.roomCode || "");
-    const [isSaving, setIsSaving] = useState(false);
-    const [open, setOpen] = useState(false);
-    const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
-
-    const showDialog = (title: string, message: string) => {
-        setDialogState({ open: true, title, message });
-    };
-
-    const handleSave = async () => {
-        if (!newCode.trim()) {
-            showDialog("Error", "Room code cannot be empty.");
-            return;
-        }
-        setIsSaving(true);
-        try {
-            await onSave(battle.id, newCode.trim());
-            setOpen(false);
-        } catch (error) {
-             showDialog("Error", "Failed to update room code.");
-        } finally {
-            setIsSaving(false);
-        }
+const StatusIndicator = ({ status }: { status: Battle['status'] }) => {
+  const statusInfo = useMemo(() => {
+    switch (status) {
+      case "waiting":
+        return { text: "Waiting for opponent...", color: "bg-yellow-500" };
+      case "active":
+        return { text: "Game in progress!", color: "bg-green-500" };
+      case "completed":
+        return { text: "Game Over", color: "bg-blue-500" };
+      case "cancelled":
+        return { text: "Game Cancelled", color: "bg-red-500" };
+      default:
+        return { text: "Starting...", color: "bg-gray-500" };
     }
+  }, [status]);
 
-    return (
-        <>
-            <InfoDialog 
-                open={dialogState.open} 
-                onClose={() => setDialogState({ ...dialogState, open: false })} 
-                title={dialogState.title}
-                message={dialogState.message} 
-            />
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon"><Edit className="h-5 w-5 text-muted-foreground" /></Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="text-primary">Edit Room Code</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <Label htmlFor="room-code-edit">New Ludo King Room Code</Label>
-                        <Input id="room-code-edit" type="text" value={newCode} onChange={(e) => setNewCode(e.target.value)} className="text-center tracking-widest text-lg" maxLength={9} />
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                             <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button onClick={handleSave} disabled={isSaving}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Code
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </>
-    )
-}
-
-function RulesDialog() {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="text-red-500 border-red-500">
-            <Info className="mr-2 h-4 w-4" /> Rules
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Game Rules</DialogTitle>
-          <DialogDescription>
-            Follow these rules to ensure a fair and enjoyable game.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="prose dark:prose-invert max-w-none text-foreground">
-            <ul className="space-y-3 text-sm list-disc list-inside">
-                <li>
-                    <strong>Room Code:</strong> After joining a battle, the creator will enter a Ludo King room code. You must join the room in the Ludo King app using this code.
-                </li>
-                <li>
-                    <strong>Gameplay:</strong> The game must be played according to standard Ludo King classic rules.
-                </li>
-                <li>
-                    <strong>Winning Proof:</strong> After winning the game, you MUST take a screenshot of the final win screen in Ludo King.
-                </li>
-                <li>
-                    <strong>Uploading Result:</strong> Upload the winning screenshot in the "Game Result" section of the app. The winner gets the prize money after verification.
-                </li>
-                 <li>
-                    <strong>Cheating:</strong> Any form of cheating, including using mods or teaming up, will result in an immediate ban and forfeiture of all wallet funds.
-                </li>
-                <li>
-                    <strong>Disputes:</strong> If there is any issue, contact support immediately. Any attempt at fraud will result in a permanent ban.
-                </li>
-                 <li>
-                    <strong>Cancellation:</strong> You can cancel a battle after an opponent has joined, but a small penalty fee will be deducted from your wallet for doing so.
-                </li>
-            </ul>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
+    <div className="flex items-center justify-center gap-2 p-2 bg-secondary rounded-lg">
+      <div className={`w-3 h-3 rounded-full ${statusInfo.color} animate-pulse`}></div>
+      <span className="text-sm font-medium">{statusInfo.text}</span>
+    </div>
+  );
+};
 
-export default function CreateBattlePage({ params }: { params: { battleId: string } }) {
-  const router = useRouter();
-  const { battleId } = params;
+const PlayerCard = ({ player, isCreator, isReady }: { 
+    player: { id: string; name: string; avatarUrl?: string; } | undefined;
+    isCreator: boolean;
+    isReady?: boolean;
+}) => {
+  if (!player) {
+    return (
+      <Card className="w-full flex flex-col items-center justify-center p-6 border-dashed">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="mt-2 text-sm text-muted-foreground">Waiting for opponent...</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className={`w-full p-4 flex flex-col items-center relative ${isReady ? 'border-green-500' : ''}`}>
+        {isReady && <div className="absolute top-2 right-2 text-green-500"><Check /></div>}
+      <Avatar className="w-16 h-16 border-2 border-primary">
+        <AvatarImage src={player.avatarUrl} />
+        <AvatarFallback><User /></AvatarFallback>
+      </Avatar>
+      <p className="mt-2 font-bold text-lg">{player.name}</p>
+      <Badge variant={isCreator ? "default" : "secondary"} className="mt-1">
+        {isCreator ? "Creator" : "Opponent"}
+      </Badge>
+    </Card>
+  );
+};
+
+
+export default function BattlePage() {
   const { user, userProfile } = useAuth();
-  
+  const router = useRouter();
+  const params = useParams();
+  const battleId = params.battleId as string;
+
   const [battle, setBattle] = useState<Battle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [roomCode, setRoomCode] = useState("");
-  const [isSubmittingCode, setIsSubmittingCode] = useState(false);
-  const [isMarkingReady, setIsMarkingReady] = useState(false);
-  const [dialogState, setDialogState] = useState({ open: false, title: '', message: '' });
-
-  const showDialog = (title: string, message: string) => {
-    setDialogState({ open: true, title, message });
-  };
-
+  const [copied, setCopied] = useState(false);
+  const { width, height } = useWindowSize();
 
   useEffect(() => {
-    if (!battleId || !user) {
-        return;
-    };
-    const unsubscribe = BattleService.getBattleStream(battleId, (battleData) => {
-        if (battleData) {
-             if (battleData.creator.id === user.uid) {
-                setBattle(battleData);
-                // When opponent joins, status becomes 'waiting_for_players_ready'.
-                // Creator should stay on this page to enter code.
-                // Do not redirect creator from here.
-             } else if (battleData.opponent?.id === user.uid) {
-                // This is the opponent, they should be on the game page.
-                 router.replace(`/game/${battleId}`);
-             } else {
-                 // User is not part of this battle.
-                 setError("You are not part of this battle.");
-                 setTimeout(() => router.push('/play'), 3000);
-             }
-        } else {
-            setError("Battle not found or has been cancelled.");
-            setTimeout(() => router.push('/play'), 3000);
+    if (!battleId) return;
+
+    const battleRef = doc(db, "battles", battleId);
+
+    const unsubscribe = onSnapshot(battleRef, async (docSnap) => {
+      if (docSnap.exists()) {
+        const battleData = { id: docSnap.id, ...docSnap.data() } as Battle;
+
+        // Join game if user is opponent and not already joined
+        if (user && userProfile && !battleData.opponent && battleData.creator.id !== user.uid) {
+            try {
+                await updateDoc(battleRef, { 
+                    opponent: { id: user.uid, name: userProfile.displayName || 'New Player', avatarUrl: userProfile.photoURL || '' },
+                    status: 'waiting_for_players_ready' 
+                });
+                toast.success('You have joined the battle!');
+            } catch (err) {
+                console.error("Error joining battle: ", err);
+                toast.error('Failed to join the battle.');
+            }
         }
-        setLoading(false);
+        
+        setBattle(battleData);
+      } else {
+        setError("Battle not found. It might have been cancelled or never existed.");
+        toast.error("Battle not found!");
+      }
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [battleId, user, router]);
+  }, [battleId, user, userProfile]);
 
-  const handleCodeSubmit = async (id?: string, code?: string) => {
-      const battleIdToUse = id || battle?.id;
-      const codeToUse = code || roomCode.trim();
-
-      if(codeToUse && battleIdToUse) {
-          setIsSubmittingCode(true);
-          try {
-            await BattleService.setRoomCode(battleIdToUse, codeToUse);
-            setRoomCode(""); // Clear input after successful submission
-          } catch(err) {
-              showDialog("Error", "Failed to set room code.");
-          } finally {
-              setIsSubmittingCode(false);
-          }
-      }
-  }
+  useEffect(() => {
+    if (battle?.status === "active") {
+      toast.info("Game is starting!");
+      router.push(`/game/${battleId}`);
+    }
+  }, [battle?.status, battleId, router]);
   
   const handleReady = async () => {
-    if (!battle || !user) return;
-    setIsMarkingReady(true);
-    try {
-        await BattleService.markPlayerAsReady(battle.id, user.uid);
-    } catch (err) {
-        showDialog("Error", "Could not mark as ready.");
-    } finally {
-        setIsMarkingReady(false);
-    }
-  }
+      if (!user || !battle) return;
+      const battleRef = doc(db, "battles", battleId);
+      const currentReadyPlayers = battle.readyPlayers || [];
+      
+      if (!currentReadyPlayers.includes(user.uid)) {
+          const newReadyPlayers = [...currentReadyPlayers, user.uid];
+          await updateDoc(battleRef, { readyPlayers: newReadyPlayers });
 
-  const handleCopy = () => {
-    if (battle?.roomCode) {
-      navigator.clipboard.writeText(battle.roomCode);
-      showDialog("Copied", "Room code copied to clipboard!");
-    }
-  }
-  
-  const handleCancel = async () => {
-    if (!battle || !user) return;
-    if (confirm("Are you sure you want to cancel this battle? A penalty may be applied if an opponent has joined.")) {
-      try {
-        await BattleService.cancelBattle(battle.id, user.uid);
-        showDialog("Success", "Battle cancelled.");
-        router.push('/play');
-      } catch (err) {
-        showDialog("Error", `Failed to cancel battle: ${(err as Error).message}`);
+          // If both players are ready, start the game
+          if (newReadyPlayers.length === 2) {
+               await updateDoc(battleRef, { status: 'active' });
+          }
       }
-    }
+  };
+
+  const copyToClipboard = () => {
+    const inviteLink = `${window.location.origin}/battle/${battleId}`;
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      setCopied(true);
+      toast.success("Invite link copied!");
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
-  if (loading || !userProfile) {
-    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>;
+  if (error) {
+    return (
+        <div className="flex flex-col items-center justify-center h-screen text-center">
+            <Card className="p-8">
+                <CardHeader>
+                    <CardTitle className="text-2xl text-destructive">Error</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>{error}</p>
+                    <Button onClick={() => router.push('/')} className="mt-4">Go Home</Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
   }
 
-  if (error || !battle) {
-    return <div className="text-center py-10 text-red-500">{error || "Could not load battle details."}</div>;
-  }
+  if (!battle) return null;
   
-  const isOpponentJoined = !!battle.opponent;
-  const opponent = battle.opponent;
-  const isPlayerReady = user && battle.readyPlayers && battle.readyPlayers[user.uid];
-  const isOpponentReady = opponent && battle.readyPlayers && battle.readyPlayers[opponent.id];
-
-
-   const renderGameControl = () => {
-        if (battle.status === 'inprogress' || battle.status === 'result_pending' || battle.status === 'completed') {
-            if(battle.roomCode){
-                return <LudoLaunchButton roomCode={battle.roomCode} />;
-            }
-             router.replace(`/game/${battleId}`);
-            return <p className="text-center text-muted-foreground">Redirecting to game...</p>;
-        }
-
-        if (!isOpponentJoined) {
-            return (
-                <div className='text-center py-4'>
-                    <p className="text-lg font-semibold my-2">Waiting for an opponent...</p>
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                </div>
-            )
-        }
-
-        if (!battle.roomCode) {
-            return (
-                 <>
-                    <p className="text-sm text-muted-foreground">An opponent has joined! Enter the Ludo King Room Code.</p>
-                    <div className="flex items-center gap-2 my-2">
-                        <Input 
-                            type="text" 
-                            placeholder="Enter room code" 
-                            value={roomCode}
-                            onChange={(e) => setRoomCode(e.target.value)}
-                            className="text-center tracking-widest"
-                            disabled={isSubmittingCode}
-                            maxLength={9}
-                        />
-                        <Button onClick={() => handleCodeSubmit()} disabled={isSubmittingCode || !roomCode}>
-                            {isSubmittingCode ? <Loader2 className="animate-spin" /> : "Set"}
-                        </Button>
-                    </div>
-                     <p className="text-xs text-muted-foreground my-4">After getting the code from Ludo King, enter it here.</p>
-                </>
-            )
-        }
-
-        if (battle.status === 'waiting_for_players_ready' || battle.status === 'open') {
-             return (
-                <div className="text-center py-4 space-y-4">
-                     <p className="text-sm text-muted-foreground">Room Code</p>
-                    <div className="flex justify-center items-center gap-2 my-2">
-                        <p className="text-4xl font-bold tracking-widest text-primary">{battle.roomCode}</p>
-                        <Button variant="ghost" size="icon" onClick={handleCopy}>
-                            <Copy className="w-5 h-5" />
-                        </Button>
-                        <EditCodeModal battle={battle} onSave={handleCodeSubmit} />
-                    </div>
-
-                    {isPlayerReady ? (
-                         <div className='text-center py-4'>
-                            <p className="text-lg font-semibold my-2 text-green-600">You are ready!</p>
-                            <p>Waiting for {opponent?.name} to confirm...</p>
-                        </div>
-                    ) : (
-                         <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={handleReady} disabled={isMarkingReady}>
-                            {isMarkingReady ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-                            I'm Ready
-                         </Button>
-                    )}
-                </div>
-            )
-        }
-        
-        return <p className="text-center text-muted-foreground">Loading game state...</p>;
-    }
-
+  const isCreator = user?.uid === battle.creator.id;
+  const isOpponent = user?.uid === battle.opponent?.id;
+  const isPlayer = isCreator || isOpponent;
+  const isUserReady = user && battle.readyPlayers?.includes(user.uid);
 
   return (
-    <div className="space-y-4">
-       <InfoDialog 
-            open={dialogState.open} 
-            onClose={() => setDialogState({ ...dialogState, open: false })} 
-            title={dialogState.title}
-            message={dialog.message} 
-        />
-      <div className="flex justify-end items-center">
-        <RulesDialog />
-      </div>
+    <div className="p-4 max-w-lg mx-auto space-y-4">
+        {battle.status === 'completed' && battle.winner?.id === user?.uid && <Confetti width={width} height={height} />}
 
       <Card>
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center text-center mb-4">
-              <div className="flex flex-col items-center gap-1">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary">
-                    <CircleUserRound className="w-6 h-6 text-primary" />
-                  </div>
-                  <span className="font-semibold text-sm">You</span>
-              </div>
-              <div className="text-center">
-                  <p className="text-orange-500 font-bold text-xl">VS</p>
-                  <p className="font-bold text-green-600">₹ {battle.amount}</p>
-              </div>
-              <div className={`flex flex-col items-center gap-1 transition-opacity duration-500 ${isOpponentJoined ? 'opacity-100' : 'opacity-50'}`}>
-                    {isOpponentJoined && opponent ? (
-                        <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center ring-2 ring-muted">
-                           <CircleUserRound className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                    ) : (
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                            <CircleHelp className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                    )}
-                  <span className="font-semibold text-sm">{isOpponentJoined && opponent ? opponent.name : 'Waiting...'}</span>
-              </div>
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl"> <Swords /> Battle Lobby</CardTitle>
+          <CardDescription>Get ready for a duel!</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-primary/10 rounded-lg text-center">
+            <p className="text-sm text-primary">Battle Amount</p>
+            <p className="text-3xl font-bold text-primary">₹{battle.amount}</p>
+            <p className="text-xs text-primary/80">Winner takes ₹{(battle.amount * 2 * 0.95).toFixed(2)} (after 5% fee)</p>
+          </div>
+          
+          <StatusIndicator status={battle.status} />
+
+          <div className="grid grid-cols-2 gap-4 items-start">
+            <PlayerCard player={battle.creator} isCreator={true} isReady={battle.readyPlayers?.includes(battle.creator.id)} />
+            <PlayerCard player={battle.opponent} isCreator={false} isReady={battle.opponent && battle.readyPlayers?.includes(battle.opponent.id)} />
           </div>
 
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
-            {renderGameControl()}
-            <Button variant="destructive" className="w-full mt-4" onClick={handleCancel}>
-                <Trash2 className="mr-2 h-4 w-4" /> Cancel Battle
-            </Button>
-          </div>
+          {battle.status === 'waiting' && (
+            <Card className="p-4 space-y-2">
+              <p className="text-center font-semibold">Waiting for an opponent...</p>
+              <p className="text-center text-sm text-muted-foreground">Share this link to invite someone.</p>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/battle/${battleId}`}
+                  className="flex-1 p-2 border rounded bg-muted text-sm"
+                />
+                <Button onClick={copyToClipboard} size="icon">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </Card>
+          )}
+          
+          {battle.status === 'waiting_for_players_ready' && isPlayer && (
+              <div className="text-center">
+                <Button onClick={handleReady} disabled={isUserReady} className="w-full">
+                    {isUserReady ? 'Waiting for other player...' : 'I am Ready!'}
+                </Button>
+              </div>
+          )}
+          
+           {battle.status === 'completed' && (
+              <Card className="p-4 text-center">
+                  <h3 className="text-xl font-bold">
+                      {battle.winner?.id === user?.uid ? 'Congratulations, You Won!' : 'Sorry, You Lost.'}
+                  </h3>
+                   <Button onClick={() => router.push('/')} className="mt-4">Play Again</Button>
+              </Card>
+           )}
         </CardContent>
       </Card>
-      
-      <p className="text-center text-sm text-muted-foreground">The game will start automatically once both players are ready.</p>
-
-      <div className="border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg space-y-2">
-        <h3 className="font-bold text-yellow-700 dark:text-yellow-300 flex items-center gap-2"><TriangleAlert className="h-5 w-5"/> Important Note</h3>
-        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 pl-2">
-            <li>Do not press back or close the app after the opponent has joined.</li>
-            <li>If you cancel after the opponent joins, a penalty of Rs. 5 will be deducted from your wallet.</li>
-        </ul>
-      </div>
     </div>
   );
 }
-
-
-
-
-    

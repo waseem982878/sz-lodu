@@ -39,15 +39,15 @@ function InfoDialog({ open, onClose, title, message }: { open: boolean, onClose:
 
 
 const mockTransactions: Transaction[] = [
-    { id: 't1', userId: 'mock', type: 'deposit', amount: 500, bonusAmount: 140, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 't1', userId: 'mock', type: 'deposit', amount: 500, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
     { id: 't2', userId: 'mock', type: 'withdrawal', amount: 300, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 2)), updatedAt: Timestamp.fromDate(new Date()) },
-    { id: 't3', userId: 'mock', type: 'deposit', amount: 200, bonusAmount: 56, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 3)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 't3', userId: 'mock', type: 'deposit', amount: 200, status: 'completed', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 3)), updatedAt: Timestamp.fromDate(new Date()) },
     { id: 't4', userId: 'mock', type: 'withdrawal', amount: 500, status: 'pending', createdAt: Timestamp.fromDate(new Date(Date.now() - 86400000 * 4)), updatedAt: Timestamp.fromDate(new Date()) },
 ];
 
 const mockGames: Battle[] = [
-    { id: 'g1', amount: 100, gameType: 'classic', status: 'completed', winnerId: 'user-id-placeholder', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp1', name: 'Priya', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
-    { id: 'g2', amount: 50, gameType: 'classic', status: 'completed', winnerId: 'opp2', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp2', name: 'Amit', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 5)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 'g1', amount: 100, gameType: 'classic', status: 'completed', winner: 'user-id-placeholder', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp1', name: 'Priya', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 1)), updatedAt: Timestamp.fromDate(new Date()) },
+    { id: 'g2', amount: 50, gameType: 'classic', status: 'completed', winner: 'opp2', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp2', name: 'Amit', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 5)), updatedAt: Timestamp.fromDate(new Date()) },
     { id: 'g3', amount: 200, gameType: 'classic', status: 'cancelled', creator: { id: 'user-id-placeholder', name: 'Rohan', avatarUrl: '' }, opponent: { id: 'opp3', name: 'Sneha', avatarUrl: '' }, createdAt: Timestamp.fromDate(new Date(Date.now() - 3600000 * 10)), updatedAt: Timestamp.fromDate(new Date()) },
 ];
 
@@ -82,7 +82,7 @@ function GameHistoryCard({ game }: { game: Battle }) {
 
     const isCreator = game.creator.id === user.uid;
     const opponent = isCreator ? game.opponent : game.creator;
-    const isWin = game.winnerId === user.uid || (game.winnerId === 'user-id-placeholder' && mockGames.some(g => g.id === game.id));
+    const isWin = game.winner === user.uid || (game.winner === 'user-id-placeholder' && mockGames.some(g => g.id === game.id));
 
 
     const getDisplayStatus = (): { text: string; variant: "default" | "destructive" | "secondary" | "outline", color: string, icon: React.ElementType } => {
@@ -139,7 +139,8 @@ function TransactionHistoryCard({ transaction }: { transaction: Transaction }) {
     const statusVariant = {
         'pending': 'outline',
         'completed': 'default',
-        'rejected': 'destructive'
+        'rejected': 'destructive',
+        'failed': 'destructive'
     } as const;
 
     const Icon = isDeposit ? ArrowDownCircle : ArrowUpCircle;
@@ -255,7 +256,7 @@ export default function WalletPage() {
     router.push('/wallet/withdraw');
   };
   
-  const totalBalance = userProfile.depositBalance + userProfile.winningsBalance;
+  const totalBalance = (userProfile.depositBalance || 0) + (userProfile.winningsBalance || 0);
 
   return (
     <div className="space-y-4">
@@ -288,7 +289,7 @@ export default function WalletPage() {
       <div className="grid grid-cols-2 gap-4">
         <BalanceCard
             title="Deposit Balance"
-            balance={userProfile.depositBalance}
+            balance={userProfile.depositBalance || 0}
             buttonText="Add Money"
             buttonAction={handleAdd}
             icon={PlusCircle}
@@ -296,7 +297,7 @@ export default function WalletPage() {
         />
         <BalanceCard
             title="Winnings Balance"
-            balance={userProfile.winningsBalance}
+            balance={userProfile.winningsBalance || 0}
             buttonText="Withdraw"
             buttonAction={handleWithdraw}
             icon={Download}
